@@ -1,32 +1,50 @@
-import { memo, useMemo } from 'react'
-import { useViewport } from '@xyflow/react'
+import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useViewportStore, useReactFlowStoreApi } from '@xyflow/react'
 import { useEngine } from '../mock/engine'
 import { edges } from '../mock/data'
 import type { Scheme } from '../prefs'
 import { DEFS, twinkleSvg } from '../gen/render'
 import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
-import { levelFor } from '../lib/view'
+import { viewOf, type TileView } from '../lib/view'
 import { TileLayer } from './TileLayer'
 import { Lantern, March, Wash } from './Fx'
 
 // The baked world (server tiles) sits under React Flow and follows its viewport transform. On top of it,
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
-export function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
-  const vp = useViewport()
-  const tex = world.textures?.[scheme]?.[levelFor(vp.zoom, window.devicePixelRatio)], k = 1024 * vp.zoom // the texture repeats every 1024 world units
+// The transform is written straight to the DOM from React Flow's store; React only re-renders when the tile level or the visible tile range changes.
+export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
+  const store = useReactFlowStoreApi().viewportStore
+  const paper = useRef<HTMLDivElement>(null), el = useRef<HTMLDivElement>(null)
+  const T = world.tiles.size
+  const [view, setView] = useState<TileView>(() => viewOf(store.getState().transform, T, size, window.devicePixelRatio))
+  useLayoutEffect(() => {
+    let key = ''
+    const apply = ([x, y, zoom]: number[]) => {
+      const k = 1024 * zoom // the texture repeats every 1024 world units
+      el.current!.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`
+      paper.current!.style.backgroundSize = `${k}px`
+      paper.current!.style.backgroundPosition = `${x % k}px ${y % k}px`
+      const v = viewOf([x, y, zoom], T, size, window.devicePixelRatio)
+      const kk = `${v.level}/${v.c0}/${v.c1}/${v.r0}/${v.r1}`
+      if (kk !== key) { key = kk; setView(v) }
+    }
+    apply(store.getState().transform)
+    return store.subscribe((s) => apply(s.transform))
+  }, [store, T, size])
+  const tex = world.textures?.[scheme]?.[view.level]
   return (
     <>
     {/* paper under everything, one screen big: the texture is a tile's own base, so it continues seamlessly under the tiles */}
-    <div className="paper" style={{ backgroundImage: `url(/a/${tex})`, backgroundSize: k, backgroundPosition: `${vp.x % k}px ${vp.y % k}px` }} />
-    <div className="world" style={{ transform: `translate(${vp.x}px, ${vp.y}px) scale(${vp.zoom})` }}>
-      <TileLayer world={world} scheme={scheme} vp={vp} size={size} />
+    <div className="paper" ref={paper} style={{ backgroundImage: `url(/a/${tex})` }} />
+    <div className="world" ref={el}>
+      <TileLayer world={world} scheme={scheme} view={view} />
       <Live world={world} scheme={scheme} />
-      <Labels world={world} zoom={vp.zoom} />
+      <Labels world={world} />
     </div>
     </>
   )
-}
+})
 
 const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: Scheme }) {
   const night = scheme === 'night'
@@ -54,7 +72,8 @@ const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: S
 })
 
 // Estate names and path labels follow the viewport: their on-screen size stays between a minimum and a maximum. Estate names always show; path labels fade out when zoomed so far out they would only overlap.
-function Labels({ world, zoom }: { world: WorldData; zoom: number }) {
+function Labels({ world }: { world: WorldData }) {
+  const zoom = useViewportStore((s) => s.transform[2]) // task 2.4 steps this
   const { bounds: b } = world
   const px = (natural: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, natural * zoom)) / zoom
   const fr = Math.min(px(11.5, 9.5, 13.5), 11.5 * 1.35) /* never wider than the room the generator reserved */, fe = px(13, 11, 17)

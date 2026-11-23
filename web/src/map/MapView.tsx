@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
-import { ReactFlow, useReactFlow, useViewport, type Node } from '@xyflow/react'
+import { ReactFlow, useReactFlow, useViewportStore, type Node } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import type { Scheme } from '../prefs'
 import { clampViewport, heroInset, initialViewport, PULL, minZoom, panExtent } from '../lib/view'
@@ -37,7 +37,7 @@ export function MapView({ world, scheme, size, collapsed, onSelect }: { world: W
   const moved = useRef(false)
   const { setViewport, getViewport } = useReactFlow()
   const glide = useRef({ to: { x: 0, y: 0, zoom: 1 }, until: 0 })
-  const { zoom } = useViewport()
+  const zoom = useViewportStore((s) => s.transform[2]) // zoom only: a pan does not render MapView
   const [[ex0, ey0], [ex1, ey1]] = panExtent(world.bounds, size.w, zoom, collapsed)
   const extent = useMemo<[[number, number], [number, number]]>(() => [[ex0, ey0], [ex1, ey1]], [ex0, ey0, ex1, ey1])
   useEffect(() => {
