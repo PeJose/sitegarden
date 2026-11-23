@@ -88,3 +88,25 @@ commit 02ccdd3 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · hea
 Idle GPU % / paints per 10 s, before -> after (single runs, +-3 points noise): dpr 1 light-still 23.2 -> 12.5 / 1800 -> 1800; night-still 19.2 -> 18.9 / 1800; light 22.4 -> 14.8; night 22.7 -> 17.3. dpr 2 light-still 20.4 -> 14.5; night-still 21.5 -> 20.7; light 21.4 -> 14.3; night 17.0 -> 20.0. Pan GPU dpr 1 27.1 -> 16.9, pan-4x 23 -> 13.6, zoom 29.4 -> 18.1; dpr 2 pan 28.7 -> 18.4, zoom 28.1 -> 18.5. Screenshot diff (dpr 1): light-still 0.001 %, night-still 0.002 % mean difference, passes.
 
 Findings: (1) the paints that remain (1800 per 10 s, 3 per frame) are the march dashes and the down pulse, both main-thread painters (dash offset and `r` cannot run on the compositor); they are now small layers. With both stopped, light idle is 0.3 %. (2) Night is not fixed by layers alone: any compositor animation makes Chrome composite the whole scene every frame, and that floor is about 9-10 % GPU here (a 4 px div animating opacity or transform, everything else hidden: 9.9-10.7 %; nothing animating: 0.4-1.7 %). Stars + fires + lantern together add roughly another 8 points on top (77 per-star layers measured the same as 3 class layers, so 3 were kept). So the < 10 % budget needs the scene composite itself to get cheaper (texture, tiles, pins: tasks 2.2, 2.5, 2.8), or fewer frames. Layer count at night: 30 `.fx` layers (3 star class layers, 12 fire parts, 6 logs, wash 1, lantern 1, march 1, plus the hidden-defs and pulse), 26 elements with will-change.
+
+## 2026-11-23 nofx-stars-fires
+
+commit 3ed440b (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"night","zoom":0.340909,"loadMs":204,"bytes":{"total":4290300,"texture":1470374,"tiles":2408366,"js":213611},"gpuPct":21.7,"fps":60,"paints":1805,"paintAreaMpx":169448351024.84,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":146,"layout":42,"script":28,"paint":146,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":200,"bytes":{"total":4290303,"texture":1470374,"tiles":2408366,"js":213611},"gpuPct":20.4,"fps":60.1,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":154,"layout":40,"script":26,"paint":156,"decode":0}}
+```
+
+## 2026-11-23 nofx-stars-fires
+
+commit 3ed440b (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"night","zoom":0.340909,"loadMs":209,"bytes":{"total":4290302,"texture":1470374,"tiles":2408366,"js":213611},"gpuPct":21.3,"fps":60.1,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":151,"layout":38,"script":29,"paint":143,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":205,"bytes":{"total":4290300,"texture":1470374,"tiles":2408366,"js":213611},"gpuPct":20.4,"fps":60,"paints":1800,"paintAreaMpx":168885400413.03,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":150,"layout":39,"script":25,"paint":155,"decode":0}}
+```
+
+### Star twinkle and campfires removed (decision by the owner)
+
+Stars are now static circles inside the `Live` SVG, campfires are gone, `night-still` baseline re-shot on purpose. Night-still idle GPU 18.9-22.5 % before (2.1 block, plus a stale-build rerun at 22.5) -> 20.4 % twice after: no measurable change. Hiding every `.fx` in the scene (one-off) gives 15.6 %, so the lantern, march and pulse layers carry the rest of the compositor-animation floor.
