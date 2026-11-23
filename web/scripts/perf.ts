@@ -14,11 +14,13 @@ const baseline = process.argv.includes('--baseline') && dpr === 1 ? arg('baselin
 const label = arg('label', 'run')
 const W = 1440, H = 900
 const MEAN_MAX = 0.5, OVER_MAX = 2 // screenshot diff thresholds: mean abs diff %, % of channel values differing by > 16/255
-const scenarios: Record<string, { q: string; kind: 'idle' | 'pan' | 'zoom' | 'fly'; warm?: boolean; cpu?: number; shot?: boolean }> = {
+const scenarios: Record<string, { q: string; kind: 'idle' | 'pan' | 'zoom' | 'fly' | 'hidden' | 'reduced'; warm?: boolean; cpu?: number; shot?: boolean }> = {
   light: { q: '', kind: 'idle' },
   night: { q: '?theme=night', kind: 'idle' },
   'light-still': { q: '?still=1', kind: 'idle', shot: true },
   'night-still': { q: '?theme=night&still=1', kind: 'idle', shot: true },
+  hidden: { q: '', kind: 'hidden' }, // tab in the background for 5 s: frames, GPU and timers should be ~0
+  reduced: { q: '?still=1', kind: 'reduced' }, // prefers-reduced-motion: reduce, 5 s: no running animation, GPU at the static floor
   pan: { q: '', kind: 'pan' },
   zoom: { q: '', kind: 'zoom' },
   'pan-4x': { q: '', kind: 'pan', cpu: 4 },
@@ -31,12 +33,13 @@ const only = arg('only')
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 // Page-side counters, injected so app code stays untouched. A string, because tsx adds __name helpers that do not exist in the page.
-const init = `window.__frames = 0; window.__lt = []; window.__gaps = []
+const init = `window.__frames = 0; window.__timers = 0; window.__lt = []; window.__gaps = []
+for (const n of ['setTimeout', 'setInterval']) { const o = window[n].bind(window); window[n] = (f, ...a) => typeof f === 'function' ? o((...x) => { window.__timers++; return f(...x) }, ...a) : o(f, ...a) }
 let last = performance.now()
 const tick = (t) => { window.__frames++; window.__gaps.push(Math.round(t - last)); last = t; requestAnimationFrame(tick) }
 requestAnimationFrame(tick)
 new PerformanceObserver((l) => l.getEntries().forEach((e) => window.__lt.push(Math.round(e.duration)))).observe({ type: 'longtask', buffered: true })`
-const counters = (p: Page) => p.evaluate(() => { const w = window as unknown as { __frames: number; __lt: number[] }; return { frames: w.__frames, lt: w.__lt.length } })
+const counters = (p: Page) => p.evaluate(() => { const w = window as unknown as { __frames: number; __timers: number; __lt: number[] }; return { frames: w.__frames, timers: w.__timers, lt: w.__lt.length } })
 
 // Sum of top-level (non-nested) trace events whose name matches, in ms.
 type Ev = { name: string; ph: string; ts: number; dur?: number; tid: number; args?: { data?: { clip?: number[] } } }
@@ -73,6 +76,7 @@ for (const [name, s] of Object.entries(scenarios)) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, serviceWorkers: 'block', deviceScaleFactor: dpr }) // fresh and cold every time
   await ctx.addInitScript({ content: init })
   const page = await ctx.newPage()
+  if (s.kind === 'reduced') await page.emulateMedia({ reducedMotion: 'reduce' })
   const cdp = await ctx.newCDPSession(page)
   await cdp.send('Network.enable')
   const urls = new Map<string, string>(), sizes = new Map<string, number>()
@@ -98,7 +102,19 @@ for (const [name, s] of Object.entries(scenarios)) {
   const reqs0 = tileReqs, urls0 = tileUrls.length
   const [c0, g0, t0] = [await counters(page), await gpuCpu(), Date.now()]
   const cx = W / 2, cy = H / 2
-  if (s.kind === 'idle') await sleep(10_000)
+  let extra = {}
+  if (s.kind === 'hidden') {
+    // Headless Chrome is always visible (bringToFront / minimize do not hide it, headed is not allowed here), so fake the page-side signal the app listens to.
+    await page.evaluate("Object.defineProperty(document, 'hidden', { get: () => true }); Object.defineProperty(document, 'visibilityState', { get: () => 'hidden' }); document.dispatchEvent(new Event('visibilitychange'))")
+    await sleep(500)
+    const hid = await page.evaluate(() => document.hidden)
+    await sleep(5000)
+    const running = await page.evaluate("document.getAnimations().filter((a) => a.playState === 'running').length")
+    extra = { hidden: hid, running }
+  } else if (s.kind === 'reduced') {
+    await sleep(5000)
+    extra = { running: await page.evaluate("document.getAnimations().filter((a) => a.playState === 'running').length") }
+  } else if (s.kind === 'idle') await sleep(10_000)
   else if (s.kind === 'fly') for (const i of s.warm ? [1, 0] : [rows - 1]) { await page.locator('.estates .estate').nth(i).click(); await sleep(1500) }
   else if (s.kind === 'pan') {
     await page.mouse.move(cx, cy); await page.mouse.down()
@@ -121,7 +137,7 @@ for (const [name, s] of Object.entries(scenarios)) {
   const r = {
     scenario: name, zoom, loadMs: load.tilesVisible, bytes,
     gpuPct: +(((g1 - g0) / secs) * 100).toFixed(1),
-    fps: +((c1.frames - c0.frames) / secs).toFixed(1),
+    fps: +((c1.frames - c0.frames) / secs).toFixed(1), frames: c1.frames - c0.frames, timers: c1.timers - c0.timers, ...extra,
     paints: paints.length, paintAreaMpx: +(paints.reduce((a, e) => a + quadArea(e.args!.data!.clip!), 0) / 1e6).toFixed(2), maxPaintMpx: +(Math.max(0, ...paints.map((e) => quadArea(e.args!.data!.clip!))) / 1e6).toFixed(2),
     maxFrameMs: Math.max(0, ...gaps), slowFrames: gaps.filter((g) => g > 25).length,
     longTasks: lt.length, longTaskMs: lt.reduce((a, b) => a + b, 0), maxLongTask: Math.max(0, ...lt),

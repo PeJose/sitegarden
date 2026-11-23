@@ -34,6 +34,7 @@ button { font: inherit; color: inherit; }
 .fx { position: absolute; z-index: 10; pointer-events: none; } .fx svg { display: block; } /* one small compositor layer per animation, in world coordinates */
 @keyframes ink { to { stroke-dashoffset: -40; } }
 .ink { animation: ink 1s linear infinite; }
+html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animation-play-state: paused !important; }
 @media (prefers-reduced-motion: reduce) { .chipbox, .road-labels, .world .tile { transition: none !important; } .march, .pulse, .ink { animation: none; } .funswitch, .wash-fade, .hero, .hero-smear, .cmd { transition: none !important; } .hero-tab { animation: none; } }
 
 /* ---- layout ---- */
