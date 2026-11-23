@@ -38,8 +38,9 @@ function PinNodeInner({ id, data }: NodeProps) {
   const iconD = shape === 'diamond' && def.type === 'site' ? 'M-7 1l7-6 7 6v6h-14z' : icon.d
   return (
     <div className="pin" role="img" aria-label={`${def.name}: ${status}`}>
+      {/* the pulse repaints (its radius animates), so it gets its own layer: only its 76 px box is redrawn */}
+      {shape === 'diamond' && <svg className="pulse-svg" width="34" height="34" viewBox="-17 -17 34 34" overflow="visible" aria-hidden="true"><circle className="pulse" cx="0" cy="0" r="17" fill="none" stroke={COLOR.down} strokeWidth="2" /></svg>}
       <svg width="34" height="34" viewBox="-17 -17 34 34" overflow="visible" aria-hidden="true">
-        {shape === 'diamond' && <circle className="pulse" cx="0" cy="0" r="17" fill="none" stroke={COLOR.down} strokeWidth="2" />}
         {roughPin(id, status, shape, c, iconD).map((p, i) => <path key={i} d={p.d} fill={p.fill ?? 'none'} stroke={p.stroke} strokeWidth={p.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />)}
         {icon.dot && shape !== 'diamond' && <circle cx="5" cy="4" r="1.9" fill={stroke} />}
       </svg>
