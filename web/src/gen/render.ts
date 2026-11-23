@@ -140,18 +140,25 @@ export const estateGrainSvg = (e: Estate, scale: number) => { // the same in bot
 
 // Live night extras. Fires flicker through CSS classes; stars twinkle. Stars are keyed on a fixed 360-unit lattice,
 // so they do not move when the world grows.
-export const campfireSvg = ([x, y]: [number, number]) =>
-  `<g transform="translate(${x} ${y})"><circle class="fireglow" r="38" fill="url(#fireG)"/><path d="M-7 5 L7 1 M-7 1 L7 5" stroke="#5A3A24" stroke-width="2.4" stroke-linecap="round"/>` +
-  '<path class="flame" d="M0 2 C-5 -2 -3 -7 0 -12 C1 -7 5 -5 3 0 C2 2 1 3 0 2 Z" fill="#FFB347"/><path class="flame" d="M0 1 C-2 -2 -1 -5 0 -7 C1 -5 2 -3 1 0 Z" fill="#FFE59A"/></g>'
-export function twinkleSvg(w: World): string {
+export const campfireParts = ([x, y]: [number, number]): { cls: string; box: [number, number, number, number]; svg: string }[] => {
+  const g = (inner: string) => `<g transform="translate(${x} ${y})">${inner}</g>`
+  // Boxes are the exact geometry boxes of each shape (what `transform-box: fill-box` used), so the flicker keeps its bottom-centre origin.
+  return [
+    { cls: 'fireglow', box: [x - 38, y - 38, 76, 76], svg: g('<circle r="38" fill="url(#fireG)"/>') },
+    { cls: '', box: [x - 7, y + 1, 14, 4], svg: g('<path d="M-7 5 L7 1 M-7 1 L7 5" stroke="#5A3A24" stroke-width="2.4" stroke-linecap="round"/>') },
+    { cls: 'flame', box: [x - 3.0455, y - 12, 6.5978, 14.3923], svg: g('<path d="M0 2 C-5 -2 -3 -7 0 -12 C1 -7 5 -5 3 0 C2 2 1 3 0 2 Z" fill="#FFB347"/>') },
+    { cls: 'flame', box: [x - 1.1547, y - 7, 2.5689, 8], svg: g('<path d="M0 1 C-2 -2 -1 -5 0 -7 C1 -5 2 -3 1 0 Z" fill="#FFE59A"/>') },
+  ]
+}
+export function twinkleSvg(w: World): [string, string, string] { // one group per twinkle class, so each class is one layer (per-star layers measured no cheaper)
   const S = 360, b = w.bounds
-  let out = ''
+  const out = ['', '', '']
   for (let i = Math.floor(b.x / S); i < Math.ceil((b.x + b.w) / S); i++) for (let j = Math.floor(b.y / S); j < Math.ceil((b.y + b.h) / S); j++) {
     const r = rngFor(w.seed, 'star', i, j)
     if (r() > 0.45) continue
     const x = f1((i + r()) * S), y = f1((j + r()) * S), s = f1(1.4 + r() * 0.5)
-    out += `<g class="tw${1 + Math.floor(r() * 3)}"><circle cx="${x}" cy="${y}" r="${s}"/><circle cx="${x}" cy="${y}" r="${f1(s * 3.4)}" opacity="0.25"/></g>`
+    out[Math.floor(r() * 3)] += `<circle cx="${x}" cy="${y}" r="${s}"/><circle cx="${x}" cy="${y}" r="${f1(s * 3.4)}" opacity="0.25"/>`
   }
-  return `<g fill="#FFE7A8">${out}</g>`
+  return out.map((o) => `<g fill="#FFE7A8">${o}</g>`) as [string, string, string]
 }
 export { DEFS }

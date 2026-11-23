@@ -3,10 +3,11 @@ import { useViewport } from '@xyflow/react'
 import { useEngine } from '../mock/engine'
 import { edges } from '../mock/data'
 import type { Scheme } from '../prefs'
-import { DEFS, campfireSvg, twinkleSvg } from '../gen/render'
+import { DEFS, campfireParts, twinkleSvg } from '../gen/render'
 import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
 import { TileLayer } from './TileLayer'
+import { Fx, Lantern, March, Wash } from './Fx'
 
 // The baked world (server tiles) sits under React Flow and follows its viewport transform. On top of it,
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
@@ -34,24 +35,15 @@ const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: S
     <>
       {/* one hidden copy of the defs for every live svg below to reference */}
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs dangerouslySetInnerHTML={{ __html: DEFS[scheme] }} /></svg>
+      {/* each animation is its own layer in world coordinates; same stacking order as before: stars, wash, windows, fires, lanterns, dashes */}
+      {night && stars.map((html, i) => <Fx key={'s' + i} box={[b.x, b.y, b.w, b.h]} className={`tw${i + 1}`} html={html} />)}
+      {blds.map((bl) => <Wash key={bl.id} x={bl.x} y={bl.y} down={status[bl.id]?.status === 'down'} />)}
       <svg className="live" style={at} viewBox={`${b.x} ${b.y} ${b.w} ${b.h}`} aria-hidden="true">
-        {night && <g dangerouslySetInnerHTML={{ __html: stars }} />}
-        {blds.map((bl) => (
-          <g key={bl.id} transform={`translate(${bl.x} ${bl.y})`} className="wash-fade" style={{ opacity: status[bl.id]?.status === 'down' ? 1 : 0 }}>
-            <g filter="url(#aq)"><circle r="70" fill="#C25A4A" opacity="0.3" /><circle r="38" fill="#B8443A" opacity="0.25" /></g>
-          </g>
-        ))}
         {night && blds.map((bl) => <g key={'l' + bl.id} dangerouslySetInnerHTML={{ __html: lightsSvg(bl, status[bl.id]?.status !== 'down') }} />)}
-        {night && world.estates.map((e) => <g key={'f' + e.id} dangerouslySetInnerHTML={{ __html: campfireSvg(e.campfire) }} />)}
-        {edges.map((e) => roads[e.id] && flows[e.id] === 'deploy' && night && (
-          <circle key={'l' + e.id} className="lantern" r="7" fill="#FFC56B" filter="url(#glow)">
-            <animateMotion dur="3.2s" repeatCount="indefinite" path={roads[e.id].d} />
-          </circle>
-        ))}
-        {edges.map((e) => roads[e.id] && flows[e.id] && (
-          <path key={e.id} className="march" d={roads[e.id].d} fill="none" stroke="#D98A1C" strokeWidth="3" strokeDasharray="8 8" strokeLinecap="round" />
-        ))}
       </svg>
+      {night && world.estates.flatMap((e) => campfireParts(e.campfire).map((p, i) => <Fx key={`f${e.id}${i}`} box={p.box} className={p.cls} html={p.svg} />))}
+      {edges.map((e) => roads[e.id] && flows[e.id] === 'deploy' && night && <Lantern key={'l' + e.id} d={roads[e.id].d} />)}
+      {edges.map((e) => roads[e.id] && flows[e.id] && <March key={e.id} d={roads[e.id].d} />)}
     </>
   )
 })
