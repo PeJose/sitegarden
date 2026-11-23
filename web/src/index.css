@@ -30,7 +30,7 @@ button { font: inherit; color: inherit; }
 @keyframes march { to { stroke-dashoffset: -48; } }
 .march { animation: march 1.6s steps(24) infinite; } /* 15 dash steps per second: each step repaints the road box */
 @keyframes pulse { 0% { transform: scale(calc(17 / 38)); opacity: .6; } 100% { transform: scale(1); opacity: 0; } }
-.pulse { width: 78px; height: 78px; will-change: transform, opacity; animation: pulse 2s ease-out infinite; }
+.pulse { width: 78px; height: 78px; will-change: transform, opacity; animation: pulse 2s steps(24) infinite; } /* 12 steps per second, hand-animated feel */
 .fx { position: absolute; z-index: 10; pointer-events: none; } .fx svg { display: block; } /* one small compositor layer per animation, in world coordinates */
 @keyframes ink { to { stroke-dashoffset: -40; } }
 .ink { animation: ink 1s linear infinite; }
