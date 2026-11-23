@@ -561,3 +561,14 @@ Not budgeted: `zoom` has one 58 ms long task and loads 39 tiles from intermediat
 ### 3.2 look check
 
 The `?still=1` screenshots compared by eye with `design/v42-*.preview.html`: same palette, plots, roads, pins, labels and panels. The differences come from the scene: the mock has 6 estates against the boards' 2, so it opens at a lower zoom and the pin chips are hidden. Night has no campfires and the stars do not twinkle (owner decision). Star brightness is unchanged from the original baseline (bright pixels 7125 then, 7276 now). `pnpm test` passes and `pnpm lint` gives 0 errors (3 old warnings in `ui/Dots.tsx`).
+
+## 2026-11-23 march-15
+
+commit 2006f67 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":209,"bytes":{"total":3540733,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":10,"fps":60,"frames":600,"timers":2,"paints":302,"paintAreaMpx":108632.42,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":91,"layout":0,"script":27,"paint":26,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":218,"bytes":{"total":3223280,"texture":402537,"tiles":2402094,"js":214529},"gpuPct":9.5,"fps":60,"frames":601,"timers":2,"paints":302,"paintAreaMpx":108632.42,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":98,"layout":0,"script":24,"paint":21,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":208,"bytes":{"total":3540733,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":12.7,"fps":59.9,"frames":600,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":110,"layout":0,"script":30,"paint":30,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":211,"bytes":{"total":3217532,"texture":402537,"tiles":2402094,"js":214529},"gpuPct":13.5,"fps":60.1,"frames":601,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":142,"layout":0,"script":29,"paint":27,"decode":0,"decodeAllThreads":0}}
+```
