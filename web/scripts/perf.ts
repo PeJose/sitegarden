@@ -22,10 +22,11 @@ const scenarios: Record<string, { q: string; kind: 'idle' | 'pan' | 'zoom' | 'fl
   pan: { q: '', kind: 'pan' },
   zoom: { q: '', kind: 'zoom' },
   'pan-4x': { q: '', kind: 'pan', cpu: 4 },
+  'zoom-4x': { q: '', kind: 'zoom', cpu: 4 },
   fly: { q: '', kind: 'fly' }, // cold cache: first click on the last sidebar plot
   'fly-warm': { q: '', kind: 'fly', warm: true }, // after one flight: click another plot, then back
 }
-// default run keeps the seven original scenarios; fly scenarios run with --only fly,fly-warm
+// default run keeps the non-fly scenarios; fly scenarios run with --only fly,fly-warm
 const only = arg('only')
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
