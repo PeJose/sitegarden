@@ -204,3 +204,12 @@ commit bef9b5e (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · hea
 ### pulse note (down pulse as compositor-only scale animation; blocks "pulse" and "pulse-dpr2")
 
 Ring drawn once at r 38 in a wrapper, wrapper animated with `transform: scale(17/38 -> 1)` and opacity (look checked frame by frame against HEAD at dpr 2: same position, size and colour; the stroke now grows from 1.1 to 2 px). Idle GPU dpr 1: light-still 19.6 -> 19.7 %, night-still 21.2 -> 21.3 %; dpr 2: light-still 18.2 -> 16.4 %, night-still 22.9 -> 16.7 %. Paints per 10 s: 1800 -> 1200 (the pulse no longer paints; the remaining 1200 are the other main-thread animations, the dash march). Screenshot diff passes (light-still 0.488 %, night-still 0.425 %). So the pulse alone is not what holds idle GPU up while the march still runs; the march is the next lever.
+
+## 2026-11-23 fly-baseline
+
+commit 2280a17 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":201,"bytes":{"total":3539793,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":22.2,"fps":58.2,"paints":1652,"paintAreaMpx":316659394395.08,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":41,"ms":{"style":38,"layout":33,"script":43,"paint":17,"decode":0,"decodeAllThreads":350}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":204,"bytes":{"total":3539793,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":20.8,"fps":59.7,"paints":688,"paintAreaMpx":22379.43,"maxPaintMpx":63.28,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"ms":{"style":32,"layout":40,"script":75,"paint":33,"decode":0,"decodeAllThreads":10}}
+```

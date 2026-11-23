@@ -14,7 +14,7 @@ const baseline = process.argv.includes('--baseline') && dpr === 1 ? arg('baselin
 const label = arg('label', 'run')
 const W = 1440, H = 900
 const MEAN_MAX = 0.5, OVER_MAX = 2 // screenshot diff thresholds: mean abs diff %, % of channel values differing by > 16/255
-const scenarios: Record<string, { q: string; kind: 'idle' | 'pan' | 'zoom'; cpu?: number; shot?: boolean }> = {
+const scenarios: Record<string, { q: string; kind: 'idle' | 'pan' | 'zoom' | 'fly'; warm?: boolean; cpu?: number; shot?: boolean }> = {
   light: { q: '', kind: 'idle' },
   night: { q: '?theme=night', kind: 'idle' },
   'light-still': { q: '?still=1', kind: 'idle', shot: true },
@@ -22,7 +22,10 @@ const scenarios: Record<string, { q: string; kind: 'idle' | 'pan' | 'zoom'; cpu?
   pan: { q: '', kind: 'pan' },
   zoom: { q: '', kind: 'zoom' },
   'pan-4x': { q: '', kind: 'pan', cpu: 4 },
+  fly: { q: '', kind: 'fly' }, // cold cache: first click on the last sidebar plot
+  'fly-warm': { q: '', kind: 'fly', warm: true }, // after one flight: click another plot, then back
 }
+// default run keeps the seven original scenarios; fly scenarios run with --only fly,fly-warm
 const only = arg('only')
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
@@ -64,14 +67,15 @@ const lines: string[] = []
 let failed = false
 mkdirSync(out, { recursive: true })
 for (const [name, s] of Object.entries(scenarios)) {
-  if (only && !only.split(',').includes(name)) continue
+  if (only ? !only.split(',').includes(name) : s.kind === 'fly') continue
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, serviceWorkers: 'block', deviceScaleFactor: dpr }) // fresh and cold every time
   await ctx.addInitScript({ content: init })
   const page = await ctx.newPage()
   const cdp = await ctx.newCDPSession(page)
   await cdp.send('Network.enable')
   const urls = new Map<string, string>(), sizes = new Map<string, number>()
-  cdp.on('Network.requestWillBeSent', (e) => urls.set(e.requestId, e.request.url))
+  let tileReqs = 0
+  cdp.on('Network.requestWillBeSent', (e) => { urls.set(e.requestId, e.request.url); if (/\/a\/.*tile-/.test(e.request.url)) tileReqs++ })
   cdp.on('Network.loadingFinished', (e) => sizes.set(urls.get(e.requestId) ?? e.requestId, (sizes.get(urls.get(e.requestId) ?? e.requestId) ?? 0) + e.encodedDataLength))
   await page.goto(base + '/' + s.q)
   await page.waitForFunction(() => (window as unknown as { __perf?: unknown }).__perf, null, { timeout: 120_000 }) // set 300 ms after the tiles-visible mark
@@ -82,10 +86,17 @@ for (const [name, s] of Object.entries(scenarios)) {
   const zoom = await page.evaluate(() => +(/scale\(([\d.]+)\)/.exec(document.querySelector<HTMLElement>('.react-flow__viewport')?.style.transform ?? '')?.[1] ?? 0))
   if (s.cpu) await cdp.send('Emulation.setCPUThrottlingRate', { rate: s.cpu })
 
-  await browser.startTracing(page, { categories: ['devtools.timeline'] })
+  const rows = await page.locator('.estates .estate').count()
+  if (s.kind === 'fly') {
+    if (rows < 3) throw new Error('fly needs 3 sidebar plots')
+    if (s.warm) { await page.locator('.estates .estate').nth(0).click(); await sleep(3000) } // one flight done, untimed
+  }
+  await browser.startTracing(page, { categories: s.kind === 'fly' ? ['devtools.timeline', 'disabled-by-default-devtools.timeline'] : ['devtools.timeline'] })
+  const reqs0 = tileReqs
   const [c0, g0, t0] = [await counters(page), await gpuCpu(), Date.now()]
   const cx = W / 2, cy = H / 2
   if (s.kind === 'idle') await sleep(10_000)
+  else if (s.kind === 'fly') for (const i of s.warm ? [1, 0] : [rows - 1]) { await page.locator('.estates .estate').nth(i).click(); await sleep(1500) }
   else if (s.kind === 'pan') {
     await page.mouse.move(cx, cy); await page.mouse.down()
     for (const t0 = Date.now(); Date.now() - t0 < 3000;) { const a = (Date.now() - t0) / 3000 * 4 * Math.PI; await page.mouse.move(cx + 250 * Math.sin(a), cy + 150 * Math.sin(2 * a)) }
@@ -97,6 +108,7 @@ for (const [name, s] of Object.entries(scenarios)) {
   const [c1, g1, secs] = [await counters(page), await gpuCpu(), (Date.now() - t0) / 1000]
   const trace = JSON.parse((await browser.stopTracing()).toString()) as { traceEvents: Ev[] }
   const evs = trace.traceEvents
+  const mainTid = (evs as (Ev & { args?: { name?: string } })[]).find((e) => e.name === 'thread_name' && e.args?.name === 'CrRendererMain')?.tid
   const paints = evs.filter((e) => e.name === 'Paint' && e.args?.data?.clip)
   const lt = await page.evaluate((n) => (window as unknown as { __lt: number[] }).__lt.slice(n), c0.lt)
   const r = {
@@ -105,7 +117,8 @@ for (const [name, s] of Object.entries(scenarios)) {
     fps: +((c1.frames - c0.frames) / secs).toFixed(1),
     paints: paints.length, paintAreaMpx: +(paints.reduce((a, e) => a + quadArea(e.args!.data!.clip!), 0) / 1e6).toFixed(2), maxPaintMpx: +(Math.max(0, ...paints.map((e) => quadArea(e.args!.data!.clip!))) / 1e6).toFixed(2),
     longTasks: lt.length, longTaskMs: lt.reduce((a, b) => a + b, 0), maxLongTask: Math.max(0, ...lt),
-    ms: { style: topMs(evs, /^UpdateLayoutTree$/), layout: topMs(evs, /^Layout$/), script: topMs(evs, /^(FunctionCall|EvaluateScript)$/), paint: topMs(evs, /^Paint$/), decode: topMs(evs, /^Decode/) },
+    tileReqs: tileReqs - reqs0,
+    ms: { style: topMs(evs, /^UpdateLayoutTree$/), layout: topMs(evs, /^Layout$/), script: topMs(evs, /^(FunctionCall|EvaluateScript)$/), paint: topMs(evs, /^Paint$/), decode: topMs(evs.filter((e) => e.tid === mainTid), /^Decode/), decodeAllThreads: Math.round(evs.filter((e) => e.ph === 'X' && e.name === 'ImageDecodeTask').reduce((a, e) => a + (e.dur ?? 0) / 1000, 0)) },
   }
   console.log(JSON.stringify(r)); lines.push(JSON.stringify(r))
 
