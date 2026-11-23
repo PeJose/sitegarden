@@ -54,3 +54,11 @@ export function initialViewport(w: number, h: number, world: Pick<World, 'estate
   }
   return clampViewport(v, panExtent(world.bounds, w, zoom, collapsed), w, h) // exactly what react-flow will allow, so the first interaction never moves it
 }
+
+// What TileLayer depends on: the level and the range of tile cells in view (rect is the exact viewport in world units, for the first wave only).
+export interface TileView { level: number; c0: number; c1: number; r0: number; r1: number; rect: number[] }
+export function viewOf([x, y, zoom]: number[], T: number, size: { w: number; h: number }, dpr: number): TileView {
+  const m = T / 2 // half a tile of margin so panning rarely waits
+  const rx0 = -x / zoom - m, ry0 = -y / zoom - m, rx1 = (size.w - x) / zoom + m, ry1 = (size.h - y) / zoom + m
+  return { level: levelFor(zoom, dpr), c0: Math.floor(rx0 / T), c1: Math.floor(rx1 / T), r0: Math.floor(ry0 / T), r1: Math.floor(ry1 / T), rect: [rx0, ry0, rx1, ry1] }
+}
