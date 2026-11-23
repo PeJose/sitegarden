@@ -524,3 +524,40 @@ Single runs, within noise (+-1.5): hide chip box-shadow (-1.0 / +0.4), hide chip
 Ranking of what pins cost in pan: pin layer as a whole about 6 points (dpr 1) / 4.5 (dpr 2); of that the pin SVGs (scaled, rastered inside the moving viewport) are the biggest part; chips, shadows, scale and pulse are in the noise. Fix: `.react-flow__viewport { will-change: transform }` so the viewport is one layer that moves by transform and is not re-rastered with the pan (layers 35 to 39, same big layers, total 31.8 Mpx).
 
 Before / after, interleaved, 3 runs each (old build served from a worktree of the previous commit), pan GPU % : dpr 1 before 16.4/16.5/16.2, after 14.8/14.7/15.2 (-1.5); dpr 2 before 14.4/14.2/14.7, after 12.6/11.3/11.1 (-3.0). pan-4x: dpr 1 before 5.7/7.0/6.9, after 5.4/5.3/5.6 (-1.1); dpr 2 before 6.2/6.0/6.1, after 4.8/4.7/4.6 (-1.4). Paints unchanged (~325 / ~350 per window): the pins were not repainting; the saving is GPU raster/composite. fps 30 in both (the machine's display state this session, identical before and after). Screenshots: light-still 0.487 %, night-still 0.426 % (pass, same as before); after four zoom-in clicks at rest vs the previous build, mean diff 0.032 % at dpr 1, 0.004 % at dpr 2 (pins and chips crisp, checked by eye).
+
+## 2026-11-23 final-3.1
+
+commit 485aa8d · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":211,"bytes":{"total":3540720,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":14.7,"fps":60,"frames":600,"timers":2,"paints":1201,"paintAreaMpx":434520.59,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":117,"layout":0,"script":27,"paint":95,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":216,"bytes":{"total":3217519,"texture":402537,"tiles":2402094,"js":214529},"gpuPct":14.4,"fps":60,"frames":600,"timers":0,"paints":1200,"paintAreaMpx":434519.3,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":128,"layout":0,"script":25,"paint":83,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":213,"bytes":{"total":3540720,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":14.3,"fps":60,"frames":600,"timers":0,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":117,"layout":0,"script":26,"paint":98,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":213,"bytes":{"total":3217519,"texture":402537,"tiles":2402094,"js":214529},"gpuPct":15.9,"fps":60.1,"frames":601,"timers":0,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":147,"layout":0,"script":27,"paint":90,"decode":0,"decodeAllThreads":0}}
+{"scenario":"hidden","zoom":0.340909,"loadMs":206,"bytes":{"total":3540723,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":1.9,"fps":60,"frames":331,"timers":0,"hidden":true,"running":0,"paints":2,"paintAreaMpx":724.2,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":3,"layout":0,"script":20,"paint":0,"decode":0,"decodeAllThreads":0}}
+{"scenario":"reduced","zoom":0.340909,"loadMs":207,"bytes":{"total":3541447,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":1.7,"fps":60.1,"frames":301,"timers":0,"running":0,"paints":0,"paintAreaMpx":0,"maxPaintMpx":0,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":0,"layout":0,"script":14,"paint":0,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":213,"bytes":{"total":3540720,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":15.6,"fps":60.1,"frames":181,"timers":12,"paints":605,"paintAreaMpx":563179414.92,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":23,"layout":1,"script":58,"paint":17,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":213,"bytes":{"total":3540720,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":15.9,"fps":59.5,"frames":181,"timers":0,"paints":1787,"paintAreaMpx":257831151844.29,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":58,"maxLongTask":58,"tileReqs":39,"tileReqsOff":39,"ms":{"style":52,"layout":33,"script":58,"paint":22,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":220,"bytes":{"total":3540720,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":9.9,"fps":59.6,"frames":181,"timers":12,"paints":603,"paintAreaMpx":563178690.7,"maxPaintMpx":281474943.16,"maxFrameMs":33,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":62,"layout":3,"script":152,"paint":54,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.340909,"loadMs":218,"bytes":{"total":3540720,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":13.7,"fps":58.7,"frames":180,"timers":0,"paints":2086,"paintAreaMpx":322570432500.54,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":3,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":39,"tileReqsOff":39,"ms":{"style":168,"layout":109,"script":187,"paint":77,"decode":0,"decodeAllThreads":0}}
+```
+
+### 3.1 verdict (final-3.1, AC power, dpr 1)
+
+| Budget | Result | |
+|---|---|---|
+| Idle, nothing active: GPU < 10 %, no recurring paints | 1.7 % GPU, 0 paints (`reduced`: nothing animates) | pass |
+| Idle, design scene (one down, one deploy): GPU < 10 % | light 14.3 %, night 15.9 %, 120 paints/s | **miss** |
+| Hidden tab: no animation frames | 0 running, 2 paints, 1.9 % GPU | pass |
+| Reduced motion: no animation | 0 running, 0 paints | pass |
+| Pan ≥ 55 fps, no long task > 50 ms | 60.1 fps, 0 long tasks | pass |
+| Pan 4x throttle ≥ 50 fps | 59.6 fps | pass |
+| Look unchanged (screenshot diff) | light 0.49 % / night 0.43 % mean | pass |
+
+Why the design scene misses: the two marching deploy paths animate `stroke-dashoffset`, which cannot run on the compositor, so each frame repaints both road boxes (2 paints per frame). On top of that, any running animation keeps the compositor producing frames, which costs about 4 % GPU even on an empty page (see 2.1 notes). Options: march at 15 updates/s, or move the 10 % budget to the nothing-active case only. Owner decision.
+
+Not budgeted: `zoom` has one 58 ms long task and loads 39 tiles from intermediate levels (`tileReqsOff`), while fps stays at 59.5.
+
+### 3.2 look check
+
+The `?still=1` screenshots compared by eye with `design/v42-*.preview.html`: same palette, plots, roads, pins, labels and panels. The differences come from the scene: the mock has 6 estates against the boards' 2, so it opens at a lower zoom and the pin chips are hidden. Night has no campfires and the stars do not twinkle (owner decision). Star brightness is unchanged from the original baseline (bright pixels 7125 then, 7276 now). `pnpm test` passes and `pnpm lint` gives 0 errors (3 old warnings in `ui/Dots.tsx`).
