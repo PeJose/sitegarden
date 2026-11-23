@@ -1,4 +1,4 @@
-import { useCallback, type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ReactFlowProvider, useReactFlowStoreApi } from '@xyflow/react'
 import { engine } from './mock/engine'
 import { nodeById } from './mock/data'
@@ -11,10 +11,12 @@ import { Hero } from './ui/Hero'
 import { StatusStrip } from './ui/StatusStrip'
 import { CommandBar } from './ui/CommandBar'
 import { Controls } from './ui/Controls'
-import { Popover } from './ui/Popover'
-import { Panel } from './ui/Panels'
 import { Debug } from './ui/Debug'
-import { Boring } from './Boring'
+
+// Not needed for first paint: split into chunks (rough.js stays in main, pins need it).
+const Boring = lazy(() => import('./Boring').then((m) => ({ default: m.Boring })))
+const Panel = lazy(() => import('./ui/Panels').then((m) => ({ default: m.Panel })))
+const Popover = lazy(() => import('./ui/Popover').then((m) => ({ default: m.Popover })))
 
 const params = new URLSearchParams(location.search) // ?select=copperleaf-site&still=1 are for screenshots
 
@@ -26,7 +28,7 @@ export default function App() {
   }, [])
   const world = useWorld()
   if (!world) return <div className="app" />
-  if (prefs.style === 'boring') return <Boring setStyle={prefs.setStyle} />
+  if (prefs.style === 'boring') return <Suspense fallback={<div className="app" />}><Boring setStyle={prefs.setStyle} /></Suspense>
   return (
     <ReactFlowProvider>
       <Fun {...prefs} world={world} />
@@ -88,8 +90,10 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
       <div className="mapbox" ref={box}>
         {size && <MapView world={world} scheme={scheme} size={size} collapsed={collapsed} onSelect={(id) => { setSelected(id); setPanel(null) }} />}
         <StatusStrip onPick={pickFromPanel} />
-        {selected && nodeById(selected) && <Anchored key={selected} id={selected} boxW={size?.w ?? 1440} />}
-        {panel && <Panel kind={panel} onClose={() => setPanel(null)} onPick={pickFromPanel} />}
+        <Suspense fallback={null}>
+          {selected && nodeById(selected) && <Anchored key={selected} id={selected} boxW={size?.w ?? 1440} />}
+          {panel && <Panel kind={panel} onClose={() => setPanel(null)} onPick={pickFromPanel} />}
+        </Suspense>
         {toast && <div className="toast" role="status">{toast}</div>}
         <CommandBar say={say} />
         <Controls scheme={scheme} style={style} toggleScheme={toggleScheme} setStyle={setStyle}  />
