@@ -313,3 +313,52 @@ commit a6589cc (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · hea
 | fly-warm dpr1 | 72 -> 69 | 0 -> 0 | n/a -> 17 | n/a -> 0 | 20.1 -> 19.1 |
 
 Screenshot diff passes (light-still 0.488 %, night-still 0.425 %, unchanged). After a button zoom and after a pan, tiles, pins, labels and the `?select=copperleaf-site` popover (card and arrow) stay aligned and the paper has no seam (screenshots read by eye). The single slowFrame in pan is one 33 ms frame, within the noise of the 3 s run.
+
+## 2026-11-23 2.4
+
+commit 5e04f82 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":209,"bytes":{"total":3540402,"texture":537502,"tiles":2589958,"js":214248},"gpuPct":20.1,"fps":60,"paints":1203,"paintAreaMpx":435244.79,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":155,"layout":0,"script":34,"paint":119,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":202,"bytes":{"total":3217200,"texture":402537,"tiles":2402094,"js":214248},"gpuPct":18.6,"fps":60,"paints":1201,"paintAreaMpx":434520.59,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":195,"layout":1,"script":38,"paint":109,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":201,"bytes":{"total":3540399,"texture":537502,"tiles":2589958,"js":214248},"gpuPct":16.2,"fps":60,"paints":1200,"paintAreaMpx":434519.3,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":142,"layout":0,"script":29,"paint":120,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":218,"bytes":{"total":3217198,"texture":402537,"tiles":2402094,"js":214248},"gpuPct":18.1,"fps":60,"paints":1200,"paintAreaMpx":434519.3,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":182,"layout":0,"script":32,"paint":121,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":210,"bytes":{"total":3540401,"texture":537502,"tiles":2589958,"js":214248},"gpuPct":20.5,"fps":60,"paints":611,"paintAreaMpx":1689078468.64,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":38,"layout":1,"script":68,"paint":25,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":215,"bytes":{"total":3540401,"texture":537502,"tiles":2589958,"js":214248},"gpuPct":21.5,"fps":59.1,"paints":1847,"paintAreaMpx":270779002337.77,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":2,"longTasks":1,"longTaskMs":56,"maxLongTask":56,"tileReqs":39,"ms":{"style":47,"layout":39,"script":66,"paint":25,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":203,"bytes":{"total":3540402,"texture":537502,"tiles":2589958,"js":214248},"gpuPct":12.2,"fps":59.9,"paints":605,"paintAreaMpx":1689076295.96,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":78,"layout":3,"script":177,"paint":49,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 2.4-dpr2
+
+commit 5e04f82 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":231,"bytes":{"total":11152940,"texture":1656961,"tiles":9083040,"js":214248},"gpuPct":19.4,"fps":60,"paints":1201,"paintAreaMpx":1522352.73,"maxPaintMpx":2535.96,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":190,"layout":0,"script":42,"paint":171,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":219,"bytes":{"total":10003620,"texture":1143788,"tiles":8447265,"js":214248},"gpuPct":21.1,"fps":60,"paints":1203,"paintAreaMpx":1524889.98,"maxPaintMpx":2535.96,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":276,"layout":0,"script":44,"paint":170,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":222,"bytes":{"total":11153051,"texture":1656961,"tiles":9083040,"js":214248},"gpuPct":17.9,"fps":59.9,"paints":1202,"paintAreaMpx":1524888.69,"maxPaintMpx":2535.96,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":166,"layout":0,"script":35,"paint":148,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":220,"bytes":{"total":10003620,"texture":1143788,"tiles":8447265,"js":214248},"gpuPct":19.8,"fps":60,"paints":1200,"paintAreaMpx":1522351.43,"maxPaintMpx":2535.96,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":267,"layout":0,"script":38,"paint":156,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":225,"bytes":{"total":11152940,"texture":1656961,"tiles":9083040,"js":214248},"gpuPct":19.3,"fps":59.7,"paints":632,"paintAreaMpx":1689712250.83,"maxPaintMpx":281474943.16,"maxFrameMs":33,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":37,"layout":2,"script":81,"paint":24,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":219,"bytes":{"total":11152940,"texture":1656961,"tiles":9083040,"js":214248},"gpuPct":20.2,"fps":59,"paints":2388,"paintAreaMpx":440227478650.94,"maxPaintMpx":281474943.16,"maxFrameMs":67,"slowFrames":1,"longTasks":1,"longTaskMs":75,"maxLongTask":75,"tileReqs":23,"ms":{"style":59,"layout":47,"script":77,"paint":29,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":215,"bytes":{"total":11152941,"texture":1656961,"tiles":9083040,"js":214248},"gpuPct":10.4,"fps":59.7,"paints":632,"paintAreaMpx":1689712250.72,"maxPaintMpx":281474943.16,"maxFrameMs":33,"slowFrames":2,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"ms":{"style":85,"layout":5,"script":178,"paint":52,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 2.4-fly
+
+commit 5e04f82 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":211,"bytes":{"total":3540399,"texture":537502,"tiles":2589958,"js":214248},"gpuPct":23.6,"fps":58.5,"paints":1195,"paintAreaMpx":193654836213.54,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":41,"ms":{"style":25,"layout":22,"script":42,"paint":14,"decode":0,"decodeAllThreads":318}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":212,"bytes":{"total":3540399,"texture":537502,"tiles":2589958,"js":214248},"gpuPct":25.1,"fps":60,"paints":619,"paintAreaMpx":18939.54,"maxPaintMpx":63.32,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"ms":{"style":48,"layout":8,"script":94,"paint":35,"decode":0,"decodeAllThreads":0}}
+```
+
+### 2.4 note (zoom-stepped labels and LOD variables; blocks "2.4", "2.4-dpr2", "2.4-fly" = after, "2.3*" = before)
+
+`lod.ts` `followZoom` snaps zoom to 1/16 of a doubling (factor 2^(1/16), at most 4.4 % between snaps) and calls back only when the step changes, plus once with the exact zoom 120 ms after the store goes quiet. `MapView` writes `--pin-k`, `--chip-o`, `--hover-k` to `.react-flow__viewport` from it (no longer a style prop on a wrapper), `Labels` sets font size, letter spacing, stroke and opacity on its two `<g>`s (road label `dy` is `0.35em`, same value). Neither renders React per zoom frame any more (MapView still renders for the pan extent, which depends on zoom). A JS CPU profile of a 3 s wheel zoom shows no app function over 10 ms self time.
+
+| scenario | style ms | layout ms | scripting ms | long tasks | maxFrameMs | slowFrames | GPU % |
+|---|---|---|---|---|---|---|---|
+| zoom dpr1 | 51 -> 47 | 32 -> 39 | 59 -> 66 | 1 (61 ms) -> 1 (56 ms) | 50 -> 50 | 2 -> 2 | 18.7 -> 21.5 |
+| zoom dpr2 | 70 -> 59 | 38 -> 47 | 61 -> 77 | 1 (72 ms) -> 1 (75 ms) | 67 -> 67 | 2 -> 1 | 17.9 -> 20.2 |
+| fly dpr1 | 36 -> 25 | 32 -> 22 | 41 -> 42 | 0 -> 0 | 50 -> 50 | 1 -> 1 | 22.9 -> 23.6 |
+
+No measurable drop: the changes are within run-to-run noise. The one long task in `zoom` comes from mounting ~39 tiles (tileReqs), not from labels or pins; that is the tile work of 2.5/D6. Screenshot diff passes (light-still 0.488 %, night-still 0.425 %). At rest after 1, 2 and 3 button zooms the old and new builds differ by 0.0002 to 0.0006 % mean (labels, chips, pins identical); a mid-glide frame shows no visible jump.
