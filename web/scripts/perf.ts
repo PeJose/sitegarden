@@ -1,5 +1,5 @@
 // Measures the production build in system Chrome (real GPU). See perf/README.md.
-// pnpm perf [--label x] [--url http://localhost:4173] [--out perf/out] [--baseline perf/baseline] [--only pan,zoom]
+// pnpm perf [--label x] [--url http://localhost:4173] [--out perf/out] [--baseline perf/baseline] [--only pan,zoom] [--dpr 2]
 import { chromium, type Browser, type Page } from 'playwright-core'
 import { execSync } from 'node:child_process'
 import { appendFileSync, mkdirSync } from 'node:fs'
@@ -9,7 +9,8 @@ import sharp from 'sharp'
 const arg = (k: string, d = '') => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : process.argv[i + 1] }
 const base = arg('url', 'http://localhost:4173')
 const out = arg('out', 'perf/out')
-const baseline = process.argv.includes('--baseline') ? arg('baseline') : ''
+const dpr = +arg('dpr', '1') || 1 // retina = 2; the screenshot diff only applies at dpr 1 (baseline size)
+const baseline = process.argv.includes('--baseline') && dpr === 1 ? arg('baseline') : ''
 const label = arg('label', 'run')
 const W = 1440, H = 900
 const MEAN_MAX = 0.5, OVER_MAX = 2 // screenshot diff thresholds: mean abs diff %, % of channel values differing by > 16/255
@@ -64,7 +65,7 @@ let failed = false
 mkdirSync(out, { recursive: true })
 for (const [name, s] of Object.entries(scenarios)) {
   if (only && !only.split(',').includes(name)) continue
-  const ctx = await browser.newContext({ viewport: { width: W, height: H }, serviceWorkers: 'block' }) // fresh and cold every time
+  const ctx = await browser.newContext({ viewport: { width: W, height: H }, serviceWorkers: 'block', deviceScaleFactor: dpr }) // fresh and cold every time
   await ctx.addInitScript({ content: init })
   const page = await ctx.newPage()
   const cdp = await ctx.newCDPSession(page)
@@ -127,6 +128,6 @@ await browser.close()
 if (lines.length) {
   const git = (c: string) => { try { return execSync(`git ${c}`, { encoding: 'utf8' }).trim() } catch { return '?' } }
   const dirty = git('status --porcelain -- src server') ? ' (dirty)' : ''
-  appendFileSync('perf/results.md', `\n## ${new Date().toISOString().slice(0, 10)} ${label}\n\ncommit ${git('rev-parse --short HEAD')}${dirty} · ${chrome} · ${os.cpus()[0].model} · ${W}x${H} · ${mode} · GPU ${gpu}\n\n\`\`\`json\n${lines.join('\n')}\n\`\`\`\n`)
+  appendFileSync('perf/results.md', `\n## ${new Date().toISOString().slice(0, 10)} ${label}\n\ncommit ${git('rev-parse --short HEAD')}${dirty} · ${chrome} · ${os.cpus()[0].model} · ${W}x${H} dpr ${dpr} · ${mode} · GPU ${gpu}\n\n\`\`\`json\n${lines.join('\n')}\n\`\`\`\n`)
 }
 if (failed) { console.error('screenshot diff over threshold'); process.exit(1) }
