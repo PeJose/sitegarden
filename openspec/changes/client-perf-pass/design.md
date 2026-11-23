@@ -36,7 +36,7 @@ Tools at hand: `playwright-core` (devDependency), `web/src/perf.ts` (page-load m
 ## Decisions
 
 ### D1. Measure with a Playwright script, not by hand
-`web/scripts/perf.ts` (`pnpm perf`) launches system Chrome via `playwright-core` (`channel: 'chrome'`, headed so the real GPU is used) against the preview build:
+`web/scripts/perf.ts` (`pnpm perf`) launches system Chrome via `playwright-core` (`channel: 'chrome'`, new headless mode with `--use-angle=metal --enable-gpu --ignore-gpu-blocklist`, so no window opens and the real GPU is used; the script reads `SystemInfo.getInfo`, prints the GPU in the results block, and if it is software rendering falls back to headed but off-screen and unthrottled) against the preview build:
 
 1. **load**: `window.__perf` from `perf.ts`, plus bytes transferred (CDP `Network`).
 2. **idle**: 10 s with no input. GPU % from CDP `SystemInfo.getProcessInfo` (`GPU` process `cpuTime` delta), paint events and painted area from a `devtools.timeline` trace.
@@ -82,7 +82,7 @@ The perf script compares `?still=1` light and night screenshots against the comm
 ## Risks / Trade-offs
 
 - [GPU % differs by machine] → budgets are for the owner's laptop; every logged number carries machine, Chrome version and commit.
-- [Headless Chrome uses SwiftShader] → the script runs headed with `channel: 'chrome'`.
+- [Headless Chrome may use SwiftShader] → the script launches system Chrome headless with ANGLE/Metal flags and checks the GPU through CDP `SystemInfo.getInfo`; on software rendering it falls back to an off-screen headed window. The mode and GPU are logged with every result.
 - [Too many compositor layers cost memory] → stars grouped by twinkle class (D2); the profile's Layers panel decides.
 - [Imperative transform drifts from React Flow's state] → one source (the React Flow store), written in its own subscription; a test pans and checks the tile layer and pins stay aligned (screenshot at rest).
 - [Snapping labels during zoom is visible] → step small enough to read as smooth; check by eye, adjust the step.
