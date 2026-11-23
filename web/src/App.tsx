@@ -15,10 +15,8 @@ import { Debug } from './ui/Debug'
 
 // Not needed for first paint: split into chunks (rough.js stays in main, pins need it).
 const Boring = lazy(() => import('./Boring').then((m) => ({ default: m.Boring })))
-const loadPanel = () => import('./ui/Panels')
-const loadPopover = () => import('./ui/Popover')
-const Panel = lazy(() => loadPanel().then((m) => ({ default: m.Panel })))
-const Popover = lazy(() => loadPopover().then((m) => ({ default: m.Popover })))
+const Panel = lazy(() => import('./ui/Panels').then((m) => ({ default: m.Panel })))
+const Popover = lazy(() => import('./ui/Popover').then((m) => ({ default: m.Popover })))
 
 const params = new URLSearchParams(location.search) // ?select=goldcrisp-site&still=1 are for screenshots
 
@@ -51,12 +49,6 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
   const toggle = () => setHidden((h) => { try { localStorage.setItem('sitegarden-hero', h ? 'open' : 'hidden') } catch { /* private mode */ } return !h })
   const toggleRef = useRef(toggle)
   toggleRef.current = toggle
-  useEffect(() => { // fetch the click-time chunks when idle so the first click does not wait on the network
-    const warm = () => { void loadPanel(); void loadPopover() }
-    if ('requestIdleCallback' in window) { const h = requestIdleCallback(warm); return () => cancelIdleCallback(h) }
-    const t = setTimeout(warm, 1500)
-    return () => clearTimeout(t)
-  }, [])
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const say = useCallback((m: string) => {
