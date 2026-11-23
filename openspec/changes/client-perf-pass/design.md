@@ -4,77 +4,89 @@
 
 See proposal.md for why. The map is three stacked layers inside `MapView`:
 
-- `.world` (`WorldLayer.tsx`): one `div` with `transform: translate() scale()` updated from `useViewport()` on every pan/zoom frame. It holds the server tiles (`TileLayer`), a world-sized live SVG (`Live`) and a world-sized label SVG (`Labels`).
-- React Flow on top: one `PinNode` per node (rough.js paths, cached per id+status), chips sized by CSS variables set on a wrapper in `MapView` on every zoom change.
-- UI panels (hero, command bar, status strip) as HTML over the map. No `backdrop-filter` is used.
+- `.world` (`WorldLayer.tsx`): one `div` with `will-change: transform` and `transform: translate() scale()`, set from `useViewport()`, so React re-renders `WorldLayer`, `TileLayer` and `Labels` on every pan/zoom frame. It holds the server tiles, a world-sized live SVG (`Live`) and a world-sized label SVG (`Labels`).
+- React Flow on top: one `PinNode` per node, sized by CSS variables (`--pin-k`, `--chip-o`, `--hover-k`) that `MapView` rewrites on every zoom frame.
+- UI panels (hero, command bar, status strip) as HTML over the map. No `backdrop-filter`.
 
-What runs continuously today, regardless of activity (from `index.css` and `WorldLayer.tsx`):
+Hot spots found in the code (all to be confirmed by the baseline profile):
 
-| Animation | Where | Paint area |
+| # | What | Why it costs |
 |---|---|---|
-| `.march` dash offset on flowing roads | `Live` SVG | whole world SVG |
-| lantern `<animateMotion>` + `filter=url(#glow)` | `Live` SVG, night | whole world SVG |
-| `.tw1/2/3` star twinkle, `.fireglow/.flame` flicker | `Live` SVG, night | whole world SVG |
-| red wash `filter=url(#aq)` (`feDisplacementMap`) | `Live` SVG, every building, `opacity: 0` when healthy | whole world SVG, filter re-evaluated on repaint |
-| `.pulse` on down pins | pin SVG | 34 px pin (fine) |
-
-A single animated element inside a world-sized SVG invalidates that SVG, and inside a scaled layer the browser re-rasterises it, filters included. That matches "300% GPU while idle". The paper `div` in `TileLayer` is 204 800 px square inside the same transformed layer.
+| H1 | Animations inside the world-sized `Live` SVG: `.march` dash offset, lantern SMIL `<animateMotion>` + `filter=url(#glow)`, star twinkle, campfire flicker | any change inside one SVG repaints the whole SVG; inside a scaled layer that is a world-sized re-raster, filters included, every frame, forever |
+| H2 | Red wash per building: `filter=url(#aq)` (`feDisplacementMap`), mounted for every building at `opacity: 0` | the costly filter is part of every repaint caused by H1 |
+| H3 | Paper texture: a 204 800 px square `div` inside `.world`, background = `layer-texture-*-z3` **PNG of 4.2 MB** (2048 px, ~16 MB decoded) | GPU rasters a huge scaled area; the biggest download on the page |
+| H4 | `useViewport()` in `WorldLayer` / `Anchored` | full React render + tile-set recompute per pan frame, on the main thread |
+| H5 | `Labels`: font size, letter spacing and stroke on every `textPath` change per zoom frame; LOD variables restyle every pin and chip per zoom frame | text relayout + world-sized SVG repaint + style recalc of all pins, per frame |
+| H6 | Tiles: `<img>` without `decoding="async"`, opacity transition per tile, up to 48 kept mounted; preview `<img>` is world-sized | decode jank on the main thread during pan/zoom |
+| H7 | One 565 KB JS bundle (Boring view, rough.js, generator) | slower first paint than needed |
 
 Tools at hand: `playwright-core` (devDependency), `web/src/perf.ts` (page-load marks + long tasks), `?still=1` freezes the mock scene, `pnpm build && pnpm preview` gives the production build.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- A scripted, repeatable measurement (idle GPU %, pan fps, long tasks) run against the production build.
-- Fix the measured hot spots so the budgets in `specs/map-performance/spec.md` hold.
+- A scripted, repeatable measurement (idle GPU %, pan fps, long tasks, load time) on the production build.
+- Fix the measured hot spots so the budgets in `specs/map-performance/spec.md` hold, with every animation kept exactly as it looks today.
 
 **Non-Goals:**
-- The M2 flow canvas (rAF lanterns/pulses from `flow.started` events). This change only stops the current SVG animations from costing a world-sized repaint; it does not build the canvas.
-- Server render pipeline speed (tile baking cost is M8).
-- New visuals or changes to the look.
+- The M2 flow canvas. Nothing here pre-empts it.
+- Server tile baking speed (M8).
+- Any change to the look or to what animates.
 
 ## Decisions
 
 ### D1. Measure with a Playwright script, not by hand
-`web/scripts/perf.ts` (run as `pnpm perf`) launches system Chrome via `playwright-core` (`channel: 'chrome'`, headed, real GPU), opens the preview build and runs three phases:
+`web/scripts/perf.ts` (`pnpm perf`) launches system Chrome via `playwright-core` (`channel: 'chrome'`, headed so the real GPU is used) against the preview build:
 
-1. **load**: reads `window.__perf` (existing `perf.ts`).
-2. **idle**: 10 s with no input. GPU % from CDP `SystemInfo.getProcessInfo` (the `GPU` process `cpuTime`), sampled at start and end. Paint count from a CDP trace (`devtools.timeline` category, count `Paint` events).
-3. **pan**: 3 s of `page.mouse` drags; fps from a page-side `requestAnimationFrame` counter; long tasks from the existing observer.
+1. **load**: `window.__perf` from `perf.ts`, plus bytes transferred (CDP `Network`).
+2. **idle**: 10 s with no input. GPU % from CDP `SystemInfo.getProcessInfo` (`GPU` process `cpuTime` delta), paint events and painted area from a `devtools.timeline` trace.
+3. **pan / zoom**: 3 s of `page.mouse` drags and wheel zoom; fps from a page-side rAF counter; long tasks from the existing observer. Repeated with `Emulation.setCPUThrottlingRate(4)`.
 
-It prints one JSON line per scenario (`light`, `night`, `light-still`, `night-still`, `pan`, `pan-4x` via CDP `Emulation.setCPUThrottlingRate`) and appends it to `web/perf/results.md` with date, commit and label.
+Scenarios: `light`, `night`, `light-still`, `night-still`, `pan`, `zoom`, `pan-4x`. One JSON line each, appended to `web/perf/results.md` with date, commit, Chrome version and label. Also saves `light-still.png` / `night-still.png` for D9.
 
-Why: by-hand DevTools numbers drift between runs and can't be compared later. Alternative: Lighthouse — no idle/pan scenario, rejected.
+Alternative: Lighthouse. No idle or pan scenario, rejected.
 
-### D2. Animated things get their own small boxes
-Split `Live` so the world-sized SVG holds only static content (stars, lit windows, fires at rest). Each animated element (flowing road, lantern, wash fading in) renders in its own absolutely positioned SVG sized to its bounding box (road bbox from its path; `getBBox` is not needed, the generator knows the road points). The browser then repaints only those boxes.
+### D2. Every animation gets its own compositor layer (H1, H2)
+The cost is not the animations, it's where they live. Keep the markup and CSS of each animated thing as is, but render it in its own small absolutely positioned wrapper (`<div class="fx">` with a tiny SVG sized to the element's box, sharing the existing hidden `<defs>`), outside the world-sized `Live` SVG:
 
-Alternative: move all animation onto one canvas now (the M2 flow canvas). Rejected for this change: it's 3 days of M2 work and changes event plumbing; small boxes get the same win for the current scene.
+- **Star twinkle, fire flicker, down pulse, wash fade:** they only animate `opacity` and `transform`. Move the CSS animation from the SVG `<g>` to the wrapper `div` with `will-change: opacity` / `transform`. The compositor then runs them off the main thread with **zero repaint**; the SVG inside (filters included) is rasterised once. Same keyframes, same timing.
+- **Lantern:** replace SMIL `<animateMotion>` (main thread, repaint) with a Web Animations API `transform: translate()` animation over points pre-sampled from the road path (`getPointAtLength` once, ~48 points, `easing: linear`, same 3.2 s loop). Compositor-run, same motion. The glow filter is rasterised once with the lantern.
+- **Marching dashes:** `stroke-dashoffset` cannot run on the compositor, so each flowing road gets its own wrapper sized to the road's bbox. Repaint shrinks from world-sized to one road while a flow runs, and stops when it ends. If the profile still shows it, the fallback is a dash pattern image translated along the road, decided by numbers, not up front.
+- **Red wash:** mount only while a building is down (fade in via the wrapper's opacity), so healthy buildings carry no filter at all.
 
-### D3. Ambient night animation is static
-Star twinkle and fire flicker stop being infinite CSS animations: stars and fires render at a fixed phase. Their only job is mood, and the v4.2 boards are static. They may come back later on the M2 canvas, gated by the same "only while visible" rule.
+Number of extra layers: one per star cell, fire, lantern, flowing road and down building. Stars are the only large group; if layer count shows up in the profile, stars share a few layers by twinkle class (`tw1`/`tw2`/`tw3` → 3 layers), which keeps the three phases.
 
-### D4. Red wash only for down buildings, no live displacement filter
-Mount the wash only when a building is down (fade in with CSS opacity on its own small box, D2). Replace the live `filter=url(#aq)` with the same filter applied once to a small SVG and rasterised to an `<img>` (data URL via `XMLSerializer` + `Image`, or a server artifact if the design scene shows that's simpler); the fade then animates opacity of a bitmap, which the compositor does without repainting.
+Alternatives: rasterising effects to images or freezing ambient animation (rejected: changes the look); one canvas for everything now (rejected: that is M2's flow canvas, 3 days, new event plumbing).
 
-If the profile shows a live filter on a 140-unit box is already cheap, keep the filter and only do the mount change. Decide from the numbers and log them.
+### D3. Paper texture: viewport-sized, WebP (H3)
+Replace the 204 800 px `div` with a screen-sized element outside `.world` whose `background-size` is `1024 × zoom` and `background-position` the viewport offset modulo that size. Same texture, same seams, one screen of raster. Server: emit the texture as WebP like the tiles (`apply.ts` already uses sharp), and the client picks the level by on-screen size like tiles. Expected: 4.2 MB → a few hundred KB.
 
-### D5. Paper background follows the viewport, not the world
-Replace the 204 800 px `div` with a viewport-sized element outside `.world` whose `background-position` and `background-size` follow the viewport transform (1024 × zoom, offset by `vp.x`, `vp.y` mod size). Same texture, same seam continuity, a layer the size of the screen.
+### D4. Drive the transform imperatively (H4)
+Subscribe to React Flow's viewport through its store (`useStoreApi().subscribe`) and write `style.transform` of `.world` and the D3 background directly in the subscription. React re-renders only when the visible tile set or the zoom level changes (computed in the subscription, compared, then `setState`). `Anchored` uses the same subscription to move the popover without a React render.
 
-### D6. Stop work when hidden or still
-`.march`, `.pulse` and lantern animations get `animation-play-state: paused` while `document.hidden` (one class on the root, set by a `visibilitychange` listener). React re-renders on viewport change stay as they are unless the profile shows `Labels` or `TileLayer` as long tasks; if it does, memoise their per-zoom output (labels only change with zoom, tiles only when the tile set changes).
+### D5. Labels and level of detail follow zoom in steps (H5)
+Quantise zoom for label font size and the LOD CSS variables to steps (e.g. 1/16 of a doubling) and apply them only when the step changes, plus once on `onMoveEnd`. During a continuous zoom the labels scale with the map and snap to their exact size a few times per doubling. Moving the LOD variables from the React Flow wrapper to the `.react-flow__viewport` element limits style recalc to pins.
 
-### D7. Verify the look by screenshots
-The perf script also saves `light-still.png` and `night-still.png` at a fixed viewport before and after. A pixel diff (sharp is installed: `sharp(a).composite` difference + stats) must stay under a small threshold outside animated boxes. Compare once by eye against `design/v42-*.preview.html`.
+### D6. Tiles decode off the main thread (H6)
+`decoding="async"` on tile and preview `<img>`, `img.decode()` before fading a tile in, and `content-visibility`/`contain: strict` on the preview. Lower `KEEP` only if memory shows up in the profile.
+
+### D7. Split the bundle (H7)
+`Boring`, `Panels` and `Popover` as `React.lazy` chunks; rough.js stays in the main chunk because pins need it on first paint. Check with `vite build` output.
+
+### D8. Hidden tab and reduced motion
+CSS animations on composited layers already stop in hidden tabs; WAAPI lanterns are paused on `visibilitychange`. The existing reduced-motion rule keeps covering every class after D2 (classes move to the wrappers, so the selector list is updated with them).
+
+### D9. Verify the look by screenshots
+The perf script compares `?still=1` light and night screenshots against the committed baseline with sharp (difference + stats) and fails over a small threshold, so no fix silently changes the map. Once by eye against `design/v42-*.preview.html`.
 
 ## Risks / Trade-offs
 
-- [GPU % differs by machine] → budgets are for the owner's laptop; the log records machine, Chrome version and commit next to every number.
-- [Headless Chrome uses SwiftShader, not the GPU] → the script runs headed with `channel: 'chrome'`.
-- [Rasterising the wash once loses its per-frame wobble] → the boards show it static, so nothing is lost.
-- [Static stars/fires feel less alive at night] → accepted for now; M2's canvas can bring motion back cheaply.
+- [GPU % differs by machine] → budgets are for the owner's laptop; every logged number carries machine, Chrome version and commit.
+- [Headless Chrome uses SwiftShader] → the script runs headed with `channel: 'chrome'`.
+- [Too many compositor layers cost memory] → stars grouped by twinkle class (D2); the profile's Layers panel decides.
+- [Imperative transform drifts from React Flow's state] → one source (the React Flow store), written in its own subscription; a test pans and checks the tile layer and pins stay aligned (screenshot at rest).
+- [Snapping labels during zoom is visible] → step small enough to read as smooth; check by eye, adjust the step.
 
 ## Migration Plan
 
-Client-only. No data or API changes; rollback is reverting the commit.
+Client changes plus one server change (texture as WebP, D3), which produces new content-addressed artifacts on the next `sg apply`; old PNGs are garbage-collected as today. Rollback is reverting the commit and re-running apply.

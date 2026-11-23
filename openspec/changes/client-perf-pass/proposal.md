@@ -7,12 +7,9 @@ With the POC map open, Chrome's GPU process sits at ~300% even when the map is i
 ## What Changes
 
 - Add a repeatable profiling procedure (dev vs production build, idle vs pan) with recorded baseline numbers, so fixes are judged by data, not guesses.
-- Fix whatever the profile shows. Likely candidates found in the code (to confirm by profiling, not to fix blindly):
-  - the live SVG overlay in `src/map/WorldLayer.tsx` spans the whole world inside the scaled `.world` layer and carries infinite CSS/SMIL animations (`march`, twinkling stars, campfire flicker, lantern `animateMotion`), so every frame repaints a world-sized layer;
-  - the red wash per building uses `filter="url(#aq)"` (`feDisplacementMap`) live in the browser, and stays mounted at `opacity: 0` for healthy buildings;
-  - the 204 800 × 204 800 px paper `div` in `src/map/TileLayer.tsx` under the transformed layer;
-  - `Labels` and `TileLayer` re-rendering on every viewport change.
-- Idle animations stop when nothing is happening and pause when the tab is hidden; reduced-motion keeps them off.
+- Fix what the profile ranks highest. Seven hot spots found in the code (design.md H1–H7): animations inside one world-sized SVG, live displacement filters on every building, a 4.2 MB PNG paper texture on a 204 800 px layer, a React render per pan frame, per-frame label/LOD restyling, main-thread tile decoding, one 565 KB bundle.
+- Fixes move work to the compositor and out of React instead of rewriting features: every animation keeps its look and timing.
+- Animations pause when the tab is hidden; reduced-motion keeps them off.
 - No visual change: the map must still match the v4.2 Light/Night boards.
 
 ## Capabilities
@@ -26,5 +23,5 @@ With the POC map open, Chrome's GPU process sits at ~300% even when the map is i
 ## Impact
 
 - Code: `web/src/map/*` (WorldLayer, TileLayer, MapView, PinNode), `web/src/index.css`, `web/src/gen/render.ts` (live night extras), `web/src/perf.ts`.
-- No API, server or dependency changes expected. If a fix needs the server to bake something (e.g. pre-filtered red wash), that is called out in design.md.
+- Server: `web/server/apply.ts` emits the paper texture as WebP instead of PNG. No API or dependency changes.
 - Runs before the monorepo restructure and the M1 core change; those move these files but do not change them.
