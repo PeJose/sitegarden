@@ -32,9 +32,11 @@ button { font: inherit; color: inherit; }
 @keyframes pulse { 0% { r: 17; opacity: .6; } 100% { r: 38; opacity: 0; } }
 .pulse { animation: pulse 2s ease-out infinite; }
 @keyframes tw { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+.fx { position: absolute; z-index: 10; pointer-events: none; } .fx svg { display: block; } /* one small compositor layer per animation, in world coordinates */
 .tw1 { animation: tw 3.1s ease-in-out infinite; } .tw2 { animation: tw 4.3s ease-in-out 1s infinite; } .tw3 { animation: tw 2.6s ease-in-out .5s infinite; }
+.tw1, .tw2, .tw3 { will-change: opacity; }
 @keyframes flick { 0%, 100% { opacity: .9; transform: scale(1); } 30% { opacity: .7; transform: scale(.94); } 60% { opacity: 1; transform: scale(1.06); } }
-.fireglow, .flame { animation: flick .9s ease-in-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+.fireglow, .flame { animation: flick .9s ease-in-out infinite; transform-origin: center bottom; will-change: opacity, transform; } /* the wrapper box is the shape's own box */
 @keyframes ink { to { stroke-dashoffset: -40; } }
 .ink { animation: ink 1s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .chipbox, .road-labels, .world .tile { transition: none !important; } .march, .pulse, .tw1, .tw2, .tw3, .fireglow, .flame, .ink { animation: none; } .funswitch, .wash-fade, .hero, .hero-smear, .cmd { transition: none !important; } .hero-tab { animation: none; } }
@@ -53,6 +55,7 @@ button { font: inherit; color: inherit; }
 .react-flow__node { cursor: pointer; }
 .pin { position: relative; width: 34px; height: 34px; }
 .pin svg { transform: scale(calc(.88 * var(--pin-k, 1))); } /* pins keep a minimum on-screen size when zoomed out */
+.pin .pulse-svg { position: absolute; left: 0; top: 0; will-change: transform; }
 .pin::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(34px * var(--pin-k, 1)); height: calc(34px * var(--pin-k, 1)); transform: translate(-50%, -50%); } /* so does their tap target */
 .chipbox { position: absolute; display: flex; align-items: center; opacity: var(--chip-o, 1); transition: opacity .2s, transform .2s; pointer-events: none; }
 /* chips fade out when their text would be too small to read; a hovered or focused pin always shows its own, enlarged to stay legible */
