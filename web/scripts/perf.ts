@@ -1,15 +1,18 @@
 // Measures the production build in system Chrome (real GPU). See perf/README.md.
-// pnpm perf [--label x] [--url http://localhost:4173] [--out perf/out] [--only pan,zoom]
+// pnpm perf [--label x] [--url http://localhost:4173] [--out perf/out] [--baseline perf/baseline] [--only pan,zoom]
 import { chromium, type Browser, type Page } from 'playwright-core'
 import { execSync } from 'node:child_process'
 import { appendFileSync, mkdirSync } from 'node:fs'
 import os from 'node:os'
+import sharp from 'sharp'
 
 const arg = (k: string, d = '') => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : process.argv[i + 1] }
 const base = arg('url', 'http://localhost:4173')
 const out = arg('out', 'perf/out')
+const baseline = process.argv.includes('--baseline') ? arg('baseline') : ''
 const label = arg('label', 'run')
 const W = 1440, H = 900
+const MEAN_MAX = 0.5, OVER_MAX = 2 // screenshot diff thresholds: mean abs diff %, % of channel values differing by > 16/255
 const scenarios: Record<string, { q: string; kind: 'idle' | 'pan' | 'zoom'; cpu?: number; shot?: boolean }> = {
   light: { q: '', kind: 'idle' },
   night: { q: '?theme=night', kind: 'idle' },
@@ -57,6 +60,7 @@ const bcdp = await browser.newBrowserCDPSession()
 const gpuCpu = async () => ((await bcdp.send('SystemInfo.getProcessInfo')) as { processInfo: { type: string; cpuTime: number }[] }).processInfo.filter((p) => p.type === 'GPU').reduce((a, p) => a + p.cpuTime, 0)
 
 const lines: string[] = []
+let failed = false
 mkdirSync(out, { recursive: true })
 for (const [name, s] of Object.entries(scenarios)) {
   if (only && !only.split(',').includes(name)) continue
@@ -107,6 +111,14 @@ for (const [name, s] of Object.entries(scenarios)) {
   if (s.shot) {
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
     await page.screenshot({ path: `${out}/${name}.png` })
+    if (baseline) {
+      const [a, b] = await Promise.all([`${out}/${name}.png`, `${baseline}/${name}.png`].map((f) => sharp(f).removeAlpha().raw().toBuffer()))
+      let sumD = 0, over = 0
+      for (let i = 0; i < a.length; i++) { const d = Math.abs(a[i] - b[i]); sumD += d; if (d > 16) over++ }
+      const mean = +((sumD / a.length / 255) * 100).toFixed(3), pct = +((over / a.length) * 100).toFixed(3)
+      const bad = a.length !== b.length || mean > MEAN_MAX || pct > OVER_MAX
+      console.log(JSON.stringify({ diff: name, meanPct: mean, overPct: pct, ok: !bad })); failed ||= bad
+    }
   }
   await ctx.close()
 }
@@ -117,3 +129,4 @@ if (lines.length) {
   const dirty = git('status --porcelain -- src server') ? ' (dirty)' : ''
   appendFileSync('perf/results.md', `\n## ${new Date().toISOString().slice(0, 10)} ${label}\n\ncommit ${git('rev-parse --short HEAD')}${dirty} · ${chrome} · ${os.cpus()[0].model} · ${W}x${H} · ${mode} · GPU ${gpu}\n\n\`\`\`json\n${lines.join('\n')}\n\`\`\`\n`)
 }
+if (failed) { console.error('screenshot diff over threshold'); process.exit(1) }
