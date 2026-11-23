@@ -40,6 +40,7 @@ button { font: inherit; color: inherit; }
 .app { position: relative; height: 100vh; min-height: 560px; overflow: hidden; background: var(--bg); }
 .mapbox { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 .mapbox .react-flow { background: transparent; }
+.paper { position: absolute; inset: 0; pointer-events: none; }
 .world { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; will-change: transform; pointer-events: none; }
 .world .tile { position: absolute; max-width: none; user-select: none; opacity: 0; transition: opacity .25s; }
 .world .live { position: absolute; left: 0; top: 0; overflow: visible; z-index: 10; } /* above every tile level */

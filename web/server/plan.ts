@@ -41,7 +41,7 @@ export function computePlan(config: Config, positions: Positions): Plan {
   const grid = { x0, y0, cols: Math.ceil(area[2] / T) - x0, rows: Math.ceil(area[3] / T) - y0 }
   const jobs: Job[] = [], tiles: TileSpec[] = [], previews = {} as Record<Theme, string>, byName = new Map<string, Job>()
   const add = (j: Omit<Job, 'name'>, id: string, tag = `z${j.z}`) => {
-    const name = `layer-${j.kind}-${j.theme}-${tag}-${hash(RENDERER + id)}.png`
+    const name = `layer-${j.kind}-${j.theme}-${tag}-${hash(RENDERER + id)}.${j.kind === 'texture' ? 'webp' : 'png'}`
     if (!byName.has(name)) { const job = { ...j, name }; byName.set(name, job); jobs.push(job) } // a soft layer shared by two levels is one job
     return name
   }
@@ -50,7 +50,7 @@ export function computePlan(config: Config, positions: Positions): Plan {
     for (const z of SCALE.keys()) {
       const s = SCALE[z], wc = WC[z]
       const px = (a: number, k: number) => a * k * k
-      const texture = add({ kind: 'texture', theme, z, ms: px(TEX * TEX, s) * US.texture / 1000 * (theme === 'night' ? 0.5 : 1), svg: textureSvg(theme, TEX, s) }, textureSvg(theme, TEX, s))
+      const texture = add({ kind: 'texture', theme, z, ms: px(TEX * TEX, s) * US.texture / 1000 * (theme === 'night' ? 0.5 : 1), svg: textureSvg(theme, TEX, s) }, 'webp97' + textureSvg(theme, TEX, s)) // the encoder setting is part of the id
       const estateNames = new Map(world.estates.map((e) => {
         const v = estateView(e), area = (v[2] - v[0]) * (v[3] - v[1])
         const softSvg = estateSoftSvg(world, e, theme, wc), crisp = estateSvg(world, e, theme, s), mask = estateGrainSvg(e, s)

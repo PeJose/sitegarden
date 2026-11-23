@@ -21,7 +21,8 @@ async function cpu<T>(prio: number, fn: () => Promise<T>): Promise<T> {
 const rawPng = (svg: string) => sharp(Buffer.from(svg), { density: 72 }).png(png).toBuffer()
 async function render(j: Job) {
   let buf: Buffer
-  if (j.kind === 'texture' || j.kind === 'soft') buf = await rawPng(j.svg!)
+  if (j.kind === 'texture') buf = await sharp(await rawPng(j.svg!)).webp({ quality: 97 }).toBuffer() // the client's paper and every tile's base, so a high quality
+  else if (j.kind === 'soft') buf = await rawPng(j.svg!)
   else {
     // the low-resolution watercolour layer, enlarged, then the full-resolution parts: paper grain (multiplied in) and strokes, buildings
     const s = SCALE[j.z], soft = sharp(art(j.soft!))

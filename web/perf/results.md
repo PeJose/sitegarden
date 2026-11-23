@@ -110,3 +110,59 @@ commit 3ed440b (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · hea
 ### Star twinkle and campfires removed (decision by the owner)
 
 Stars are now static circles inside the `Live` SVG, campfires are gone, `night-still` baseline re-shot on purpose. Night-still idle GPU 18.9-22.5 % before (2.1 block, plus a stale-build rerun at 22.5) -> 20.4 % twice after: no measurable change. Hiding every `.fx` in the scene (one-off) gives 15.6 %, so the lantern, march and pulse layers carry the rest of the compositor-animation floor.
+
+## 2026-11-23 2.2
+
+commit 0812a94 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":203,"bytes":{"total":3460821,"texture":364433,"tiles":2683774,"js":213627},"gpuPct":18,"fps":60,"paints":1800,"paintAreaMpx":168885400413.03,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":84,"layout":34,"script":23,"paint":159,"decode":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":242,"bytes":{"total":3155707,"texture":276409,"tiles":2466718,"js":213627},"gpuPct":21.2,"fps":60,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":131,"layout":34,"script":23,"paint":142,"decode":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":203,"bytes":{"total":3460821,"texture":364433,"tiles":2683774,"js":213627},"gpuPct":19.9,"fps":60,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":102,"layout":43,"script":25,"paint":144,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":199,"bytes":{"total":3155707,"texture":276409,"tiles":2466718,"js":213627},"gpuPct":21.9,"fps":60.1,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":152,"layout":40,"script":26,"paint":154,"decode":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":205,"bytes":{"total":3460821,"texture":364433,"tiles":2683774,"js":213627},"gpuPct":20.4,"fps":59.5,"paints":865,"paintAreaMpx":56013787316.42,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":21,"layout":6,"script":208,"paint":20,"decode":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":206,"bytes":{"total":3460821,"texture":364433,"tiles":2683774,"js":213627},"gpuPct":19.3,"fps":59.8,"paints":1972,"paintAreaMpx":309059591418.54,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":55,"layout":42,"script":72,"paint":26,"decode":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":205,"bytes":{"total":3460821,"texture":364433,"tiles":2683774,"js":213627},"gpuPct":12.8,"fps":59.5,"paints":866,"paintAreaMpx":56295262259.55,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":59,"layout":19,"script":509,"paint":54,"decode":0}}
+```
+
+## 2026-11-23 2.2
+
+commit 0812a94 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":209,"bytes":{"total":3539746,"texture":537502,"tiles":2589958,"js":213627},"gpuPct":19.1,"fps":60,"paints":1807,"paintAreaMpx":170011300188.56,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":98,"layout":41,"script":31,"paint":142,"decode":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":208,"bytes":{"total":3216545,"texture":402537,"tiles":2402094,"js":213627},"gpuPct":22.4,"fps":60.1,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":140,"layout":36,"script":24,"paint":147,"decode":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":197,"bytes":{"total":3539746,"texture":537502,"tiles":2589958,"js":213627},"gpuPct":19.6,"fps":60,"paints":1800,"paintAreaMpx":168885400413.03,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":98,"layout":44,"script":25,"paint":150,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":200,"bytes":{"total":3216545,"texture":402537,"tiles":2402094,"js":213627},"gpuPct":21.2,"fps":60.1,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":149,"layout":38,"script":25,"paint":148,"decode":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":197,"bytes":{"total":3539746,"texture":537502,"tiles":2589958,"js":213627},"gpuPct":21.7,"fps":60,"paints":870,"paintAreaMpx":55732314545.94,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":21,"layout":6,"script":202,"paint":20,"decode":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":207,"bytes":{"total":3539746,"texture":537502,"tiles":2589958,"js":213627},"gpuPct":18.6,"fps":59.2,"paints":2027,"paintAreaMpx":322007441879.58,"maxPaintMpx":281474943.16,"longTasks":1,"longTaskMs":61,"maxLongTask":61,"ms":{"style":54,"layout":40,"script":71,"paint":25,"decode":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":201,"bytes":{"total":3539746,"texture":537502,"tiles":2589958,"js":213627},"gpuPct":12.9,"fps":59.7,"paints":863,"paintAreaMpx":56013786592.19,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":57,"layout":12,"script":515,"paint":52,"decode":0}}
+```
+
+## 2026-11-23 2.2-dpr2
+
+commit 0812a94 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":210,"bytes":{"total":11152287,"texture":1656961,"tiles":9083040,"js":213627},"gpuPct":18.9,"fps":59.9,"paints":1803,"paintAreaMpx":169167965725.57,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":100,"layout":40,"script":24,"paint":166,"decode":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":204,"bytes":{"total":10002967,"texture":1143788,"tiles":8447265,"js":213627},"gpuPct":22,"fps":59.9,"paints":1805,"paintAreaMpx":169449440670.03,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":153,"layout":35,"script":27,"paint":165,"decode":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":202,"bytes":{"total":11152287,"texture":1656961,"tiles":9083040,"js":213627},"gpuPct":18.2,"fps":60.1,"paints":1803,"paintAreaMpx":169167965725.57,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":86,"layout":35,"script":21,"paint":197,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":203,"bytes":{"total":10008715,"texture":1143788,"tiles":8447265,"js":213627},"gpuPct":22.9,"fps":60,"paints":1803,"paintAreaMpx":169167965725.57,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":160,"layout":36,"script":24,"paint":172,"decode":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":206,"bytes":{"total":11152287,"texture":1656961,"tiles":9083040,"js":213627},"gpuPct":23.2,"fps":59.5,"paints":955,"paintAreaMpx":56014700884.88,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":23,"layout":6,"script":224,"paint":21,"decode":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":219,"bytes":{"total":11152287,"texture":1656961,"tiles":9083040,"js":213627},"gpuPct":17.6,"fps":58.1,"paints":2747,"paintAreaMpx":540995510896.67,"maxPaintMpx":281474943.16,"longTasks":2,"longTaskMs":126,"maxLongTask":74,"ms":{"style":80,"layout":49,"script":82,"paint":27,"decode":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":202,"bytes":{"total":11152288,"texture":1656961,"tiles":9083040,"js":213627},"gpuPct":14.7,"fps":59.7,"paints":951,"paintAreaMpx":55451748461.27,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":79,"layout":20,"script":578,"paint":58,"decode":0}}
+```
+
+## 2026-11-23 x
+
+commit 0812a94 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light-still","zoom":0.340909,"loadMs":210,"bytes":{"total":3539746,"texture":537502,"tiles":2589958,"js":213627},"gpuPct":17.4,"fps":60,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":89,"layout":35,"script":22,"paint":153,"decode":0}}
+```
+
+### 2.2 note (paper texture viewport-sized and WebP; blocks "2.2" and "2.2-dpr2")
+
+Texture bytes in `load`, dpr 1: light 1 659 778 -> 537 502 (-68 %), night 1 470 374 -> 402 537 (-73 %); dpr 2 light 5 546 414 -> 1 656 961, night 4 871 717 -> 1 143 788. Files on disk at level 3: light 4.1 MB -> 1.23 MB, night 3.6 MB -> 0.83 MB (WebP quality 97: 90 passed no screenshot diff, mean 0.545 % over the 0.5 % threshold). Texture is the tiles' base, so all tiles were re-rendered; screenshot diff now light-still 0.448 %, night-still 0.391 % mean (passes; the difference is lossy paper grain). Idle/pan GPU unchanged within noise (light-still 17-19 %, pan 20-22 %), as H3 predicted: the paper was never a GPU cost. Layer tree: the `.world` layer is 4608x3584 (16.5 Mpx) instead of 204800^2 (41 943 Mpx, a nominal size, tiled lazily).
+
+A caution for later measurements: stopping the dev server's view of the artifacts (for example `git stash` while `tsx watch` runs the API) makes it serve a release whose tiles are missing, and an empty map idles at 4.6 % GPU. A number that low is a broken run.
