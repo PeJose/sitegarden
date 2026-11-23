@@ -51,7 +51,7 @@ The repository SHALL contain a written profiling procedure and a results log wit
 - **THEN** they get idle GPU %, pan fps and long-task totals comparable to the logged baseline
 
 ### Requirement: Performance fixes do not change the look
-Performance fixes SHALL NOT visibly change the map compared with the v4.2 Light and Night boards, and SHALL keep every existing animation (twinkle, flicker, lanterns, marching paths, pulses, wash fade) with its current look and timing.
+Performance fixes SHALL NOT visibly change the map compared with the v4.2 Light and Night boards, and SHALL keep every existing animation (lanterns, marching paths, pulses, wash fade) with its current look and timing. By owner decision (2026-11-23), stars are static (no twinkle) and campfires are removed.
 
 #### Scenario: Side-by-side check
 - **WHEN** screenshots of `?still=1` in light and night are taken before and after the change at the same viewport
