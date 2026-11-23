@@ -5,4 +5,5 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: { proxy: { '/api': 'http://localhost:8787', '/a/': 'http://localhost:8787' } },
+  preview: { proxy: { '/api': 'http://localhost:8787', '/a/': 'http://localhost:8787' } }, // pnpm perf runs against the preview build
 })
