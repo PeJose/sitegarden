@@ -1,0 +1,17 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.tsx'
+import { loadWorld } from './world'
+import { startPerf } from './perf'
+
+startPerf()
+void loadWorld() // fetch the release, config and world JSON while React boots
+// Production only: in dev a service worker would serve stale modules and break HMR.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) void navigator.serviceWorker.register('/sw.js')
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)

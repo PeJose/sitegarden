@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>sitegarden — orchard map, night</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&amp;family=Kalam:wght@400;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#18202C}
+a{color:#ECE4D3}a:hover{color:#E0B062}
+@keyframes ink{to{stroke-dashoffset:-64}}
+.ink{animation:ink 1.4s linear infinite}
+@keyframes drop{from{transform:translateY(-10px);opacity:0}to{transform:translateY(0);opacity:1}}
+.drop{animation:drop .35s cubic-bezier(.2,.9,.3,1.3) both}
+@media (prefers-reduced-motion: reduce){.ink,.drop{animation:none}}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #18202C; color: #ECE4D3; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="position: relative; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 18px 28px; border-bottom: 1.5px solid #2E3A4D">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#ECE4D3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 31 V18"/><path d="M17 20 C10 21 5 17 6 11 C7 5 13 3 17 6 C21 3 28 5 28 11 C29 17 24 21 17 20 Z" fill="#2A3443"/><circle cx="12" cy="12" r="2.2" fill="#F0384F" stroke="none"/><circle cx="21" cy="10" r="2.2" fill="#F0384F" stroke="none"/><circle cx="18" cy="15" r="2.2" fill="#F0384F" stroke="none"/><path d="M10 31 H24"/></svg>
+      <span style="font-family: Fraunces, serif; font-style: italic; font-size: 28px; font-weight: 600; letter-spacing: -0.01em">sitegarden</span>
+    </div>
+    <span style="font-family: Kalam, cursive; font-size: 17px; color: #A9A08E">your orchard · 2 plots · 6 trees</span>
+    <div style="flex: 1 1 0"></div>
+    <span style="font-size: 13px; color: #A9A08E">updated 4 min ago</span>
+    <button type="button" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; font-family: Kalam, cursive; font-size: 17px; color: #ECE4D3; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 14px 10px 15px 9px / 10px 14px 9px 15px; box-shadow: 2px 3px 0 rgba(0,0,0,0.35); cursor: pointer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      Refresh all
+    </button>
+    <div style="position: relative">
+      <button type="button" aria-label="Theme: dark. Fun or boring mode below" aria-expanded="true" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 50% 46% 52% 48% / 48% 52% 46% 50%; box-shadow: 0 0 18px rgba(240,190,90,0.25); cursor: pointer; color: #E0B062">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>
+      </button>
+      <div class="drop" style="position: absolute; right: -6px; top: 50px; width: 190px; display: flex; flex-direction: column; align-items: center">
+        <svg width="60" height="16" viewBox="0 0 60 16" aria-hidden="true"><path d="M14 0 L18 16 M46 0 L42 16" stroke="#8A8170" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <div role="radiogroup" aria-label="Map style" style="width: 100%; display: flex; gap: 4px; padding: 5px; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 12px 9px 13px 8px / 9px 12px 8px 13px; box-shadow: 2px 4px 0 rgba(0,0,0,0.35); box-sizing: border-box">
+          <button type="button" role="radio" aria-checked="true" style="flex: 1 1 0; min-height: 40px; font-family: Kalam, cursive; font-size: 17px; font-weight: 700; color: #1A1408; background: #E0B062; border: none; border-radius: 9px 7px 10px 6px; cursor: pointer">fun</button>
+          <button type="button" role="radio" aria-checked="false" style="flex: 1 1 0; min-height: 40px; font-family: Inter, sans-serif; font-size: 14px; color: #A9A08E; background: transparent; border: none; border-radius: 8px; cursor: pointer">boring</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; flex: 1 1 auto">
+
+    <div style="flex: 999 1 560px; min-width: 0; overflow: auto; position: relative">
+      <div style="position: relative; width: 1000px; height: 740px; margin: 0 auto">
+
+        <svg width="1000" height="740" viewBox="0 0 1000 740" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+          <defs>
+            <filter id="paperN"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="7"/><feColorMatrix values="0 0 0 0 0.9  0 0 0 0 0.85  0 0 0 0 0.75  0 0 0 0.05 0"/></filter>
+          </defs>
+          <rect width="1000" height="740" filter="url(#paperN)"/>
+          <g fill="#ECE4D3" opacity="0.5">
+            <circle cx="120" cy="40" r="1"/><circle cx="310" cy="24" r="1.3"/><circle cx="470" cy="56" r="0.9"/><circle cx="760" cy="30" r="1.1"/><circle cx="640" cy="440" r="0.9"/><circle cx="980" cy="460" r="1.2"/><circle cx="260" cy="700" r="1"/>
+          </g>
+          <g fill="none" stroke="#2E3A4D" stroke-width="1">
+            <path d="M700 640 C760 560 900 570 940 630 C980 700 840 735 760 720 C700 708 670 680 700 640 Z"/>
+            <path d="M730 645 C780 590 880 600 905 640 C930 690 840 712 780 700 C735 690 712 670 730 645 Z"/>
+            <path d="M765 650 C800 620 860 625 872 650 C885 678 835 690 800 682 C772 676 755 664 765 650 Z"/>
+            <path d="M-20 470 C60 430 160 450 210 500 C260 560 150 600 60 590 C0 584 -40 520 -20 470 Z"/>
+            <path d="M10 490 C70 465 140 478 175 510 C205 548 140 570 80 565 C30 560 0 525 10 490 Z"/>
+            <path d="M640 30 C720 10 860 20 990 50"/>
+            <path d="M600 60 C700 34 860 44 1010 80"/>
+          </g>
+          <path d="M540 -10 C520 60 560 120 538 200 C516 280 556 340 540 420 C526 500 560 560 548 640 C540 700 556 730 552 760" fill="none" stroke="#2F4F66" stroke-width="5" stroke-linecap="round"/>
+          <path d="M540 -10 C520 60 560 120 538 200 C516 280 556 340 540 420 C526 500 560 560 548 640 C540 700 556 730 552 760" fill="none" stroke="#5F8CA6" stroke-width="1" opacity="0.6"/>
+
+          <path d="M44 94 C160 86 330 98 516 90 C522 180 512 300 520 404 C380 410 200 400 42 408 C36 300 48 190 44 94 Z" fill="rgba(126,156,116,0.07)" stroke="#7E9C74" stroke-width="2.2"/>
+          <path d="M48 98 C165 92 330 102 512 95 C516 185 508 300 515 400 C380 404 205 396 47 403 C42 300 52 195 48 98 Z" fill="none" stroke="#7E9C74" stroke-width="1" opacity="0.5"/>
+          <path d="M564 94 C700 88 820 98 960 92 C966 190 956 300 962 404 C840 410 700 400 562 408 C556 300 568 190 564 94 Z" fill="rgba(126,156,116,0.07)" stroke="#7E9C74" stroke-width="2.2"/>
+          <path d="M568 98 C700 93 820 102 956 97 C960 195 952 300 957 400 C840 404 705 396 567 403 C562 300 572 195 568 98 Z" fill="none" stroke="#7E9C74" stroke-width="1" opacity="0.5"/>
+
+          <g fill="none" stroke="#8A8170" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round">
+            <path d="M134 228 C134 262 230 256 275 292"/>
+            <path d="M347 322 C400 322 430 282 430 228"/>
+            <path d="M654 228 C654 262 730 256 770 292"/>
+            <path d="M842 322 C875 322 880 282 880 228"/>
+          </g>
+          <path class="ink" d="M842 322 C875 322 880 282 880 228" fill="none" stroke="#E0B062" stroke-width="3" stroke-dasharray="6 10" stroke-linecap="round"/>
+
+          <path d="M330 470 C430 464 520 474 628 468 C632 520 626 570 630 612 C520 616 430 608 330 614 C326 560 334 510 330 470 Z" fill="none" stroke="#8A8170" stroke-width="1.5" stroke-dasharray="6 6"/>
+
+          <g transform="translate(900 120)" stroke="#A9A08E" fill="none" stroke-width="1.2">
+            <circle r="26"/><circle r="20" stroke-dasharray="2 3"/>
+            <path d="M0 -34 L5 0 L0 34 L-5 0 Z" fill="#2A3443"/>
+            <path d="M-34 0 L0 5 L34 0 L0 -5 Z"/>
+            <path d="M0 -34 L5 0 L-5 0 Z" fill="#E0B062" stroke="#E0B062"/>
+          </g>
+        </svg>
+
+        <span style="position: absolute; left: 892px; top: 70px; font-family: Fraunces, serif; font-size: 14px; font-weight: 600; color: #A9A08E">N</span>
+        <span style="position: absolute; left: 556px; top: 650px; font-family: Kalam, cursive; font-size: 14px; color: #7FA7BF; transform: rotate(-80deg); transform-origin: left top">the deploy river</span>
+
+        <div style="position: absolute; left: 66px; top: 104px">
+          <div style="font-family: Fraunces, serif; font-style: italic; font-size: 30px; font-weight: 600; line-height: 1">widok23</div>
+          <div style="font-family: Kalam, cursive; font-size: 15px; color: #A9A08E">Sanity → GitHub → home.pl</div>
+        </div>
+        <div style="position: absolute; left: 586px; top: 104px">
+          <div style="font-family: Fraunces, serif; font-style: italic; font-size: 30px; font-weight: 600; line-height: 1">goldcrisp</div>
+          <div style="font-family: Kalam, cursive; font-size: 15px; color: #A9A08E">Sanity → GitHub → FTPS</div>
+        </div>
+
+        <span style="position: absolute; left: 150px; top: 256px; font-family: Kalam, cursive; font-size: 14px; color: #A9A08E">webhook</span>
+        <span style="position: absolute; left: 392px; top: 300px; font-family: Kalam, cursive; font-size: 14px; color: #A9A08E">FTPS deploy</span>
+        <span style="position: absolute; left: 670px; top: 256px; font-family: Kalam, cursive; font-size: 14px; color: #A9A08E">webhook</span>
+        <span style="position: absolute; left: 872px; top: 300px; font-family: Kalam, cursive; font-size: 14px; font-weight: 700; color: #E0B062">deploying…</span>
+
+        <button type="button" style="position: absolute; left: 64px; top: 162px; width: 140px; height: 66px; display: flex; align-items: center; gap: 10px; padding: 0 12px; text-align: left; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 14px 10px 15px 9px / 10px 14px 9px 15px; box-shadow: 0 0 28px rgba(240,190,90,0.22); cursor: pointer; color: #ECE4D3">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4C12 4 6 9 5 19"/><path d="M20 4c0 8-5 13-13 13"/><path d="M4 20l3-3"/></svg>
+          <span style="display: flex; flex-direction: column"><span style="font-family: Kalam, cursive; font-size: 17px; font-weight: 700; line-height: 1.1">studio</span><span style="font-size: 11px; color: #A9A08E">Sanity</span></span>
+        </button>
+        <button type="button" style="position: absolute; left: 205px; top: 292px; width: 140px; height: 66px; display: flex; align-items: center; gap: 10px; padding: 0 12px; text-align: left; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 10px 15px 9px 14px / 14px 9px 15px 10px; box-shadow: 0 0 28px rgba(240,190,90,0.22); cursor: pointer; color: #ECE4D3">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10"/><path d="M18 10c0 4-6 3-11.5 7.5"/></svg>
+          <span style="display: flex; flex-direction: column"><span style="font-family: Kalam, cursive; font-size: 17px; font-weight: 700; line-height: 1.1">repo</span><span style="font-size: 11px; color: #A9A08E">PeJose/widok23</span></span>
+        </button>
+        <button type="button" style="position: absolute; left: 360px; top: 162px; width: 140px; height: 66px; display: flex; align-items: center; gap: 10px; padding: 0 12px; text-align: left; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 15px 9px 14px 10px / 9px 15px 10px 14px; box-shadow: 0 0 0 4px #18202C, 0 0 0 6px #E0B062, 0 0 32px 6px rgba(240,190,90,0.3); cursor: pointer; color: #ECE4D3">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18"/><path d="M12 3c-3 3-3 15 0 18"/></svg>
+          <span style="display: flex; flex-direction: column"><span style="font-family: Kalam, cursive; font-size: 17px; font-weight: 700; line-height: 1.1">site</span><span style="font-size: 11px; color: #A9A08E">home.pl</span></span>
+        </button>
+
+        <button type="button" style="position: absolute; left: 584px; top: 162px; width: 140px; height: 66px; display: flex; align-items: center; gap: 10px; padding: 0 12px; text-align: left; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 14px 10px 15px 9px / 10px 14px 9px 15px; box-shadow: 0 0 28px rgba(240,190,90,0.22); cursor: pointer; color: #ECE4D3">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4C12 4 6 9 5 19"/><path d="M20 4c0 8-5 13-13 13"/><path d="M4 20l3-3"/></svg>
+          <span style="display: flex; flex-direction: column"><span style="font-family: Kalam, cursive; font-size: 17px; font-weight: 700; line-height: 1.1">studio</span><span style="font-size: 11px; color: #A9A08E">Sanity</span></span>
+        </button>
+        <button type="button" style="position: absolute; left: 700px; top: 292px; width: 140px; height: 66px; display: flex; align-items: center; gap: 10px; padding: 0 12px; text-align: left; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 10px 15px 9px 14px / 14px 9px 15px 10px; box-shadow: 2px 3px 0 rgba(0,0,0,0.35); cursor: pointer; color: #ECE4D3">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10"/><path d="M18 10c0 4-6 3-11.5 7.5"/></svg>
+          <span style="display: flex; flex-direction: column"><span style="font-family: Kalam, cursive; font-size: 17px; font-weight: 700; line-height: 1.1">repo</span><span style="font-size: 11px; color: #A9A08E">goldcrisp</span></span>
+        </button>
+        <button type="button" style="position: absolute; left: 810px; top: 162px; width: 140px; height: 66px; display: flex; align-items: center; gap: 10px; padding: 0 12px; text-align: left; background: #1D2532; border: 1.5px dashed #8A8170; border-radius: 15px 9px 14px 10px / 9px 15px 10px 14px; cursor: pointer; color: #ECE4D3">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18"/><path d="M12 3c-3 3-3 15 0 18"/></svg>
+          <span style="display: flex; flex-direction: column"><span style="font-family: Kalam, cursive; font-size: 17px; font-weight: 700; line-height: 1.1">site</span><span style="font-size: 11px; color: #A9A08E">FTPS · lights out</span></span>
+        </button>
+
+        <svg role="img" aria-label="Healthy" width="30" height="32" viewBox="0 0 26 28" style="position: absolute; left: 186px; top: 148px"><path d="M13 8C9 5 3 6 3 13c0 7 5 13 10 11 5 2 10-4 10-11 0-7-6-8-10-5z" fill="#F0384F" stroke="#FFB3BC" stroke-width="1"/><path d="M13 8c0-3 1-5 2-6" stroke="#CFC3A8" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M14 5c3-3 7-2 7-1-2 2-5 2-7 1z" fill="#7FB04A"/><path d="M7 12c0-2 1-3 2-3" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+        <svg role="img" aria-label="Healthy" width="30" height="32" viewBox="0 0 26 28" style="position: absolute; left: 327px; top: 278px"><path d="M13 8C9 5 3 6 3 13c0 7 5 13 10 11 5 2 10-4 10-11 0-7-6-8-10-5z" fill="#F0384F" stroke="#FFB3BC" stroke-width="1"/><path d="M13 8c0-3 1-5 2-6" stroke="#CFC3A8" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M14 5c3-3 7-2 7-1-2 2-5 2-7 1z" fill="#7FB04A"/><path d="M7 12c0-2 1-3 2-3" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+        <svg role="img" aria-label="Healthy" width="30" height="32" viewBox="0 0 26 28" style="position: absolute; left: 482px; top: 148px"><path d="M13 8C9 5 3 6 3 13c0 7 5 13 10 11 5 2 10-4 10-11 0-7-6-8-10-5z" fill="#F0384F" stroke="#FFB3BC" stroke-width="1"/><path d="M13 8c0-3 1-5 2-6" stroke="#CFC3A8" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M14 5c3-3 7-2 7-1-2 2-5 2-7 1z" fill="#7FB04A"/><path d="M7 12c0-2 1-3 2-3" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+        <svg role="img" aria-label="Healthy" width="30" height="32" viewBox="0 0 26 28" style="position: absolute; left: 706px; top: 148px"><path d="M13 8C9 5 3 6 3 13c0 7 5 13 10 11 5 2 10-4 10-11 0-7-6-8-10-5z" fill="#F0384F" stroke="#FFB3BC" stroke-width="1"/><path d="M13 8c0-3 1-5 2-6" stroke="#CFC3A8" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M14 5c3-3 7-2 7-1-2 2-5 2-7 1z" fill="#7FB04A"/><path d="M7 12c0-2 1-3 2-3" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+        <svg role="img" aria-label="Deploying" width="30" height="32" viewBox="0 0 26 28" style="position: absolute; left: 822px; top: 278px"><path d="M13 8C9 5 3 6 3 13c0 7 5 13 10 11 5 2 10-4 10-11 0-7-6-8-10-5z" fill="#9CD45A" stroke="#D8F0B8" stroke-width="1"/><path d="M13 8c0-3 1-5 2-6" stroke="#CFC3A8" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M14 5c3-3 7-2 7-1-2 2-5 2-7 1z" fill="#5E8E2C"/><path d="M7 12c0-2 1-3 2-3" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+        <svg role="img" aria-label="Down" width="30" height="32" viewBox="0 0 26 28" style="position: absolute; left: 932px; top: 148px"><path d="M13 9C9 7 4 9 4.5 14c.5 5 3.5 10 7.5 9 2 1.5 7 0 9-5 2-5-1-11-8-9z" fill="#9A6634" stroke="#D9B48A" stroke-width="1"/><path d="M13 9c-1-3 0-5-2-6" stroke="#CFC3A8" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="9" cy="15" r="2" fill="#3A2614" opacity=".85"/><circle cx="16" cy="18" r="1.4" fill="#3A2614" opacity=".85"/><circle cx="15" cy="12" r="1" fill="#3A2614" opacity=".85"/></svg>
+
+        <div style="position: absolute; left: 40px; top: 470px; width: 250px; padding: 14px 16px; background: rgba(34,44,59,0.9); border: 1.5px solid #8A8170; border-radius: 12px 8px 13px 9px / 8px 12px 9px 13px">
+          <div style="font-family: Fraunces, serif; font-size: 15px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9A08E; margin-bottom: 8px">Legend</div>
+          <div style="display: flex; flex-direction: column; gap: 6px; font-family: Kalam, cursive; font-size: 16px">
+            <div style="display: flex; align-items: center; gap: 10px"><svg width="22" height="24" viewBox="0 0 26 28" aria-hidden="true"><path d="M13 8C9 5 3 6 3 13c0 7 5 13 10 11 5 2 10-4 10-11 0-7-6-8-10-5z" fill="#F0384F" stroke="#FFB3BC" stroke-width="1"/><path d="M14 5c3-3 7-2 7-1-2 2-5 2-7 1z" fill="#7FB04A"/></svg>ripe — healthy, lit</div>
+            <div style="display: flex; align-items: center; gap: 10px"><svg width="22" height="24" viewBox="0 0 26 28" aria-hidden="true"><path d="M13 8C9 5 3 6 3 13c0 7 5 13 10 11 5 2 10-4 10-11 0-7-6-8-10-5z" fill="#9CD45A" stroke="#D8F0B8" stroke-width="1"/><path d="M14 5c3-3 7-2 7-1-2 2-5 2-7 1z" fill="#5E8E2C"/></svg>unripe — checking, deploying</div>
+            <div style="display: flex; align-items: center; gap: 10px"><svg width="22" height="24" viewBox="0 0 26 28" aria-hidden="true"><path d="M13 9C9 7 4 9 4.5 14c.5 5 3.5 10 7.5 9 2 1.5 7 0 9-5 2-5-1-11-8-9z" fill="#9A6634" stroke="#D9B48A" stroke-width="1"/><circle cx="9" cy="15" r="2" fill="#3A2614"/></svg>rotten — down, dark</div>
+            <div style="display: flex; align-items: center; gap: 10px"><svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true"><path d="M1 5h20" stroke="#8A8170" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round"/></svg>path — connection</div>
+          </div>
+        </div>
+
+        <button type="button" style="position: absolute; left: 346px; top: 512px; width: 268px; min-height: 60px; display: flex; align-items: center; justify-content: center; gap: 8px; background: transparent; border: none; font-family: Kalam, cursive; font-size: 19px; color: #A9A08E; cursor: pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          plant a new project
+        </button>
+      </div>
+    </div>
+
+    <aside style="flex: 1 1 340px; max-width: 420px; padding: 28px; display: flex; flex-direction: column; gap: 22px; background: #1F2836; border-left: 1.5px solid #2E3A4D; box-sizing: border-box">
+      <div>
+        <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9A08E">widok23 · site</div>
+        <h2 style="margin: 4px 0 2px; font-family: Fraunces, serif; font-size: 32px; font-weight: 600; line-height: 1.1">The live site</h2>
+        <div style="font-size: 14px; color: #A9A08E">[site URL] · FTPS on home.pl</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 16px 11px 17px 10px / 11px 16px 10px 17px; box-shadow: 0 0 30px rgba(240,190,90,0.15)">
+        <svg role="img" aria-label="Healthy" width="56" height="60" viewBox="0 0 26 28"><path d="M13 8C9 5 3 6 3 13c0 7 5 13 10 11 5 2 10-4 10-11 0-7-6-8-10-5z" fill="#F0384F" stroke="#FFB3BC" stroke-width="0.8"/><path d="M13 8c0-3 1-5 2-6" stroke="#CFC3A8" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M14 5c3-3 7-2 7-1-2 2-5 2-7 1z" fill="#7FB04A"/><path d="M7 12c0-2 1-3 2-3" stroke="#fff" stroke-opacity=".7" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>
+        <div>
+          <div style="font-family: Kalam, cursive; font-size: 24px; font-weight: 700; color: #FF8090; line-height: 1.1">Ripe &amp; healthy</div>
+          <div style="font-size: 13px; color: #A9A08E">200 OK · 312 ms · checked 4 min ago</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-family: Fraunces, serif; font-size: 18px; font-weight: 600; margin-bottom: 6px">Health check</div>
+        <div style="font-family: Kalam, cursive; font-size: 16px; line-height: 1.5">every 5 min · GET · expects 200<br>and the text “Widok 23” · 10 s timeout</div>
+        <svg width="100%" height="56" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true" style="margin-top: 8px"><path d="M0 40 C20 38 30 30 50 34 S80 42 100 36 130 20 150 28 180 38 200 33 230 26 250 30 280 36 300 32" fill="none" stroke="#E0B062" stroke-width="2"/><path d="M0 52 H300" stroke="#2E3A4D" stroke-width="1" stroke-dasharray="3 4"/></svg>
+        <div style="font-size: 12px; color: #A9A08E">response time, last 24 h</div>
+      </div>
+
+      <div>
+        <div style="font-family: Fraunces, serif; font-size: 18px; font-weight: 600; margin-bottom: 6px">Paths from here</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; font-family: Kalam, cursive; font-size: 17px">
+          <a href="https://github.com/PeJose/widok23/actions" style="min-height: 32px; display: flex; align-items: center; gap: 6px">↗ Actions</a>
+          <a href="https://github.com/PeJose/widok23/settings" style="min-height: 32px; display: flex; align-items: center; gap: 6px">↗ Repo settings</a>
+          <a href="https://github.com/PeJose/widok23/settings/secrets/actions" style="min-height: 32px; display: flex; align-items: center; gap: 6px">↗ Secrets</a>
+          <a href="https://github.com/PeJose/widok23/pulls" style="min-height: 32px; display: flex; align-items: center; gap: 6px">↗ Pull requests</a>
+          <a href="https://www.sanity.io/manage" style="min-height: 32px; display: flex; align-items: center; gap: 6px">↗ Sanity manage</a>
+          <a href="https://www.sanity.io/manage" style="min-height: 32px; display: flex; align-items: center; gap: 6px">↗ Webhooks</a>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: auto">
+        <button type="button" style="flex: 1 1 140px; min-height: 48px; font-family: Kalam, cursive; font-size: 19px; font-weight: 700; color: #1A1408; background: #E0B062; border: 1.5px solid #E0B062; border-radius: 14px 10px 15px 9px / 10px 14px 9px 15px; box-shadow: 0 0 22px rgba(240,190,90,0.35); cursor: pointer">Deploy now</button>
+        <button type="button" style="flex: 1 1 120px; min-height: 48px; font-family: Kalam, cursive; font-size: 19px; color: #ECE4D3; background: #222C3B; border: 1.5px solid #CFC3A8; border-radius: 10px 14px 9px 15px / 14px 10px 15px 9px; cursor: pointer">Refresh</button>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

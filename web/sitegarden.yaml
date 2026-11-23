@@ -1,0 +1,406 @@
+# Sitegarden config: one estate per project. `pnpm sg plan` shows what would render, `pnpm sg apply` renders it.
+accountSeed: garden-58
+estates:
+  - id: widok23
+    label: widok23
+    nodes:
+      - id: widok23-cms
+        type: cms
+        name: widok23-cms
+        host: Sanity
+        links:
+          - label: Sanity manage
+            url: https://www.sanity.io/manage/project/w23abc12
+          - label: Studio
+            url: https://widok23.sanity.studio
+          - label: Webhooks
+            url: https://www.sanity.io/manage/project/w23abc12/api#webhooks
+        notes: Content studio for the Widok 23 apartment listings. Publishing fires the deploy webhook.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: widok23-repo
+        type: repo
+        name: PeJose/widok23
+        host: GitHub
+        links:
+          - label: Actions
+            url: https://github.com/PeJose/widok23/actions
+          - label: Settings
+            url: https://github.com/PeJose/widok23/settings
+          - label: Secrets
+            url: https://github.com/PeJose/widok23/settings/secrets/actions
+          - label: Pull requests
+            url: https://github.com/PeJose/widok23/pulls
+          - label: Issues
+            url: https://github.com/PeJose/widok23/issues
+        notes: "Astro site. Deploy workflow: deploy.yml on main, uploads over FTPS."
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: widok23-site
+        type: site
+        name: widok23.pl
+        host: home.pl
+        links:
+          - label: widok23.pl
+            url: https://widok23.pl
+          - label: home.pl panel
+            url: https://panel.home.pl
+        notes: "Runbook: if down, check home.pl panel first, then re-run the last green deploy."
+        checks:
+          - http every 5m, expect 200 + "Widok 23"
+          - ssl warn 14d
+          - domain warn 30d
+        baseMs: 180
+        initialStatus: ok
+    edges:
+      - from: widok23-cms
+        to: widok23-repo
+        type: webhook
+        label: WEBHOOK
+      - from: widok23-repo
+        to: widok23-site
+        type: deploy
+        label: FTPS
+  - id: goldcrisp
+    label: goldcrisp
+    nodes:
+      - id: goldcrisp-cms
+        type: cms
+        name: goldcrisp-cms
+        host: Sanity
+        links:
+          - label: Sanity manage
+            url: https://www.sanity.io/manage/project/gc4def56
+          - label: Studio
+            url: https://goldcrisp.sanity.studio
+          - label: Webhooks
+            url: https://www.sanity.io/manage/project/gc4def56/api#webhooks
+        notes: Content studio for the Goldcrisp catalogue.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: goldcrisp-repo
+        type: repo
+        name: PeJose/goldcrisp
+        host: GitHub
+        links:
+          - label: Actions
+            url: https://github.com/PeJose/goldcrisp/actions
+          - label: Settings
+            url: https://github.com/PeJose/goldcrisp/settings
+          - label: Secrets
+            url: https://github.com/PeJose/goldcrisp/settings/secrets/actions
+          - label: Pull requests
+            url: https://github.com/PeJose/goldcrisp/pulls
+          - label: Issues
+            url: https://github.com/PeJose/goldcrisp/issues
+        notes: Storefront. Workflow deploy.yml on main.
+        checks: []
+        baseMs: 0
+        initialStatus: working
+      - id: goldcrisp-site
+        type: site
+        name: goldcrisp.com
+        host: FTPS
+        links:
+          - label: goldcrisp.com
+            url: https://goldcrisp.com
+          - label: Hosting panel
+            url: https://panel.example-host.com
+        notes: Slow since the image migration. Look at the origin cache before blaming the code.
+        checks:
+          - http every 5m, expect 200 + "Goldcrisp"
+          - ssl warn 14d
+          - domain warn 30d
+        baseMs: 380
+        initialStatus: down
+    edges:
+      - from: goldcrisp-cms
+        to: goldcrisp-repo
+        type: webhook
+        label: WEBHOOK
+      - from: goldcrisp-repo
+        to: goldcrisp-site
+        type: deploy
+        label: FTPS
+  - id: notes
+    label: notes
+    nodes:
+      - id: notes-cms
+        type: cms
+        name: notes-cms
+        host: Sanity
+        links:
+          - label: Sanity manage
+            url: https://www.sanity.io/manage/project/nt7ghi89
+          - label: Studio
+            url: https://notes.sanity.studio
+        notes: Blog posts and newsletter drafts.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: notes-repo
+        type: repo
+        name: PeJose/notes
+        host: GitHub
+        links:
+          - label: Actions
+            url: https://github.com/PeJose/notes/actions
+          - label: Secrets
+            url: https://github.com/PeJose/notes/settings/secrets/actions
+          - label: Pull requests
+            url: https://github.com/PeJose/notes/pulls
+        notes: Next.js blog. deploy.yml on main.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: notes-db
+        type: db
+        name: notes-db
+        host: Postgres
+        links:
+          - label: Dashboard
+            url: https://example.com/notes/db
+        notes: Subscribers and comments.
+        checks:
+          - tcp 5432 every 5m
+        baseMs: 40
+        initialStatus: ok
+      - id: notes-job
+        type: job
+        name: newsletter
+        host: cron
+        links:
+          - label: Logs
+            url: https://example.com/notes/job
+        notes: Sends the weekly newsletter on Mondays, pings a heartbeat.
+        checks:
+          - heartbeat every 7d, grace 2h
+        baseMs: 0
+        initialStatus: ok
+      - id: notes-site
+        type: site
+        name: notes.example.dev
+        host: Vercel
+        links:
+          - label: notes.example.dev
+            url: https://notes.example.dev
+          - label: Vercel
+            url: https://vercel.com/dashboard
+        notes: Public blog, checked every 5 minutes.
+        checks:
+          - http every 5m, expect 200
+          - ssl warn 14d
+        baseMs: 120
+        initialStatus: ok
+    edges:
+      - from: notes-cms
+        to: notes-repo
+        type: webhook
+        label: WEBHOOK
+      - from: notes-repo
+        to: notes-site
+        type: deploy
+        label: VERCEL
+      - from: notes-db
+        to: notes-site
+        type: sync
+        label: SQL
+      - from: notes-job
+        to: notes-db
+        type: sync
+        label: CRON
+  - id: sedum
+    label: sedum
+    nodes:
+      - id: sedum-job
+        type: job
+        name: sedum-job
+        host: cron
+        links:
+          - label: Dashboard
+            url: https://example.com/sedum/job
+        notes: Nightly job, pings a heartbeat.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: sedum-site
+        type: site
+        name: sedum-site
+        host: FTPS
+        links:
+          - label: sedum.example
+            url: https://sedum.example
+          - label: Hosting panel
+            url: https://panel.example-host.com
+        notes: Public site, checked every 5 minutes.
+        checks:
+          - http every 5m, expect 200
+          - ssl warn 14d
+        baseMs: 335
+        initialStatus: ok
+      - id: sedum-site2
+        type: site
+        name: sedum-site2
+        host: FTPS
+        links:
+          - label: sedum.example
+            url: https://sedum.example
+          - label: Hosting panel
+            url: https://panel.example-host.com
+        notes: Public site, checked every 5 minutes.
+        checks:
+          - http every 5m, expect 200
+          - ssl warn 14d
+        baseMs: 266
+        initialStatus: ok
+    edges:
+      - from: sedum-job
+        to: sedum-site
+        type: deploy
+        label: FTPS
+      - from: sedum-site
+        to: sedum-site2
+        type: deploy
+        label: RSYNC
+  - id: juniper
+    label: juniper
+    nodes:
+      - id: juniper-cms
+        type: cms
+        name: juniper-cms
+        host: Sanity
+        links:
+          - label: Sanity manage
+            url: https://example.com/juniper/cms
+        notes: Content studio.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: juniper-repo
+        type: repo
+        name: juniper-repo
+        host: GitHub
+        links:
+          - label: Actions
+            url: https://github.com/PeJose/juniper/actions
+          - label: Secrets
+            url: https://github.com/PeJose/juniper/settings/secrets/actions
+        notes: Deploy workflow runs on main.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: juniper-db
+        type: db
+        name: juniper-db
+        host: Postgres
+        links:
+          - label: Dashboard
+            url: https://example.com/juniper/db
+        notes: Primary database.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+    edges:
+      - from: juniper-cms
+        to: juniper-repo
+        type: webhook
+        label: WEBHOOK
+      - from: juniper-repo
+        to: juniper-db
+        type: deploy
+        label: RSYNC
+  - id: heather
+    label: heather
+    nodes:
+      - id: heather-cms
+        type: cms
+        name: heather-cms
+        host: Sanity
+        links:
+          - label: Sanity manage
+            url: https://example.com/heather/cms
+        notes: Content studio.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: heather-job
+        type: job
+        name: heather-job
+        host: cron
+        links:
+          - label: Dashboard
+            url: https://example.com/heather/job
+        notes: Nightly job, pings a heartbeat.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: heather-job2
+        type: job
+        name: heather-job2
+        host: cron
+        links:
+          - label: Dashboard
+            url: https://example.com/heather/job
+        notes: Nightly job, pings a heartbeat.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: heather-repo
+        type: repo
+        name: heather-repo
+        host: GitHub
+        links:
+          - label: Actions
+            url: https://github.com/PeJose/heather/actions
+          - label: Secrets
+            url: https://github.com/PeJose/heather/settings/secrets/actions
+        notes: Deploy workflow runs on main.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: heather-db
+        type: db
+        name: heather-db
+        host: Postgres
+        links:
+          - label: Dashboard
+            url: https://example.com/heather/db
+        notes: Primary database.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+      - id: heather-db2
+        type: db
+        name: heather-db2
+        host: Postgres
+        links:
+          - label: Dashboard
+            url: https://example.com/heather/db
+        notes: Primary database.
+        checks: []
+        baseMs: 0
+        initialStatus: ok
+    edges:
+      - from: heather-cms
+        to: heather-job
+        type: webhook
+        label: WEBHOOK
+      - from: heather-job
+        to: heather-job2
+        type: deploy
+        label: SSH
+      - from: heather-job2
+        to: heather-repo
+        type: deploy
+        label: SSH
+      - from: heather-repo
+        to: heather-db
+        type: deploy
+        label: RSYNC
+      - from: heather-db
+        to: heather-db2
+        type: sync
+        label: SYNC

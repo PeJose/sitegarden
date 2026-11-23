@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>sitegarden — boring mode</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF}
+a{color:#1D4ED8}a:hover{color:#1E3A8A}
+@keyframes ink{to{stroke-dashoffset:-40}}
+.ink{animation:ink 1s linear infinite}
+@media (prefers-reduced-motion: reduce){.ink{animation:none}}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #FFFFFF; color: #111827; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 24px; border-bottom: 1px solid #E5E7EB">
+    <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">sitegarden</span>
+    <span style="font-size: 13px; color: #4B5563">2 projects · 6 services</span>
+    <div style="flex: 1 1 0"></div>
+    <span style="font-size: 13px; color: #4B5563">Updated 4 min ago</span>
+    <button type="button" style="display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; color: #111827; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      Refresh all
+    </button>
+    <button type="button" aria-label="Theme: light, boring mode. Hover for fun mode" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer; color: #111827">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; flex: 1 1 auto">
+
+    <div style="flex: 999 1 560px; min-width: 0; overflow: auto; background: #F9FAFB">
+      <div style="position: relative; width: 1000px; height: 740px; margin: 0 auto">
+
+        <svg width="1000" height="740" viewBox="0 0 1000 740" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+          <rect x="40" y="90" width="480" height="316" rx="12" fill="#FFFFFF" stroke="#E5E7EB"/>
+          <rect x="560" y="90" width="400" height="316" rx="12" fill="#FFFFFF" stroke="#E5E7EB"/>
+          <g fill="none" stroke="#9CA3AF" stroke-width="1.5">
+            <path d="M134 228 V260 H275 V292"/>
+            <path d="M345 325 H430 V228"/>
+            <path d="M654 228 V260 H770 V292"/>
+            <path d="M840 325 H880 V228"/>
+          </g>
+          <path class="ink" d="M840 325 H880 V228" fill="none" stroke="#2563EB" stroke-width="2" stroke-dasharray="5 5"/>
+        </svg>
+
+        <div style="position: absolute; left: 60px; top: 106px; font-size: 16px; font-weight: 600">widok23</div>
+        <div style="position: absolute; left: 580px; top: 106px; font-size: 16px; font-weight: 600">goldcrisp</div>
+
+        <button type="button" style="position: absolute; left: 64px; top: 162px; width: 140px; height: 66px; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 12px; text-align: left; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer; font-family: Inter, sans-serif; color: #111827">
+          <span style="font-size: 14px; font-weight: 600">Studio</span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #15803D"><span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A"></span>Healthy</span>
+        </button>
+        <button type="button" style="position: absolute; left: 205px; top: 292px; width: 140px; height: 66px; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 12px; text-align: left; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer; font-family: Inter, sans-serif; color: #111827">
+          <span style="font-size: 14px; font-weight: 600">Repo</span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #15803D"><span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A"></span>Healthy</span>
+        </button>
+        <button type="button" style="position: absolute; left: 360px; top: 162px; width: 140px; height: 66px; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 12px; text-align: left; background: #FFFFFF; border: 2px solid #2563EB; border-radius: 8px; cursor: pointer; font-family: Inter, sans-serif; color: #111827">
+          <span style="font-size: 14px; font-weight: 600">Site</span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #15803D"><span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A"></span>Healthy</span>
+        </button>
+
+        <button type="button" style="position: absolute; left: 584px; top: 162px; width: 140px; height: 66px; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 12px; text-align: left; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer; font-family: Inter, sans-serif; color: #111827">
+          <span style="font-size: 14px; font-weight: 600">Studio</span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #15803D"><span style="width: 8px; height: 8px; border-radius: 50%; background: #16A34A"></span>Healthy</span>
+        </button>
+        <button type="button" style="position: absolute; left: 700px; top: 292px; width: 140px; height: 66px; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 12px; text-align: left; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer; font-family: Inter, sans-serif; color: #111827">
+          <span style="font-size: 14px; font-weight: 600">Repo</span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #1D4ED8"><span style="width: 8px; height: 8px; border-radius: 50%; border: 2px solid #2563EB; box-sizing: border-box"></span>Deploying</span>
+        </button>
+        <button type="button" style="position: absolute; left: 810px; top: 162px; width: 140px; height: 66px; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 12px; text-align: left; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 8px; cursor: pointer; font-family: Inter, sans-serif; color: #111827">
+          <span style="font-size: 14px; font-weight: 600">Site</span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #B91C1C"><span style="width: 8px; height: 8px; background: #DC2626; transform: rotate(45deg)"></span>Down</span>
+        </button>
+
+        <button type="button" style="position: absolute; left: 40px; top: 440px; min-height: 40px; padding: 0 14px; display: flex; align-items: center; gap: 6px; font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; color: #374151; background: #FFFFFF; border: 1px dashed #9CA3AF; border-radius: 8px; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Add project
+        </button>
+      </div>
+    </div>
+
+    <aside style="flex: 1 1 340px; max-width: 420px; padding: 24px; display: flex; flex-direction: column; gap: 20px; background: #FFFFFF; border-left: 1px solid #E5E7EB; box-sizing: border-box">
+      <div>
+        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #4B5563">widok23 / site</div>
+        <h2 style="margin: 4px 0 2px; font-size: 22px; font-weight: 600">Live site</h2>
+        <div style="font-size: 13px; color: #4B5563">[site URL] · FTPS on home.pl</div>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px">
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #15803D"><span style="width: 10px; height: 10px; border-radius: 50%; background: #16A34A"></span>Healthy</span>
+        <span style="font-size: 13px; color: #374151">200 · 312 ms · 4 min ago</span>
+      </div>
+
+      <div>
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px">Health check</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; font-size: 13px">
+          <span style="color: #4B5563">Interval</span><span>5 min</span>
+          <span style="color: #4B5563">Request</span><span>GET, expect 200</span>
+          <span style="color: #4B5563">Keyword</span><span>“Widok 23”</span>
+          <span style="color: #4B5563">Timeout</span><span>10 s</span>
+        </div>
+        <svg width="100%" height="48" viewBox="0 0 300 48" preserveAspectRatio="none" aria-hidden="true" style="margin-top: 10px"><polyline points="0,34 25,32 50,28 75,35 100,30 125,18 150,24 175,33 200,29 225,22 250,26 275,31 300,28" fill="none" stroke="#2563EB" stroke-width="1.5"/><path d="M0 46 H300" stroke="#E5E7EB"/></svg>
+        <div style="font-size: 12px; color: #4B5563">Response time, last 24 h</div>
+      </div>
+
+      <div>
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px">Links</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 16px; font-size: 14px">
+          <a href="https://github.com/PeJose/widok23/actions" style="min-height: 32px; display: flex; align-items: center">Actions</a>
+          <a href="https://github.com/PeJose/widok23/settings" style="min-height: 32px; display: flex; align-items: center">Repo settings</a>
+          <a href="https://github.com/PeJose/widok23/settings/secrets/actions" style="min-height: 32px; display: flex; align-items: center">Secrets</a>
+          <a href="https://github.com/PeJose/widok23/pulls" style="min-height: 32px; display: flex; align-items: center">Pull requests</a>
+          <a href="https://www.sanity.io/manage" style="min-height: 32px; display: flex; align-items: center">Sanity manage</a>
+          <a href="https://www.sanity.io/manage" style="min-height: 32px; display: flex; align-items: center">Webhooks</a>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto">
+        <button type="button" style="flex: 1 1 140px; min-height: 44px; font-family: Inter, sans-serif; font-size: 14px; font-weight: 600; color: #FFFFFF; background: #111827; border: none; border-radius: 8px; cursor: pointer">Deploy</button>
+        <button type="button" style="flex: 1 1 120px; min-height: 44px; font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; color: #111827; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer">Refresh</button>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c blue,green \"pnpm dev:server\" \"pnpm dev:web\"",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "dev:server": "UV_THREADPOOL_SIZE=16 tsx watch server/index.ts",
+    "dev:web": "vite",
+    "test": "tsx --test src/gen/gen.test.ts src/lib/view.test.ts server/plan.test.ts",
+    "sg": "UV_THREADPOOL_SIZE=16 tsx server/sg.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.9",
+    "@resvg/resvg-js": "^2.6.2",
+    "@xyflow/react": "^13.0.2",
+    "hono": "^4.13.19",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "roughjs": "^4.6.6",
+    "sharp": "^0.35.5",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.7",
+    "oxlint": "^1.90.0",
+    "playwright-core": "^1.65.1",
+    "tsx": "^4.23.15",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.6"
+  }
+}
