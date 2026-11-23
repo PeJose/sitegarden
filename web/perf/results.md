@@ -430,3 +430,29 @@ commit 7a1a541 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless ·
 | fly-warm dpr2 after | 59.8 | 0 | 17 | 0 | 53 | 1 | 0 |
 
 Main-thread `Decode*` is 0 before and after; the decode that remains runs on raster workers, now during the flight and off the main thread. An earlier dpr 2 run (2.5a-dpr2) showed one 33 ms frame at flight start (13 tile images and a texture decoding on workers at once); the final run had none, so it is within noise. Landing screenshot (flight to the last plot, 1.8 s after the click) compared with the previous build: mean diff 0.031 % at dpr 1 and 0.000 % at dpr 2, 0 % of values off by over 16; all 48 mounted tiles shown (opacity 1, complete). Interruption: a wheel 250 ms into a flight mounted tiles for the new position at once (requests at ~370 ms, not at 700 ms). After hovering a row for 1 s, 15 tile requests had been made; the click and flight afterwards made 0. Screenshot diff passes (light-still 0.488 %, night-still 0.425 %).
+
+## 2026-11-23 2.6
+
+commit b18e6ef · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":208,"bytes":{"total":3541534,"texture":537502,"tiles":2589958,"js":215383},"gpuPct":20.8,"fps":60.1,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":168,"layout":0,"script":36,"paint":129,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":205,"bytes":{"total":3218333,"texture":402537,"tiles":2402094,"js":215383},"gpuPct":20.8,"fps":59.9,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":211,"layout":0,"script":34,"paint":125,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":199,"bytes":{"total":3541534,"texture":537502,"tiles":2589958,"js":215383},"gpuPct":20.3,"fps":60,"paints":1200,"paintAreaMpx":434519.3,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":189,"layout":0,"script":38,"paint":145,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":202,"bytes":{"total":3218333,"texture":402537,"tiles":2402094,"js":215383},"gpuPct":20.4,"fps":60,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":209,"layout":0,"script":36,"paint":126,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":208,"bytes":{"total":3541534,"texture":537502,"tiles":2589958,"js":215383},"gpuPct":20.2,"fps":59.9,"paints":609,"paintAreaMpx":1689077744.47,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":26,"layout":2,"script":66,"paint":20,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":207,"bytes":{"total":3541535,"texture":537502,"tiles":2589958,"js":215383},"gpuPct":20.2,"fps":59.1,"paints":1791,"paintAreaMpx":257831151956.16,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":2,"longTasks":1,"longTaskMs":62,"maxLongTask":62,"tileReqs":39,"tileReqsOff":39,"ms":{"style":56,"layout":36,"script":66,"paint":23,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":206,"bytes":{"total":3541534,"texture":537502,"tiles":2589958,"js":215383},"gpuPct":11.4,"fps":59.8,"paints":609,"paintAreaMpx":1689077744.39,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":55,"layout":3,"script":149,"paint":37,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.340909,"loadMs":200,"bytes":{"total":3541534,"texture":537502,"tiles":2589958,"js":215383},"gpuPct":16.5,"fps":58.3,"paints":2089,"paintAreaMpx":322570435649.83,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":4,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":39,"tileReqsOff":39,"ms":{"style":165,"layout":108,"script":177,"paint":69,"decode":0,"decodeAllThreads":0}}
+```
+
+### 2.6 note (lazy chunks; block "2.6")
+
+`Boring`, `Panel` and `Popover` are `React.lazy` chunks (Suspense fallback renders nothing; Boring's shows an empty `.app`); the Panel and Popover chunks are fetched with `requestIdleCallback` after the map mounts, so the first click does not wait. rough.js stays in the main chunk.
+
+| | main chunk raw | main chunk gzip | lazy chunks raw (gzip) |
+|---|---|---|---|
+| before | 568,979 B | 180,513 B | none |
+| after | 559,06x B (559.06 kB) | 180,44x B | Boring 7.1 kB (2.8), Popover 3.8 kB (1.8), Panels 1.6 kB (0.7) |
+
+The three components are small, so the main chunk only drops about 10 kB raw and 0.1 kB gzip. What is left is first-paint code: react-dom ~625 KB source, @xyflow/react + @xyflow/system ~290 KB, rough.js 28 KB, d3 (selection, transition, zoom, color, interpolate) ~100 KB, `gen/defs.ts` 21 KB, `gen/render.ts` 14 KB. Nothing there is small and clearly off the first-paint path, so no more splitting. Load (light-still) loadMs 203 to 199 (noise, 198 to 209 across scenarios, as before); tiles-visible unchanged (all tiles mounted); js bytes 214,451 to 215,383 (the idle preload lands inside the window). Pan 59.9 fps / GPU 20.2%, pan-4x 59.8 fps, no regressions. Screenshot diff passes (light-still 0.488 %, night-still 0.425 %, same as 2.5). `?style=boring`, `?panel=links`, `?panel=inventory`, `?select=copperleaf-site` checked by headless screenshot, no page errors.
