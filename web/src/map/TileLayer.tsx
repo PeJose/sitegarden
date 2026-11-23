@@ -73,9 +73,9 @@ export function TileLayer({ world, scheme, vp, size }: { world: WorldData; schem
   const prev = world.previews[scheme]
   return (
     <>
-      {prev && <img className="tile preview" src={`/a/${prev}`} onLoad={(e) => { e.currentTarget.style.opacity = '1' }} style={{ left: tiles.x0 * T, top: tiles.y0 * T, width: tiles.cols * T, height: tiles.rows * T, zIndex: -1 }} alt="" draggable={false} />}
+      {prev && <img className="tile preview" decoding="async" src={`/a/${prev}`} onLoad={(e) => { e.currentTarget.style.opacity = '1' }} style={{ left: tiles.x0 * T, top: tiles.y0 * T, width: tiles.cols * T, height: tiles.rows * T, zIndex: -1 }} alt="" draggable={false} />}
       {mounted.map((t) => (
-        <img key={keyOf(t)} className="tile" src={t.src} onLoad={onLoad(keyOf(t))} style={{ left: t.x * T, top: t.y * T, width: T, height: T, zIndex: t.z }} alt="" draggable={false} />
+        <img key={keyOf(t)} className="tile" decoding="async" src={t.src} onLoad={onLoad(keyOf(t))} style={{ left: t.x * T, top: t.y * T, width: T, height: T, zIndex: t.z }} alt="" draggable={false} />
       ))}
     </>
   )
