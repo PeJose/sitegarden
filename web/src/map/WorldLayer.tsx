@@ -8,6 +8,7 @@ import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
 import { viewOf, type TileView } from '../lib/view'
 import { TileLayer } from './TileLayer'
+import { flight } from './tiles'
 import { Lantern, March, Wash } from './Fx'
 
 // The baked world (server tiles) sits under React Flow and follows its viewport transform. On top of it,
@@ -27,10 +28,13 @@ export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { wo
       paper.current!.style.backgroundPosition = `${x % k}px ${y % k}px`
       const v = viewOf([x, y, zoom], T, size, window.devicePixelRatio)
       const kk = `${v.level}/${v.c0}/${v.c1}/${v.r0}/${v.r1}`
-      if (kk !== key) { key = kk; setView(v) }
+      if (kk !== key && !flight.active) { key = kk; setView(v) } // mid-flight the mounted tiles stay as they are; landing calls apply again
     }
     apply(store.getState().transform)
-    return store.subscribe((s) => apply(s.transform))
+    const land = () => apply(store.getState().transform)
+    flight.onEnd.add(land)
+    const off = store.subscribe((s) => apply(s.transform))
+    return () => { off(); flight.onEnd.delete(land) }
   }, [store, T, size])
   const tex = world.textures?.[scheme]?.[view.level]
   return (
