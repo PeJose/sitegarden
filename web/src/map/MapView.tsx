@@ -1,12 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { ReactFlow, useReactFlow, useReactFlowStoreApi, useViewportStore, type Node } from '@xyflow/react'
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
+import { ReactFlow, useReactFlow, useViewportStore, type Node } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import type { Scheme } from '../prefs'
 import { clampViewport, heroInset, initialViewport, PULL, minZoom, panExtent } from '../lib/view'
 import type { WorldData } from '../world'
 import { WorldLayer } from './WorldLayer'
 import { PinNode } from './PinNode'
-import { followZoom } from './lod'
 
 const nodeTypes = { pin: PinNode }
 const proOptions = { hideAttribution: true }
@@ -56,20 +55,9 @@ export function MapView({ world, scheme, size, collapsed, onSelect }: { world: W
     setViewport(to, { duration: ms, ease: (t) => 1 - (1 - t) ** 3 })
   }, [collapsed, size.w, size.h, world.bounds, getViewport, setViewport])
   // Level of detail by on-screen size, as CSS variables the pins and chips read: chips (11.5 px text) fade out below ~10 px, pins never shrink under ~24 px.
-  // Written to the viewport element (only pins live under it) in zoom steps, not per frame, and exact once the zoom settles.
-  const wrap = useRef<HTMLDivElement>(null)
-  const viewportStore = useReactFlowStoreApi().viewportStore
-  useLayoutEffect(() => {
-    const vp = wrap.current?.querySelector<HTMLElement>('.react-flow__viewport')
-    if (!vp) return
-    return followZoom(viewportStore, (z) => {
-      vp.style.setProperty('--pin-k', String(Math.max(1, 24 / (30 * z))))
-      vp.style.setProperty('--chip-o', String(Math.min(1, Math.max(0, (11.5 * z - 9) / 1.5))))
-      vp.style.setProperty('--hover-k', String(Math.min(2.5, Math.max(1, 11 / (11.5 * z)))))
-    })
-  }, [viewportStore])
+  const lod = { '--pin-k': Math.max(1, 24 / (30 * zoom)), '--chip-o': Math.min(1, Math.max(0, (11.5 * zoom - 9) / 1.5)), '--hover-k': Math.min(2.5, Math.max(1, 11 / (11.5 * zoom))) } as CSSProperties
   return (
-    <div ref={wrap} style={{ display: 'contents' }}>
+    <div style={{ display: 'contents', ...lod }}>
       <WorldLayer world={world} scheme={scheme} size={size} />
       <ReactFlow
         nodes={nodes}
