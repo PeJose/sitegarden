@@ -44,7 +44,7 @@ export function Lantern({ d }: { d: string }) {
   useEffect(() => {
     const el = ref.current
     if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return // stays at the road's start
-    const a = el.animate(pts.map(([x, y]) => ({ transform: `translate(${x}px, ${y}px)` })), { duration: 3200, iterations: Infinity, easing: 'linear' })
+    const a = el.animate(pts.map(([x, y]) => ({ transform: `translate(${x}px, ${y}px)` })), { duration: 3200, iterations: Infinity, easing: `steps(${STEPS})` }) // one jump per sampled point, 15 per second
     const vis = () => (document.hidden ? a.pause() : a.play())
     vis()
     document.addEventListener('visibilitychange', vis)
