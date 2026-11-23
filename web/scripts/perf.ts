@@ -77,7 +77,8 @@ for (const [name, s] of Object.entries(scenarios)) {
   await cdp.send('Network.enable')
   const urls = new Map<string, string>(), sizes = new Map<string, number>()
   let tileReqs = 0
-  cdp.on('Network.requestWillBeSent', (e) => { urls.set(e.requestId, e.request.url); if (/\/a\/.*tile-/.test(e.request.url)) tileReqs++ })
+  const tileUrls: string[] = []
+  cdp.on('Network.requestWillBeSent', (e) => { urls.set(e.requestId, e.request.url); if (/\/a\/.*tile-/.test(e.request.url)) { tileReqs++; tileUrls.push(new URL(e.request.url).pathname) } })
   cdp.on('Network.loadingFinished', (e) => sizes.set(urls.get(e.requestId) ?? e.requestId, (sizes.get(urls.get(e.requestId) ?? e.requestId) ?? 0) + e.encodedDataLength))
   await page.goto(base + '/' + s.q)
   await page.waitForFunction(() => (window as unknown as { __perf?: unknown }).__perf, null, { timeout: 120_000 }) // set 300 ms after the tiles-visible mark
@@ -94,7 +95,7 @@ for (const [name, s] of Object.entries(scenarios)) {
     if (s.warm) { await page.locator('.estates .estate').nth(0).click(); await sleep(3000) } // one flight done, untimed
   }
   await browser.startTracing(page, { categories: s.kind === 'fly' ? ['devtools.timeline', 'disabled-by-default-devtools.timeline'] : ['devtools.timeline'] })
-  const reqs0 = tileReqs
+  const reqs0 = tileReqs, urls0 = tileUrls.length
   const [c0, g0, t0] = [await counters(page), await gpuCpu(), Date.now()]
   const cx = W / 2, cy = H / 2
   if (s.kind === 'idle') await sleep(10_000)
@@ -114,6 +115,9 @@ for (const [name, s] of Object.entries(scenarios)) {
   const paints = evs.filter((e) => e.name === 'Paint' && e.args?.data?.clip)
   const gaps = await page.evaluate((n) => (window as unknown as { __gaps: number[] }).__gaps.slice(n), c0.frames)
   const lt = await page.evaluate((n) => (window as unknown as { __lt: number[] }).__lt.slice(n), c0.lt)
+  // tile requests in the window for tiles that are not on screen at the end: travel tiles of a flight (or tiles that scrolled out again)
+  const final = new Set(await page.evaluate(() => [...document.querySelectorAll<HTMLImageElement>('img.tile')].map((i) => new URL(i.src).pathname)))
+  const tileReqsOff = tileUrls.slice(urls0).filter((u) => !final.has(u)).length
   const r = {
     scenario: name, zoom, loadMs: load.tilesVisible, bytes,
     gpuPct: +(((g1 - g0) / secs) * 100).toFixed(1),
@@ -121,7 +125,7 @@ for (const [name, s] of Object.entries(scenarios)) {
     paints: paints.length, paintAreaMpx: +(paints.reduce((a, e) => a + quadArea(e.args!.data!.clip!), 0) / 1e6).toFixed(2), maxPaintMpx: +(Math.max(0, ...paints.map((e) => quadArea(e.args!.data!.clip!))) / 1e6).toFixed(2),
     maxFrameMs: Math.max(0, ...gaps), slowFrames: gaps.filter((g) => g > 25).length,
     longTasks: lt.length, longTaskMs: lt.reduce((a, b) => a + b, 0), maxLongTask: Math.max(0, ...lt),
-    tileReqs: tileReqs - reqs0,
+    tileReqs: tileReqs - reqs0, tileReqsOff,
     ms: { style: topMs(evs, /^UpdateLayoutTree$/), layout: topMs(evs, /^Layout$/), script: topMs(evs, /^(FunctionCall|EvaluateScript)$/), paint: topMs(evs, /^Paint$/), decode: topMs(evs.filter((e) => e.tid === mainTid), /^Decode/), decodeAllThreads: Math.round(evs.filter((e) => e.ph === 'X' && e.name === 'ImageDecodeTask').reduce((a, e) => a + (e.dur ?? 0) / 1000, 0)) },
   }
   console.log(JSON.stringify(r)); lines.push(JSON.stringify(r))
