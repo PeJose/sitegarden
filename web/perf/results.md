@@ -313,3 +313,16 @@ commit a6589cc (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · hea
 | fly-warm dpr1 | 72 -> 69 | 0 -> 0 | n/a -> 17 | n/a -> 0 | 20.1 -> 19.1 |
 
 Screenshot diff passes (light-still 0.488 %, night-still 0.425 %, unchanged). After a button zoom and after a pan, tiles, pins, labels and the `?select=goldcrisp-site` popover (card and arrow) stay aligned and the paper has no seam (screenshots read by eye). The single slowFrame in pan is one 33 ms frame, within the noise of the 3 s run.
+
+## 2026-11-23 2.4-decision
+
+2.4 (commits 2fdfaa2, b513d56) reverted: no measurable gain. A/B on the same machine, dpr 1, headless, 3 runs each, `zoom` and `zoom-4x` (CPU throttled 4x), alternating builds: "with 2.4" = 5e04f82+zoom-4x scenario build (HEAD before the revert), "without" = 5e04f82 (the commit before 2.4). Per-run values, median in brackets.
+
+| scenario | build | style ms | layout ms | scripting ms | style+layout+script | long tasks | maxFrameMs | slowFrames |
+|---|---|---|---|---|---|---|---|---|
+| zoom | without 2.4 | 56 53 54 (54) | 32 33 32 (32) | 63 61 58 (61) | 151 147 144 (147) | 1 1 1 | 50 50 50 | 1 1 1 |
+| zoom | with 2.4 | 39 40 42 (40) | 37 35 37 (37) | 61 60 64 (61) | 137 135 143 (137) | 0 1 1 | 67 50 50 | 1 1 2 |
+| zoom-4x | without 2.4 | 177 161 172 (172) | 109 111 109 (109) | 190 178 176 (178) | 476 450 457 (457) | 0 1 0 | 50 67 50 | 5 3 4 |
+| zoom-4x | with 2.4 | 120 116 143 (120) | 115 114 128 (115) | 174 180 201 (180) | 409 410 472 (410) | 0 0 1 | 50 50 67 | 4 3 5 |
+
+At 4x the sum drops 10 % (457 -> 410 ms), below the 15 % bar and inside the run spread (with: 409 to 472, without: 450 to 476). Style recalc drops by about a third, but layout and scripting grow by the same amount, and long tasks, maxFrameMs and slowFrames do not move. Not worth the extra code (`lod.ts`, stepped timers), so 2.4 is reverted and left unticked; the zoom long task is tile mounting, handled by 2.5.
