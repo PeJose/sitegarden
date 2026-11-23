@@ -6,6 +6,7 @@ import type { Scheme } from '../prefs'
 import { DEFS, twinkleSvg } from '../gen/render'
 import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
+import { levelFor } from '../lib/view'
 import { TileLayer } from './TileLayer'
 import { Lantern, March, Wash } from './Fx'
 
@@ -13,12 +14,17 @@ import { Lantern, March, Wash } from './Fx'
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
 export function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
   const vp = useViewport()
+  const tex = world.textures?.[scheme]?.[levelFor(vp.zoom, window.devicePixelRatio)], k = 1024 * vp.zoom // the texture repeats every 1024 world units
   return (
+    <>
+    {/* paper under everything, one screen big: the texture is a tile's own base, so it continues seamlessly under the tiles */}
+    <div className="paper" style={{ backgroundImage: `url(/a/${tex})`, backgroundSize: k, backgroundPosition: `${vp.x % k}px ${vp.y % k}px` }} />
     <div className="world" style={{ transform: `translate(${vp.x}px, ${vp.y}px) scale(${vp.zoom})` }}>
       <TileLayer world={world} scheme={scheme} vp={vp} size={size} />
       <Live world={world} scheme={scheme} />
       <Labels world={world} zoom={vp.zoom} />
     </div>
+    </>
   )
 }
 
