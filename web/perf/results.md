@@ -54,3 +54,37 @@ commit fb56601 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless ·
 {"scenario":"zoom","zoom":0.340909,"loadMs":223,"bytes":{"total":15019754,"texture":5546414,"tiles":9054732,"js":213137},"gpuPct":28.1,"fps":59,"paints":2765,"paintAreaMpx":554787793363.41,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":65,"layout":35,"script":81,"paint":29,"decode":0}}
 {"scenario":"pan-4x","zoom":0.340909,"loadMs":226,"bytes":{"total":15014008,"texture":5546414,"tiles":9054732,"js":213137},"gpuPct":25.2,"fps":59.6,"paints":851,"paintAreaMpx":52918509340.17,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":92,"layout":28,"script":766,"paint":80,"decode":0}}
 ```
+
+## 2026-11-23 2.1
+
+commit 02ccdd3 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":226,"bytes":{"total":4672383,"texture":1659778,"tiles":2598914,"js":213937},"gpuPct":14.8,"fps":60,"paints":1802,"paintAreaMpx":169166875357.48,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":101,"layout":44,"script":27,"paint":165,"decode":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":205,"bytes":{"total":4290771,"texture":1470374,"tiles":2408366,"js":213937},"gpuPct":17.3,"fps":60,"paints":1800,"paintAreaMpx":168885400413.03,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":257,"layout":34,"script":30,"paint":161,"decode":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":211,"bytes":{"total":4672385,"texture":1659778,"tiles":2598914,"js":213937},"gpuPct":12.5,"fps":60,"paints":1800,"paintAreaMpx":168885400413.03,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":108,"layout":43,"script":24,"paint":129,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":218,"bytes":{"total":4290769,"texture":1470374,"tiles":2408366,"js":213937},"gpuPct":18.9,"fps":60,"paints":1800,"paintAreaMpx":168885400413.03,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":290,"layout":37,"script":29,"paint":157,"decode":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":228,"bytes":{"total":4672383,"texture":1659778,"tiles":2598914,"js":213937},"gpuPct":16.9,"fps":59.7,"paints":865,"paintAreaMpx":55450916087.82,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":23,"layout":6,"script":274,"paint":14,"decode":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":214,"bytes":{"total":4672383,"texture":1659778,"tiles":2598914,"js":213937},"gpuPct":18.1,"fps":60.1,"paints":2149,"paintAreaMpx":347903164047.76,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":57,"layout":32,"script":72,"paint":27,"decode":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":228,"bytes":{"total":4672383,"texture":1659778,"tiles":2598914,"js":213937},"gpuPct":13.6,"fps":59.7,"paints":878,"paintAreaMpx":56013872482.85,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":78,"layout":22,"script":694,"paint":51,"decode":0}}
+```
+
+## 2026-11-23 2.1-dpr2
+
+commit 02ccdd3 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":234,"bytes":{"total":15014837,"texture":5546414,"tiles":9054732,"js":213937},"gpuPct":14.3,"fps":60,"paints":1800,"paintAreaMpx":168886488245.17,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":120,"layout":46,"script":28,"paint":179,"decode":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":219,"bytes":{"total":13778669,"texture":4871717,"tiles":8494923,"js":213937},"gpuPct":20,"fps":60,"paints":1802,"paintAreaMpx":169167963189.62,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":287,"layout":33,"script":31,"paint":148,"decode":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":221,"bytes":{"total":15014837,"texture":5546414,"tiles":9054732,"js":213937},"gpuPct":14.5,"fps":60,"paints":1803,"paintAreaMpx":169167965725.57,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":114,"layout":41,"script":28,"paint":156,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":226,"bytes":{"total":13778669,"texture":4871717,"tiles":8494923,"js":213937},"gpuPct":20.7,"fps":60,"paints":1803,"paintAreaMpx":169167965725.57,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":263,"layout":29,"script":29,"paint":142,"decode":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":220,"bytes":{"total":15014837,"texture":5546414,"tiles":9054732,"js":213937},"gpuPct":18.4,"fps":59.7,"paints":945,"paintAreaMpx":55452001919.33,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":22,"layout":6,"script":219,"paint":16,"decode":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":216,"bytes":{"total":15014837,"texture":5546414,"tiles":9054732,"js":213937},"gpuPct":18.5,"fps":59,"paints":2799,"paintAreaMpx":554787834151.03,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":66,"layout":36,"script":82,"paint":28,"decode":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":231,"bytes":{"total":15014837,"texture":5546414,"tiles":9054732,"js":213937},"gpuPct":16.3,"fps":59.8,"paints":966,"paintAreaMpx":55170575163.49,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":106,"layout":29,"script":815,"paint":71,"decode":0}}
+```
+
+### 2.1 note (animations on own layers; blocks "2.1" and "2.1-dpr2" above, baseline blocks "baseline" and "baseline-dpr2")
+
+Idle GPU % / paints per 10 s, before -> after (single runs, +-3 points noise): dpr 1 light-still 23.2 -> 12.5 / 1800 -> 1800; night-still 19.2 -> 18.9 / 1800; light 22.4 -> 14.8; night 22.7 -> 17.3. dpr 2 light-still 20.4 -> 14.5; night-still 21.5 -> 20.7; light 21.4 -> 14.3; night 17.0 -> 20.0. Pan GPU dpr 1 27.1 -> 16.9, pan-4x 23 -> 13.6, zoom 29.4 -> 18.1; dpr 2 pan 28.7 -> 18.4, zoom 28.1 -> 18.5. Screenshot diff (dpr 1): light-still 0.001 %, night-still 0.002 % mean difference, passes.
+
+Findings: (1) the paints that remain (1800 per 10 s, 3 per frame) are the march dashes and the down pulse, both main-thread painters (dash offset and `r` cannot run on the compositor); they are now small layers. With both stopped, light idle is 0.3 %. (2) Night is not fixed by layers alone: any compositor animation makes Chrome composite the whole scene every frame, and that floor is about 9-10 % GPU here (a 4 px div animating opacity or transform, everything else hidden: 9.9-10.7 %; nothing animating: 0.4-1.7 %). Stars + fires + lantern together add roughly another 8 points on top (77 per-star layers measured the same as 3 class layers, so 3 were kept). So the < 10 % budget needs the scene composite itself to get cheaper (texture, tiles, pins: tasks 2.2, 2.5, 2.8), or fewer frames. Layer count at night: 30 `.fx` layers (3 star class layers, 12 fire parts, 6 logs, wash 1, lantern 1, march 1, plus the hidden-defs and pulse), 26 elements with will-change.
