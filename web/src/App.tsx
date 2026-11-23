@@ -1,0 +1,107 @@
+import { useCallback, type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ReactFlowProvider, useViewport } from '@xyflow/react'
+import { engine } from './mock/engine'
+import { nodeById } from './mock/data'
+import { usePrefs } from './prefs'
+import { HeroSmear } from './ui/HeroSmear'
+import { pinAt, useWorld, type WorldData } from './world'
+import { MapView, useFlyTo } from './map/MapView'
+import { heroInset } from './lib/view'
+import { Hero } from './ui/Hero'
+import { StatusStrip } from './ui/StatusStrip'
+import { CommandBar } from './ui/CommandBar'
+import { Controls } from './ui/Controls'
+import { Popover } from './ui/Popover'
+import { Panel } from './ui/Panels'
+import { Debug } from './ui/Debug'
+import { Boring } from './Boring'
+
+const params = new URLSearchParams(location.search) // ?select=copperleaf-site&still=1 are for screenshots
+
+export default function App() {
+  const prefs = usePrefs()
+  useEffect(() => {
+    engine.start(params.has('still'))
+    return () => engine.stop()
+  }, [])
+  const world = useWorld()
+  if (!world) return <div className="app" />
+  if (prefs.style === 'boring') return <Boring setStyle={prefs.setStyle} />
+  return (
+    <ReactFlowProvider>
+      <Fun {...prefs} world={world} />
+    </ReactFlowProvider>
+  )
+}
+
+function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof usePrefs> & { world: WorldData }) {
+  const [selected, setSelected] = useState<string | null>(world.estates.some((e) => params.get('select') && e.pins[params.get('select')!]) ? params.get('select') : null)
+  const [panel, setPanel] = useState<'inventory' | 'links' | null>(params.get('panel') === 'links' ? 'links' : params.get('panel') === 'inventory' ? 'inventory' : null)
+  const [toast, setToast] = useState('')
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null) // measured, so the first frame matches the design exactly
+  const box = useRef<HTMLDivElement>(null)
+  const flyTo = useFlyTo()
+  const app = useRef<HTMLDivElement>(null)
+  const [hidden, setHidden] = useState(() => { try { return localStorage.getItem('sitegarden-hero') === 'hidden' } catch { return false } })
+  const collapsed = hidden && (size?.w ?? 1440) >= 760 // the stacked mobile hero covers nothing
+  const toggle = () => setHidden((h) => { try { localStorage.setItem('sitegarden-hero', h ? 'open' : 'hidden') } catch { /* private mode */ } return !h })
+  const toggleRef = useRef(toggle)
+  toggleRef.current = toggle
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  const say = useCallback((m: string) => {
+    setToast(m)
+    clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(''), 4500)
+  }, [])
+
+  useLayoutEffect(() => {
+    const r = box.current!.getBoundingClientRect()
+    setSize({ w: Math.round(r.width), h: Math.round(r.height) })
+    const ro = new ResizeObserver(([e]) => setSize({ w: Math.round(e.contentRect.width), h: Math.round(e.contentRect.height) }))
+    ro.observe(box.current!)
+    return () => ro.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '[' && !e.metaKey && !e.ctrlKey && !e.altKey && !(e.target instanceof HTMLElement && e.target.closest('input,textarea,[contenteditable]'))) return innerWidth >= 760 ? toggleRef.current() : undefined
+      if (e.key !== 'Escape') return
+      if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur()
+      setPanel((p) => { if (!p) setSelected(null); return null })
+    }
+    addEventListener('keydown', onKey)
+    return () => removeEventListener('keydown', onKey)
+  }, [])
+
+  const pickFromPanel = (id: string) => {
+    setPanel(null)
+    setSelected(id)
+    const [x, y] = pinAt(id)
+    flyTo(x, y, 1.4)
+  }
+
+  return (
+    <div className={`app${collapsed ? ' collapsed' : ''}`} ref={app} style={{ '--inset': `${heroInset(size?.w ?? 1440, collapsed)}px` } as CSSProperties}>
+      <HeroSmear scheme={scheme} seed={world.seed} appRef={app} />
+      <Hero onPanel={setPanel} say={say} collapsed={collapsed} onToggle={toggle} />
+      <div className="mapbox" ref={box}>
+        {size && <MapView world={world} scheme={scheme} size={size} collapsed={collapsed} onSelect={(id) => { setSelected(id); setPanel(null) }} />}
+        <StatusStrip onPick={pickFromPanel} />
+        {selected && nodeById(selected) && <Anchored key={selected} id={selected} boxW={size?.w ?? 1440} />}
+        {panel && <Panel kind={panel} onClose={() => setPanel(null)} onPick={pickFromPanel} />}
+        {toast && <div className="toast" role="status">{toast}</div>}
+        <CommandBar say={say} />
+        <Controls scheme={scheme} style={style} toggleScheme={toggleScheme} setStyle={setStyle}  />
+        <Debug />
+      </div>
+    </div>
+  )
+}
+
+// Re-renders on every pan frame, so it lives apart from the rest of the screen.
+function Anchored({ id, boxW }: { id: string; boxW: number }) {
+  const { x, y, zoom } = useViewport()
+  const [px, py] = pinAt(id)
+  return <Popover nodeId={id} x={px * zoom + x} y={py * zoom + y} boxW={boxW} />
+}
