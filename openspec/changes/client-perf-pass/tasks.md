@@ -5,7 +5,7 @@
 - [x] 1.1 Add `web/scripts/perf.ts` and a `pnpm perf` script (design D1): headed system Chrome via `playwright-core`, scenarios `light`, `night`, `light-still`, `night-still`, `pan`, `zoom`, `pan-4x`, printing JSON and appending to `web/perf/results.md`. Verify: `pnpm build && pnpm preview` then `pnpm perf` prints seven JSON lines and appends one dated block.
 - [x] 1.2 Make the script save `light-still.png` / `night-still.png` and diff them against a baseline directory with sharp (D9). Verify: two runs with no code change report a diff under threshold.
 - [x] 1.3 Record the baseline: run `pnpm perf` on the current code, commit results and baseline screenshots, and add a "Top costs" note ranking H1–H7 from design.md by measured cost (paint area, GPU %, long tasks, bytes). Verify: every H item has a number next to it.
-- [ ] 1.4 Document the procedure in `web/perf/README.md`. Verify: the README commands run as written.
+- [x] 1.4 Document the procedure in `web/perf/README.md`. Verify: the README commands run as written.
 
 ## 2. Fix, highest measured cost first
 
