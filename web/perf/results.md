@@ -153,16 +153,22 @@ commit 0812a94 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · hea
 {"scenario":"pan-4x","zoom":0.340909,"loadMs":202,"bytes":{"total":11152288,"texture":1656961,"tiles":9083040,"js":213627},"gpuPct":14.7,"fps":59.7,"paints":951,"paintAreaMpx":55451748461.27,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":79,"layout":20,"script":578,"paint":58,"decode":0}}
 ```
 
-## 2026-11-23 x
-
-commit 0812a94 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
-
-```json
-{"scenario":"light-still","zoom":0.340909,"loadMs":210,"bytes":{"total":3539746,"texture":537502,"tiles":2589958,"js":213627},"gpuPct":17.4,"fps":60,"paints":1803,"paintAreaMpx":169166876080.39,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":89,"layout":35,"script":22,"paint":153,"decode":0}}
-```
-
 ### 2.2 note (paper texture viewport-sized and WebP; blocks "2.2" and "2.2-dpr2")
 
-Texture bytes in `load`, dpr 1: light 1 659 778 -> 537 502 (-68 %), night 1 470 374 -> 402 537 (-73 %); dpr 2 light 5 546 414 -> 1 656 961, night 4 871 717 -> 1 143 788. Files on disk at level 3: light 4.1 MB -> 1.23 MB, night 3.6 MB -> 0.83 MB (WebP quality 97: 90 passed no screenshot diff, mean 0.545 % over the 0.5 % threshold). Texture is the tiles' base, so all tiles were re-rendered; screenshot diff now light-still 0.448 %, night-still 0.391 % mean (passes; the difference is lossy paper grain). Idle/pan GPU unchanged within noise (light-still 17-19 %, pan 20-22 %), as H3 predicted: the paper was never a GPU cost. Layer tree: the `.world` layer is 4608x3584 (16.5 Mpx) instead of 204800^2 (41 943 Mpx, a nominal size, tiled lazily).
+Texture bytes in `load`, dpr 1: light 1 659 778 -> 537 502 (-68 %), night 1 470 374 -> 402 537 (-73 %); dpr 2 light 5 546 414 -> 1 656 961, night 4 871 717 -> 1 143 788. Files on disk at level 3: light 4.1 MB -> 1.23 MB, night 3.6 MB -> 0.83 MB (WebP quality 97; quality 90 failed the screenshot diff, mean 0.545 % over the 0.5 % threshold). The texture is the tiles' base, so all tiles were re-rendered; screenshot diff now light-still 0.448 %, night-still 0.391 % mean (passes; the difference is lossy paper grain). Idle/pan GPU unchanged within noise (light-still 17-19 %, pan 20-22 %), as H3 predicted: the paper was never a GPU cost. The `.world` layer is 4608x3584 (16.5 Mpx) instead of a nominal 204 800^2.
 
-A caution for later measurements: stopping the dev server's view of the artifacts (for example `git stash` while `tsx watch` runs the API) makes it serve a release whose tiles are missing, and an empty map idles at 4.6 % GPU. A number that low is a broken run.
+Caution for measurements: a `git stash` while `tsx watch` runs the API makes it serve a release with missing tiles, and a map without content idled at 4.6 % GPU. A number that low is a broken run, not a win.
+
+### Composite note (night-still, before 2.2 commit unless stated; one-off CSS injections, single 8 s runs, +-1.5 points noise)
+
+Layer tree (CDP LayerTree, dpr 1, night-still): before 52 layers, 42 003 Mpx total, of which one 204 800 x 204 800 `.world` layer (WillChangeTransform, nominal, lazily tiled), 3 star layers and 2 world-sized SVG layers of 3200x3264 (10.4 Mpx each, reasons Overlap / ActiveOpacityAnimation). After 2.2 and the star/fire removal (night-still 18 layers, 45.3 Mpx; light-still): 15 layers, 45.3 Mpx (`.world` 4608x3584 = 16.5 Mpx, 2 world-sized SVG layers 10.4 Mpx each, 4 viewport-sized scroll/overlap layers 1.3 Mpx, the rest tiny). dpr 2: 50 layers before, same shape. Tile `<img>`s and the preview are NOT own layers.
+
+Ranking of what the per-frame composite costs, night-still idle GPU:
+1. Any running animation: everything animating off and an invisible 4 px compositor animation instead = 10.3 %; nothing animating = 1.8 %. The scene floor is about 10 % before any content matters (blank page with the same animation: 4.3 %).
+2. Main-thread painted animations (the down pulse, `r` and opacity of a circle in each diamond pin; the marching dashes): with all `.fx` hidden and the pulse still running 16.5 %; hiding only the pins' pulse as well 1.8 %. So these two cost about 14 points on their own and are the budget problem, not the layer tree.
+3. The world-sized SVG layers (`Live`, `Labels`): about 3 points (floor test with them hidden 10.0 vs 10.3-8.7 depending on what else is hidden; noisy).
+4. Tiles and stacked levels: 1-3 points (hiding every tile 17.3 vs 17.5-18.1).
+5. Paper (any form), preview, `will-change` on `.world`, `contain` on the SVGs or on tiles: no effect beyond noise (all within 1.5 points).
+Stars twinkle (3 layers), campfires: about 0-2 points each, removed by decision.
+
+Conclusion: no layer-structure change reduces idle GPU measurably, so none was made. The remaining lever is the painted animations: the pulse and the march run on the main thread (60 paints/s each, 1800 per 10 s) and force a full main frame, raster and composite each time. Making the pulse compositor-only would change its look (a scaled ring has a growing stroke), which was ruled out; needs an owner decision (task 2.8 territory).
