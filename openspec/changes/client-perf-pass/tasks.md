@@ -24,8 +24,8 @@ Do these in the order 1.3 ranks them. After each: `pnpm perf`, screenshot diff u
 
 ## 3. Check the budget
 
-- [ ] 3.1 Full `pnpm perf` on the final code against the spec budgets (idle GPU < 10%, pan ≥ 55 fps, pan-4x ≥ 50 fps). Verify: results.md has a final block meeting every budget, or names the one that misses and why.
-- [ ] 3.2 Compare `?still=1` light and night by eye against the v4.2 previews. Verify: no visible difference beyond animation phase; `pnpm test` and `pnpm lint` pass.
+- [x] 3.1 Full `pnpm perf` on the final code against the spec budgets (idle GPU < 10%, pan ≥ 55 fps, pan-4x ≥ 50 fps). Verify: results.md has a final block meeting every budget, or names the one that misses and why. (done: idle design-scene budget misses, see results.md "3.1 verdict")
+- [x] 3.2 Compare `?still=1` light and night by eye against the v4.2 previews. Verify: no visible difference beyond animation phase; `pnpm test` and `pnpm lint` pass.
 
 ## Workflow follow-up
 
