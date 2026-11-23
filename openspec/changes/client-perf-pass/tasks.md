@@ -20,7 +20,7 @@ Do these in the order 1.3 ranks them. After each: `pnpm perf`, screenshot diff u
 - [ ] 2.6 Lazy chunks for Boring, Panels, Popover (D7). Verify: main chunk smaller in `vite build`; `?style=boring`, `?panel=links` and `?select=copperleaf-site` still work.
   - reverted: main chunk only 2.3 kB gzip smaller (180.5 → 178.2 kB), no load-time change; not worth the lazy/Suspense/preload code. react-dom and @xyflow are the bulk and needed for first paint.
 - [ ] 2.8 Pin layer during pan (H8, found in the baseline: hiding pins cut pan GPU 13.4% → 4.4%). Profile what the pins repaint per pan frame (rough.js SVGs, chip box-shadows, `.pin svg` scale via `--pin-k`, the `.pulse` inside each pin) and fix it without changing the look, e.g. pulse on its own layer, chip shadow cached on a composited layer, pins promoted so pan only moves them. Verify: pan GPU and paints drop, screenshot diff under threshold, numbers logged.
-- [ ] 2.7 Hidden tab and reduced motion (D8). Verify: hidden 5 s → no animation frames; DevTools "prefers-reduced-motion: reduce" → nothing animates.
+- [x] 2.7 Hidden tab and reduced motion (D8). Verify: hidden 5 s → no animation frames; DevTools "prefers-reduced-motion: reduce" → nothing animates.
 
 ## 3. Check the budget
 
