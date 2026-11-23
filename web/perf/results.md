@@ -572,3 +572,39 @@ commit 2006f67 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · hea
 {"scenario":"light-still","zoom":0.340909,"loadMs":208,"bytes":{"total":3540733,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":12.7,"fps":59.9,"frames":600,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":110,"layout":0,"script":30,"paint":30,"decode":0,"decodeAllThreads":0}}
 {"scenario":"night-still","zoom":0.340909,"loadMs":211,"bytes":{"total":3217532,"texture":402537,"tiles":2402094,"js":214529},"gpuPct":13.5,"fps":60.1,"frames":601,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":142,"layout":0,"script":29,"paint":27,"decode":0,"decodeAllThreads":0}}
 ```
+
+## 2026-11-23 step-all-1
+
+commit 8e8c49e (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"night","zoom":0.340909,"loadMs":212,"bytes":{"total":3217536,"texture":402537,"tiles":2402094,"js":214536},"gpuPct":7.9,"fps":60,"frames":600,"timers":2,"paints":304,"paintAreaMpx":109356.62,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":94,"layout":1,"script":32,"paint":35,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":202,"bytes":{"total":3540737,"texture":537502,"tiles":2589958,"js":214536},"gpuPct":7.7,"fps":60,"frames":601,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":81,"layout":0,"script":28,"paint":36,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":210,"bytes":{"total":3217536,"texture":402537,"tiles":2402094,"js":214536},"gpuPct":8,"fps":60,"frames":600,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":94,"layout":0,"script":28,"paint":36,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 step-all-2
+
+commit 8e8c49e (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"night","zoom":0.340909,"loadMs":214,"bytes":{"total":3217536,"texture":402537,"tiles":2402094,"js":214536},"gpuPct":7.5,"fps":60,"frames":600,"timers":0,"paints":302,"paintAreaMpx":109354.02,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":93,"layout":0,"script":27,"paint":36,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":203,"bytes":{"total":3540737,"texture":537502,"tiles":2589958,"js":214536},"gpuPct":7.8,"fps":60.1,"frames":601,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":79,"layout":0,"script":26,"paint":35,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":204,"bytes":{"total":3217536,"texture":402537,"tiles":2402094,"js":214536},"gpuPct":9.8,"fps":60,"frames":601,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":91,"layout":0,"script":27,"paint":35,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 step-all-3
+
+commit 8e8c49e (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"night","zoom":0.340909,"loadMs":211,"bytes":{"total":3217536,"texture":402537,"tiles":2402094,"js":214536},"gpuPct":10,"fps":60.1,"frames":601,"timers":2,"paints":304,"paintAreaMpx":109356.62,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":91,"layout":1,"script":29,"paint":37,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":201,"bytes":{"total":3540737,"texture":537502,"tiles":2589958,"js":214536},"gpuPct":7.9,"fps":60,"frames":600,"timers":0,"paints":300,"paintAreaMpx":108629.82,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":81,"layout":0,"script":27,"paint":37,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":207,"bytes":{"total":3223284,"texture":402537,"tiles":2402094,"js":214536},"gpuPct":9.6,"fps":60,"frames":600,"timers":0,"paints":298,"paintAreaMpx":107905.63,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":89,"layout":0,"script":27,"paint":36,"decode":0,"decodeAllThreads":0}}
+```
+
+### 2.1 close-out: stepped animations (step-all-1..3)
+
+The owner OK'd a lower animation rate (a hand-animated, old-map feel): march 15/s, down pulse 12/s, lantern 15/s. A trace shows the compositor draws only when a value changes, so each step rate sets the frame count. Over 3 runs: light-still 7.7–7.9 %, night-still 8.0–9.8 % (mean 9.1), night 7.5–10.0 %, all with 30 paints/s. The idle budget now passes, with little headroom at night. Screenshot diffs pass.
+
+Layer audit (`?still=1`, 39 layers, 47.5 Mpx): the largest are the whole-map preview `img` (16.5 Mpx, `will-change: transform`) and two world-sized `svg.live` layers (stars/lights and labels, about 10.4 Mpx each, composited for overlap). The compositor draws only the visible part of each, and none of them repaints while idle. Not changed.

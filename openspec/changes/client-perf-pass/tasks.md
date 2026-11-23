@@ -11,7 +11,7 @@
 
 Do these in the order 1.3 ranks them. After each: `pnpm perf`, screenshot diff under threshold, numbers logged with the task id.
 
-- [ ] 2.1 Animations on own compositor layers (D2): stars, fires, down pulse, wash on wrappers with opacity/transform animations; lantern via WAAPI over pre-sampled points; flowing roads in road-sized wrappers; wash mounted only when down. Verify: `night-still` trace shows no paints from stars/fires/lanterns and only road-bbox paints from marching dashes; every animation still visible and unchanged by eye.
+- [x] 2.1 Animations on own compositor layers (D2): stars, fires, down pulse, wash on wrappers with opacity/transform animations; lantern via WAAPI over pre-sampled points; flowing roads in road-sized wrappers; wash mounted only when down. Verify: `night-still` trace shows no paints from stars/fires/lanterns and only road-bbox paints from marching dashes; every animation still visible and unchanged by eye. (done: march 15/s, pulse 12/s, lantern 15/s with the owner's OK; idle design scene 7.7–9.8 %, see results.md "2.1 close-out")
 - [x] 2.2 Paper texture viewport-sized and served as WebP (D3), including the `apply.ts` change. Verify: no seams while panning; texture bytes drop in the `load` scenario; `pnpm test` passes.
 - [x] 2.3 Imperative viewport transform (D4) for `.world`, the background and `Anchored`. Verify: React DevTools profiler shows no `WorldLayer` render per pan frame; tiles and pins stay aligned at rest after pan and zoom.
 - [ ] 2.4 Zoom-stepped labels and LOD variables on the viewport element (D5). Verify: `zoom` scenario long tasks and style-recalc time drop; labels end at the exact size after zoom.
