@@ -75,7 +75,7 @@ function plots(es: Estate[], t: Theme, gates: Gate[]): { soft: string; crisp: st
   return { soft: night(land), crisp: night(drops + ponds + roads + flora + blds) }
 }
 
-// Static night lights (street lamps). Lit windows, campfires and lanterns depend on status and stay live.
+// Static night lights (street lamps). Lit windows and lanterns depend on status and stay live.
 const lamp = (x: number, y: number, r: number, dot: number) => circle(x, y, r, 'url(#lampG)') + circle(x, y, dot, '#FFF1C8')
 
 type Parts = { defs: string; body: string }
@@ -138,19 +138,9 @@ export const estateGrainSvg = (e: Estate, scale: number) => { // the same in bot
   return doc(v, scale, `<defs>${pinRegions(aqGrain(e), v)}</defs>${rectAt(v, `fill="#fff" filter="url(#aqm_${e.id})"`)}`)
 }
 
-// Live night extras. Fires flicker through CSS classes; stars twinkle. Stars are keyed on a fixed 360-unit lattice,
+// Live night extras: static stars. Stars are keyed on a fixed 360-unit lattice,
 // so they do not move when the world grows.
-export const campfireParts = ([x, y]: [number, number]): { cls: string; box: [number, number, number, number]; svg: string }[] => {
-  const g = (inner: string) => `<g transform="translate(${x} ${y})">${inner}</g>`
-  // Boxes are the exact geometry boxes of each shape (what `transform-box: fill-box` used), so the flicker keeps its bottom-centre origin.
-  return [
-    { cls: 'fireglow', box: [x - 38, y - 38, 76, 76], svg: g('<circle r="38" fill="url(#fireG)"/>') },
-    { cls: '', box: [x - 7, y + 1, 14, 4], svg: g('<path d="M-7 5 L7 1 M-7 1 L7 5" stroke="#5A3A24" stroke-width="2.4" stroke-linecap="round"/>') },
-    { cls: 'flame', box: [x - 3.0455, y - 12, 6.5978, 14.3923], svg: g('<path d="M0 2 C-5 -2 -3 -7 0 -12 C1 -7 5 -5 3 0 C2 2 1 3 0 2 Z" fill="#FFB347"/>') },
-    { cls: 'flame', box: [x - 1.1547, y - 7, 2.5689, 8], svg: g('<path d="M0 1 C-2 -2 -1 -5 0 -7 C1 -5 2 -3 1 0 Z" fill="#FFE59A"/>') },
-  ]
-}
-export function twinkleSvg(w: World): [string, string, string] { // one group per twinkle class, so each class is one layer (per-star layers measured no cheaper)
+export function twinkleSvg(w: World): [string, string, string] { // three groups, kept as before
   const S = 360, b = w.bounds
   const out = ['', '', '']
   for (let i = Math.floor(b.x / S); i < Math.ceil((b.x + b.w) / S); i++) for (let j = Math.floor(b.y / S); j < Math.ceil((b.y + b.h) / S); j++) {

@@ -3,11 +3,11 @@ import { useViewport } from '@xyflow/react'
 import { useEngine } from '../mock/engine'
 import { edges } from '../mock/data'
 import type { Scheme } from '../prefs'
-import { DEFS, campfireParts, twinkleSvg } from '../gen/render'
+import { DEFS, twinkleSvg } from '../gen/render'
 import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
 import { TileLayer } from './TileLayer'
-import { Fx, Lantern, March, Wash } from './Fx'
+import { Lantern, March, Wash } from './Fx'
 
 // The baked world (server tiles) sits under React Flow and follows its viewport transform. On top of it,
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
@@ -35,13 +35,12 @@ const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: S
     <>
       {/* one hidden copy of the defs for every live svg below to reference */}
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs dangerouslySetInnerHTML={{ __html: DEFS[scheme] }} /></svg>
-      {/* each animation is its own layer in world coordinates; same stacking order as before: stars, wash, windows, fires, lanterns, dashes */}
-      {night && stars.map((html, i) => <Fx key={'s' + i} box={[b.x, b.y, b.w, b.h]} className={`tw${i + 1}`} html={html} />)}
+      {/* each animation is its own layer in world coordinates; same stacking order as before: wash, stars and windows, lanterns, dashes */}
       {blds.map((bl) => <Wash key={bl.id} x={bl.x} y={bl.y} down={status[bl.id]?.status === 'down'} />)}
       <svg className="live" style={at} viewBox={`${b.x} ${b.y} ${b.w} ${b.h}`} aria-hidden="true">
+        {night && stars.map((html, i) => <g key={'s' + i} dangerouslySetInnerHTML={{ __html: html }} />)}
         {night && blds.map((bl) => <g key={'l' + bl.id} dangerouslySetInnerHTML={{ __html: lightsSvg(bl, status[bl.id]?.status !== 'down') }} />)}
       </svg>
-      {night && world.estates.flatMap((e) => campfireParts(e.campfire).map((p, i) => <Fx key={`f${e.id}${i}`} box={p.box} className={p.cls} html={p.svg} />))}
       {edges.map((e) => roads[e.id] && flows[e.id] === 'deploy' && night && <Lantern key={'l' + e.id} d={roads[e.id].d} />)}
       {edges.map((e) => roads[e.id] && flows[e.id] && <March key={e.id} d={roads[e.id].d} />)}
     </>
