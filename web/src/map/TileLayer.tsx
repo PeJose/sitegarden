@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import type { Scheme } from '../prefs'
 import type { TileView } from '../lib/view'
 import type { WorldData } from '../world'
+import { nameAt as tileName, srcOf, wantOf, type Tile } from './tiles'
 
-interface Tile { z: number; x: number; y: number; src: string }
 const keyOf = (t: Tile) => `${t.z}/${t.x}/${t.y}/${t.src}` // identical paper tiles share one file, so the file name alone is not a position
 const KEEP = 48 // decoded tiles kept mounted after they scroll out of view
 
@@ -15,19 +15,11 @@ export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: S
   const reported = useRef(false)
   const { tiles } = world
   const T = tiles.size
-  const { level, c0, c1, r0, r1 } = view // level 0 is the preview's source, never fetched
-  const nameAt = (theme: Scheme, z: number, x: number, y: number) => (x >= tiles.x0 && y >= tiles.y0 && x < tiles.x0 + tiles.cols && y < tiles.y0 + tiles.rows ? tiles.names[theme][z]?.[(y - tiles.y0) * tiles.cols + (x - tiles.x0)] : null)
-  const srcOf = (name: string) => `/a/${name}`
+  const { level } = view // level 0 is the preview's source, never fetched
+  const nameAt = (theme: Scheme, z: number, x: number, y: number) => tileName(tiles, theme, z, x, y)
 
   const m = T / 2, [rx0, ry0, rx1, ry1] = view.rect
-  const want: Tile[] = [], missing: [number, number, number][] = []
-  for (const z of level > 1 ? [1, level] : [1]) {
-    for (let y = r0; y <= r1; y++) for (let x = c0; x <= c1; x++) {
-      const n = nameAt(scheme, z, x, y)
-      if (n) want.push({ z, x, y, src: srcOf(n) })
-      else if (n === null) missing.push([z, x, y]) // in the grid, not rendered yet
-    }
-  }
+  const { want, missing } = wantOf(world, scheme, view)
   for (const t of want) { lru.current.delete(keyOf(t)); lru.current.set(keyOf(t), t) }
   const wanted = new Set(want.map(keyOf))
   for (const k of lru.current.keys()) if (lru.current.size > KEEP && !wanted.has(k)) lru.current.delete(k)
