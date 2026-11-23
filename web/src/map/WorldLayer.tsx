@@ -1,5 +1,5 @@
 import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useReactFlowStoreApi } from '@xyflow/react'
+import { useViewportStore, useReactFlowStoreApi } from '@xyflow/react'
 import { useEngine } from '../mock/engine'
 import { edges } from '../mock/data'
 import type { Scheme } from '../prefs'
@@ -8,7 +8,6 @@ import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
 import { viewOf, type TileView } from '../lib/view'
 import { TileLayer } from './TileLayer'
-import { followZoom } from './lod'
 import { Lantern, March, Wash } from './Fx'
 
 // The baked world (server tiles) sits under React Flow and follows its viewport transform. On top of it,
@@ -74,23 +73,17 @@ const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: S
 
 // Estate names and path labels follow the viewport: their on-screen size stays between a minimum and a maximum. Estate names always show; path labels fade out when zoomed so far out they would only overlap.
 function Labels({ world }: { world: WorldData }) {
-  const store = useReactFlowStoreApi().viewportStore
-  const est = useRef<SVGGElement>(null), road = useRef<SVGGElement>(null)
-  // Sizes are set on the two groups from the stepped zoom (see lod.ts), so zoom frames do not render React or relayout every textPath.
-  useLayoutEffect(() => followZoom(store, (zoom) => {
-    const px = (natural: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, natural * zoom)) / zoom
-    const fr = Math.min(px(11.5, 9.5, 13.5), 11.5 * 1.35) /* never wider than the room the generator reserved */, fe = px(13, 11, 17)
-    Object.assign(est.current!.style, { fontSize: `${fe}px`, letterSpacing: `${fe * 0.2}px`, strokeWidth: `${fe / 3}px` })
-    Object.assign(road.current!.style, { opacity: `${Math.min(1, Math.max(0, (11.5 * zoom - 7) / 2))}`, fontSize: `${fr}px`, letterSpacing: `${fr * 0.09}px`, strokeWidth: `${fr * 0.27}px` })
-  }), [store])
+  const zoom = useViewportStore((s) => s.transform[2]) // task 2.4 steps this
   const { bounds: b } = world
+  const px = (natural: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, natural * zoom)) / zoom
+  const fr = Math.min(px(11.5, 9.5, 13.5), 11.5 * 1.35) /* never wider than the room the generator reserved */, fe = px(13, 11, 17)
   const roads = world.estates.flatMap((e) => e.roads)
   return (
     <svg className="live" style={{ left: b.x, top: b.y, width: b.w, height: b.h }} viewBox={`${b.x} ${b.y} ${b.w} ${b.h}`} aria-hidden="true">
       <defs>{roads.map((r) => <path key={r.id} id={`rl-${r.id}`} d={r.labelPath} />)}</defs>
-      <g className="est-labels" ref={est}>{world.estates.map((e) => <text key={e.id} x={e.tag.x} y={e.tag.y}>{e.tag.text}</text>)}</g>
-      <g className="road-labels" ref={road}>
-        {roads.map((r) => <text key={r.id} dy="0.35em"><textPath href={`#rl-${r.id}`} startOffset={`${r.labelAt * 100}%`} textAnchor="middle">{r.label}</textPath></text>)}
+      <g className="est-labels" style={{ fontSize: fe, letterSpacing: fe * 0.2, strokeWidth: fe / 3 }}>{world.estates.map((e) => <text key={e.id} x={e.tag.x} y={e.tag.y}>{e.tag.text}</text>)}</g>
+      <g className="road-labels" style={{ opacity: Math.min(1, Math.max(0, (11.5 * zoom - 7) / 2)), fontSize: fr, letterSpacing: fr * 0.09, strokeWidth: fr * 0.27 }}>
+        {roads.map((r) => <text key={r.id} dy={fr * 0.35}><textPath href={`#rl-${r.id}`} startOffset={`${r.labelAt * 100}%`} textAnchor="middle">{r.label}</textPath></text>)}
       </g>
     </svg>
   )
