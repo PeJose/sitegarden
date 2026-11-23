@@ -49,6 +49,7 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
 .wash-fade { transition: opacity 1.4s ease; }
 .est-labels { font: 600 15px Outfit, sans-serif; fill: var(--est); stroke: var(--est-halo); paint-order: stroke; stroke-linejoin: round; }
 .road-labels { font: 500 13px 'JetBrains Mono', monospace; fill: var(--road); stroke: var(--road-halo); stroke-linejoin: round; paint-order: stroke; }
+.react-flow__viewport { will-change: transform; } /* pins and chips become one composited layer that pan only moves (task 2.8) */
 .react-flow__node { cursor: pointer; }
 .pin { position: relative; width: 34px; height: 34px; }
 .pin svg { transform: scale(calc(.88 * var(--pin-k, 1))); } /* pins keep a minimum on-screen size when zoomed out */
