@@ -172,3 +172,35 @@ Ranking of what the per-frame composite costs, night-still idle GPU:
 Stars twinkle (3 layers), campfires: about 0-2 points each, removed by decision.
 
 Conclusion: no layer-structure change reduces idle GPU measurably, so none was made. The remaining lever is the painted animations: the pulse and the march run on the main thread (60 paints/s each, 1800 per 10 s) and force a full main frame, raster and composite each time. Making the pulse compositor-only would change its look (a scaled ring has a growing stroke), which was ruled out; needs an owner decision (task 2.8 territory).
+
+## 2026-11-23 pulse
+
+commit bef9b5e (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":209,"bytes":{"total":3539793,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":19.9,"fps":59.9,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":143,"layout":0,"script":28,"paint":124,"decode":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":203,"bytes":{"total":3216592,"texture":402537,"tiles":2402094,"js":213642},"gpuPct":19.3,"fps":60,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":171,"layout":0,"script":28,"paint":125,"decode":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":199,"bytes":{"total":3539793,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":19.7,"fps":60,"paints":1200,"paintAreaMpx":434519.3,"maxPaintMpx":722.9,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":140,"layout":0,"script":28,"paint":130,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":207,"bytes":{"total":3216594,"texture":402537,"tiles":2402094,"js":213642},"gpuPct":21.3,"fps":60,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":195,"layout":0,"script":30,"paint":121,"decode":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":197,"bytes":{"total":3540520,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":19.7,"fps":60.1,"paints":666,"paintAreaMpx":1689121114.7,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":22,"layout":2,"script":204,"paint":16,"decode":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":203,"bytes":{"total":3539795,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":19.3,"fps":58.9,"paints":1841,"paintAreaMpx":270779002112.21,"maxPaintMpx":281474943.16,"longTasks":1,"longTaskMs":60,"maxLongTask":60,"ms":{"style":55,"layout":36,"script":71,"paint":23,"decode":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":201,"bytes":{"total":3539793,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":11.8,"fps":59.7,"paints":668,"paintAreaMpx":1689121838.87,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":63,"layout":4,"script":525,"paint":55,"decode":0}}
+```
+
+## 2026-11-23 pulse-dpr2
+
+commit bef9b5e (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":206,"bytes":{"total":11152334,"texture":1656961,"tiles":9083040,"js":213642},"gpuPct":15.9,"fps":60,"paints":1203,"paintAreaMpx":1524889.98,"maxPaintMpx":2535.96,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":109,"layout":0,"script":25,"paint":127,"decode":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":211,"bytes":{"total":10003014,"texture":1143788,"tiles":8447265,"js":213642},"gpuPct":18.7,"fps":60,"paints":1202,"paintAreaMpx":1524888.69,"maxPaintMpx":2535.96,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":168,"layout":0,"script":25,"paint":122,"decode":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":212,"bytes":{"total":11152336,"texture":1656961,"tiles":9083040,"js":213642},"gpuPct":16.4,"fps":60.1,"paints":1202,"paintAreaMpx":1524888.69,"maxPaintMpx":2535.96,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":121,"layout":0,"script":23,"paint":133,"decode":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":214,"bytes":{"total":10003016,"texture":1143788,"tiles":8447265,"js":213642},"gpuPct":16.7,"fps":60.1,"paints":1202,"paintAreaMpx":1524888.69,"maxPaintMpx":2535.96,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":163,"layout":0,"script":23,"paint":115,"decode":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":212,"bytes":{"total":11152336,"texture":1656961,"tiles":9083040,"js":213642},"gpuPct":16.4,"fps":60.1,"paints":758,"paintAreaMpx":1690031781.33,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":21,"layout":2,"script":198,"paint":17,"decode":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":216,"bytes":{"total":11152334,"texture":1656961,"tiles":9083040,"js":213642},"gpuPct":18.1,"fps":58.2,"paints":2575,"paintAreaMpx":491455925191.67,"maxPaintMpx":281474943.16,"longTasks":1,"longTaskMs":76,"maxLongTask":76,"ms":{"style":77,"layout":47,"script":74,"paint":27,"decode":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":206,"bytes":{"total":11152334,"texture":1656961,"tiles":9083040,"js":213642},"gpuPct":11.8,"fps":59.7,"paints":758,"paintAreaMpx":1690031781.23,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"ms":{"style":66,"layout":4,"script":606,"paint":53,"decode":0}}
+```
+
+### pulse note (down pulse as compositor-only scale animation; blocks "pulse" and "pulse-dpr2")
+
+Ring drawn once at r 38 in a wrapper, wrapper animated with `transform: scale(17/38 -> 1)` and opacity (look checked frame by frame against HEAD at dpr 2: same position, size and colour; the stroke now grows from 1.1 to 2 px). Idle GPU dpr 1: light-still 19.6 -> 19.7 %, night-still 21.2 -> 21.3 %; dpr 2: light-still 18.2 -> 16.4 %, night-still 22.9 -> 16.7 %. Paints per 10 s: 1800 -> 1200 (the pulse no longer paints; the remaining 1200 are the other main-thread animations, the dash march). Screenshot diff passes (light-still 0.488 %, night-still 0.425 %). So the pulse alone is not what holds idle GPU up while the march still runs; the march is the next lever.
