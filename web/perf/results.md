@@ -326,3 +326,107 @@ Screenshot diff passes (light-still 0.488 %, night-still 0.425 %, unchanged). Af
 | zoom-4x | with 2.4 | 120 116 143 (120) | 115 114 128 (115) | 174 180 201 (180) | 409 410 472 (410) | 0 0 1 | 50 50 67 | 4 3 5 |
 
 At 4x the sum drops 10 % (457 -> 410 ms), below the 15 % bar and inside the run spread (with: 409 to 472, without: 450 to 476). Style recalc drops by about a third, but layout and scripting grow by the same amount, and long tasks, maxFrameMs and slowFrames do not move. Not worth the extra code (`lod.ts`, stepped timers), so 2.4 is reverted and left unticked; the zoom long task is tile mounting, handled by 2.5.
+
+## 2026-11-23 2.5-before-dpr1
+
+commit f731a6d · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":208,"bytes":{"total":3540187,"texture":537502,"tiles":2589958,"js":214036},"gpuPct":22.8,"fps":58.6,"paints":1695,"paintAreaMpx":329607241313.56,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":41,"tileReqsOff":10,"ms":{"style":39,"layout":33,"script":41,"paint":16,"decode":0,"decodeAllThreads":325}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":204,"bytes":{"total":3540187,"texture":537502,"tiles":2589958,"js":214036},"gpuPct":19.8,"fps":59.9,"paints":682,"paintAreaMpx":22256.95,"maxPaintMpx":63.31,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"tileReqsOff":0,"ms":{"style":37,"layout":47,"script":67,"paint":32,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 2.5-before-dpr2
+
+commit f731a6d · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":221,"bytes":{"total":11152728,"texture":1656961,"tiles":9083040,"js":214036},"gpuPct":15.7,"fps":55.8,"paints":1390,"paintAreaMpx":277815981067.14,"maxPaintMpx":281474943.16,"maxFrameMs":67,"slowFrames":3,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":26,"tileReqsOff":4,"ms":{"style":40,"layout":30,"script":37,"paint":17,"decode":0,"decodeAllThreads":363}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":211,"bytes":{"total":11152729,"texture":1656961,"tiles":9083040,"js":214036},"gpuPct":19.8,"fps":59.8,"paints":686,"paintAreaMpx":77452.86,"maxPaintMpx":221.97,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":1,"tileReqsOff":0,"ms":{"style":37,"layout":38,"script":72,"paint":32,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 2.5a
+
+commit f731a6d (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":207,"bytes":{"total":3540580,"texture":537502,"tiles":2589958,"js":214429},"gpuPct":18.8,"fps":58.4,"paints":1505,"paintAreaMpx":329607203375.07,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":15,"tileReqsOff":0,"ms":{"style":37,"layout":34,"script":38,"paint":15,"decode":0,"decodeAllThreads":220}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":203,"bytes":{"total":3540580,"texture":537502,"tiles":2589958,"js":214429},"gpuPct":20.3,"fps":60,"paints":669,"paintAreaMpx":21025.56,"maxPaintMpx":63.31,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"tileReqsOff":0,"ms":{"style":42,"layout":49,"script":67,"paint":34,"decode":0,"decodeAllThreads":45}}
+```
+
+## 2026-11-23 2.5a-dpr1
+
+commit f731a6d (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":212,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":19,"fps":60,"paints":1510,"paintAreaMpx":329607204200.17,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":15,"tileReqsOff":0,"ms":{"style":40,"layout":34,"script":38,"paint":17,"decode":0,"decodeAllThreads":215}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":207,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":19.4,"fps":59.9,"paints":670,"paintAreaMpx":21076.67,"maxPaintMpx":63.28,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"tileReqsOff":0,"ms":{"style":35,"layout":39,"script":68,"paint":30,"decode":0,"decodeAllThreads":41}}
+```
+
+## 2026-11-23 2.5a-dpr2
+
+commit f731a6d (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":209,"bytes":{"total":11153143,"texture":1656961,"tiles":9083040,"js":214451},"gpuPct":16.2,"fps":59.2,"paints":1457,"paintAreaMpx":316659460877.24,"maxPaintMpx":281474943.16,"maxFrameMs":33,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":13,"tileReqsOff":0,"ms":{"style":44,"layout":34,"script":39,"paint":17,"decode":0,"decodeAllThreads":238}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":212,"bytes":{"total":11153143,"texture":1656961,"tiles":9083040,"js":214451},"gpuPct":20.1,"fps":59.8,"paints":668,"paintAreaMpx":72877.72,"maxPaintMpx":222.15,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":1,"tileReqsOff":0,"ms":{"style":36,"layout":49,"script":68,"paint":32,"decode":0,"decodeAllThreads":37}}
+```
+
+## 2026-11-23 2.5b-fly
+
+commit 7a1a541 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":216,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":18.5,"fps":59.4,"paints":1466,"paintAreaMpx":316659356667.16,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":15,"tileReqsOff":0,"ms":{"style":39,"layout":35,"script":39,"paint":16,"decode":0,"decodeAllThreads":215}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":208,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":20.6,"fps":60,"paints":672,"paintAreaMpx":21127.24,"maxPaintMpx":63.28,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"tileReqsOff":0,"ms":{"style":38,"layout":40,"script":72,"paint":33,"decode":0,"decodeAllThreads":52}}
+```
+
+## 2026-11-23 2.5b-fly
+
+commit 7a1a541 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":205,"bytes":{"total":3540603,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":18.7,"fps":59.9,"paints":1508,"paintAreaMpx":329607203596.51,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":15,"tileReqsOff":0,"ms":{"style":40,"layout":34,"script":40,"paint":16,"decode":0,"decodeAllThreads":215}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":201,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":20.6,"fps":59.8,"paints":672,"paintAreaMpx":21126.15,"maxPaintMpx":63.28,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"tileReqsOff":0,"ms":{"style":41,"layout":36,"script":70,"paint":35,"decode":0,"decodeAllThreads":46}}
+```
+
+## 2026-11-23 2.5b
+
+commit 7a1a541 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.340909,"loadMs":208,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":20,"fps":60,"paints":1201,"paintAreaMpx":434520.59,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":157,"layout":1,"script":36,"paint":131,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night","zoom":0.340909,"loadMs":198,"bytes":{"total":3217401,"texture":402537,"tiles":2402094,"js":214451},"gpuPct":20.3,"fps":59.9,"paints":1203,"paintAreaMpx":435244.79,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":214,"layout":1,"script":39,"paint":132,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.340909,"loadMs":203,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":20.1,"fps":60,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":152,"layout":0,"script":33,"paint":126,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":209,"bytes":{"total":3217401,"texture":402537,"tiles":2402094,"js":214451},"gpuPct":20.4,"fps":60,"paints":1200,"paintAreaMpx":434519.3,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":221,"layout":0,"script":40,"paint":126,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.340909,"loadMs":199,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":22.1,"fps":59.6,"paints":609,"paintAreaMpx":1689077744.47,"maxPaintMpx":281474943.16,"maxFrameMs":33,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":29,"layout":2,"script":71,"paint":21,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.340909,"loadMs":205,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":19.7,"fps":59,"paints":1846,"paintAreaMpx":270779002385.68,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":2,"longTasks":1,"longTaskMs":60,"maxLongTask":60,"tileReqs":39,"tileReqsOff":39,"ms":{"style":58,"layout":33,"script":67,"paint":23,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.340909,"loadMs":200,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":12,"fps":60,"paints":605,"paintAreaMpx":1689076295.96,"maxPaintMpx":281474943.16,"maxFrameMs":33,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":56,"layout":3,"script":156,"paint":52,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.340909,"loadMs":205,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":15.5,"fps":58.3,"paints":2032,"paintAreaMpx":309622581974.38,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":4,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":39,"tileReqsOff":39,"ms":{"style":158,"layout":106,"script":179,"paint":78,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 2.5b-dpr2
+
+commit 7a1a541 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":211,"bytes":{"total":11153143,"texture":1656961,"tiles":9083040,"js":214451},"gpuPct":16.5,"fps":59.7,"paints":1512,"paintAreaMpx":329607319413.63,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":13,"tileReqsOff":0,"ms":{"style":44,"layout":35,"script":40,"paint":17,"decode":0,"decodeAllThreads":242}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":211,"bytes":{"total":11153143,"texture":1656961,"tiles":9083040,"js":214451},"gpuPct":20.3,"fps":59.8,"paints":672,"paintAreaMpx":73229.26,"maxPaintMpx":222.1,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":1,"tileReqsOff":0,"ms":{"style":40,"layout":44,"script":71,"paint":34,"decode":0,"decodeAllThreads":53}}
+```
+
+### 2.5 note (destination-only fly-to; blocks "2.5-before-dpr1/2" = before, "2.5a*", "2.5b*" = after; "2.5-before-dpr1" is the first 2.5-before-dpr1 block labelled 2.5-before-dpr1)
+
+`flyTo` computes the target viewport, preloads (`new Image()` + `decode()`, deduped and held in a 96-entry map) the target view's tiles (level 1 plus the target level) and the paper texture of that level, then starts the flight. `WorldLayer` ignores view changes while `flight.active`, so no in-between tile is mounted, requested or decoded; landing (`onMoveEnd`, or a 850 ms timer for a zero-length move) mounts the already decoded tiles. A user drag or wheel (`onMoveStart` with an event) ends the freeze at once. Hovering or focusing a sidebar row calls the same preload. The texture preload was needed: without it the level's larger paper texture decoded on landing and cost one 50 ms frame (a 74 ms `ImageDecodeTask` right at landing).
+
+| scenario | fps | long tasks | maxFrameMs | slowFrames | decode (all threads) ms | tile reqs | travel tile reqs (`tileReqsOff`) |
+|---|---|---|---|---|---|---|---|
+| fly dpr1 before | 58.6 | 0 | 50 | 1 | 325 | 41 | 10 |
+| fly dpr1 after (2 runs) | 59.4, 59.9 | 0, 0 | 17, 17 | 0, 0 | 215, ~215 | 15 | 0 |
+| fly-warm dpr1 before | 59.9 | 0 | 17 | 0 | 0 | 4 | 0 |
+| fly-warm dpr1 after (2 runs) | 60, 59.8 | 0, 0 | 17, 17 | 0, 0 | 41 to 52 | 4 | 0 |
+| fly dpr2 before | 55.8 | 0 | 67 | 3 | 363 | 26 | 4 |
+| fly dpr2 after | 59.7 | 0 | 17 | 0 | 238 | 13 | 0 |
+| fly-warm dpr2 before | 59.8 | 0 | 17 | 0 | 0 | 1 | 0 |
+| fly-warm dpr2 after | 59.8 | 0 | 17 | 0 | 53 | 1 | 0 |
+
+Main-thread `Decode*` is 0 before and after; the decode that remains runs on raster workers, now during the flight and off the main thread. An earlier dpr 2 run (2.5a-dpr2) showed one 33 ms frame at flight start (13 tile images and a texture decoding on workers at once); the final run had none, so it is within noise. Landing screenshot (flight to the last plot, 1.8 s after the click) compared with the previous build: mean diff 0.031 % at dpr 1 and 0.000 % at dpr 2, 0 % of values off by over 16; all 48 mounted tiles shown (opacity 1, complete). Interruption: a wheel 250 ms into a flight mounted tiles for the new position at once (requests at ~370 ms, not at 700 ms). After hovering a row for 1 s, 15 tile requests had been made; the click and flight afterwards made 0. Screenshot diff passes (light-still 0.488 %, night-still 0.425 %).
