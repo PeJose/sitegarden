@@ -414,7 +414,7 @@ commit 7a1a541 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 2 · headless ·
 {"scenario":"fly-warm","zoom":0.340909,"loadMs":211,"bytes":{"total":11153143,"texture":1656961,"tiles":9083040,"js":214451},"gpuPct":20.3,"fps":59.8,"paints":672,"paintAreaMpx":73229.26,"maxPaintMpx":222.1,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":1,"tileReqsOff":0,"ms":{"style":40,"layout":44,"script":71,"paint":34,"decode":0,"decodeAllThreads":53}}
 ```
 
-### 2.5 note (destination-only fly-to; blocks "2.5-before-dpr1/2" = before, "2.5a*", "2.5b*" = after; "2.5-before-dpr1" is the first 2.5-before-dpr1 block labelled 2.5-before-dpr1)
+### 2.5 note (destination-only fly-to; blocks "2.5-before-dpr1/2" = before (HEAD f731a6d), "2.5a*", "2.5b*" = after)
 
 `flyTo` computes the target viewport, preloads (`new Image()` + `decode()`, deduped and held in a 96-entry map) the target view's tiles (level 1 plus the target level) and the paper texture of that level, then starts the flight. `WorldLayer` ignores view changes while `flight.active`, so no in-between tile is mounted, requested or decoded; landing (`onMoveEnd`, or a 850 ms timer for a zero-length move) mounts the already decoded tiles. A user drag or wheel (`onMoveStart` with an event) ends the freeze at once. Hovering or focusing a sidebar row calls the same preload. The texture preload was needed: without it the level's larger paper texture decoded on landing and cost one 50 ms frame (a 74 ms `ImageDecodeTask` right at landing).
 
