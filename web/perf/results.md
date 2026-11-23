@@ -456,3 +456,27 @@ commit b18e6ef · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless ·
 | after | 559,065 B | 178,203 B (gzip -c) | Boring 7.1 kB (2.8), Popover 3.8 kB (1.8), Panels 1.6 kB (0.7) |
 
 The three components are small, so the main chunk only drops about 10 kB raw and 2.3 kB gzip. What is left is first-paint code: react-dom ~625 KB source, @xyflow/react + @xyflow/system ~290 KB, rough.js 28 KB, d3 (selection, transition, zoom, color, interpolate) ~100 KB, `gen/defs.ts` 21 KB, `gen/render.ts` 14 KB. Nothing there is small and clearly off the first-paint path, so no more splitting. Load (light-still) loadMs 203 to 199 (noise, 198 to 209 across scenarios, as before); tiles-visible unchanged (all tiles mounted); js bytes 214,451 to 215,383 (the idle preload lands inside the window). Pan 59.9 fps / GPU 20.2%, pan-4x 59.8 fps, no regressions. Screenshot diff passes (light-still 0.488 %, night-still 0.425 %, same as 2.5). `?style=boring`, `?panel=links`, `?panel=inventory`, `?select=copperleaf-site` checked by headless screenshot, no page errors.
+
+## 2026-11-23 2.7-before
+
+commit f2cc8cc · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"hidden","zoom":0.340909,"loadMs":199,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":19.5,"fps":60,"frames":331,"timers":0,"hidden":true,"running":2,"paints":662,"paintAreaMpx":239709.81,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":90,"layout":0,"script":19,"paint":70,"decode":0,"decodeAllThreads":0}}
+{"scenario":"reduced","zoom":0.340909,"loadMs":204,"bytes":{"total":3540602,"texture":537502,"tiles":2589958,"js":214451},"gpuPct":2.1,"fps":60,"frames":300,"timers":0,"running":0,"paints":0,"paintAreaMpx":0,"maxPaintMpx":0,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":0,"layout":0,"script":16,"paint":0,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 2.7
+
+commit f2cc8cc (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light-still","zoom":0.340909,"loadMs":208,"bytes":{"total":3540715,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":20.4,"fps":60,"frames":601,"timers":0,"paints":1202,"paintAreaMpx":435243.5,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":159,"layout":0,"script":33,"paint":130,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.340909,"loadMs":206,"bytes":{"total":3217514,"texture":402537,"tiles":2402094,"js":214529},"gpuPct":19.6,"fps":60,"frames":600,"timers":0,"paints":1200,"paintAreaMpx":434519.3,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":198,"layout":0,"script":34,"paint":117,"decode":0,"decodeAllThreads":0}}
+{"scenario":"hidden","zoom":0.340909,"loadMs":206,"bytes":{"total":3540715,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":2.1,"fps":59.8,"frames":330,"timers":0,"hidden":true,"running":0,"paints":4,"paintAreaMpx":1448.4,"maxPaintMpx":722.9,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":3,"layout":0,"script":19,"paint":0,"decode":0,"decodeAllThreads":0}}
+{"scenario":"reduced","zoom":0.340909,"loadMs":204,"bytes":{"total":3540715,"texture":537502,"tiles":2589958,"js":214529},"gpuPct":1.9,"fps":59.9,"frames":300,"timers":0,"running":0,"paints":0,"paintAreaMpx":0,"maxPaintMpx":0,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":0,"layout":0,"script":16,"paint":0,"decode":0,"decodeAllThreads":0}}
+```
+
+### 2.7 note
+
+Hidden tab (5 s, hidden signal faked in headless, see README): before, 2 CSS animations still running (march, pulse; the lantern was already paused), GPU 19.5 %, 0 timers. After (`html.tab-hidden` pauses all CSS animations, `useNow` skips re-renders while hidden and catches up on return): 0 running, GPU 2.1 %, 0 timers fired. rAF frames in headless are unchanged (headless never throttles; real tabs get none). Reduced motion (`?still=1`, emulated): 0 running animations, GPU 1.9 %; the selector list already covers march, pulse, ink, hero-tab, wash-fade, chipbox, tiles. Screenshot diff passes (light 0.488 %, night 0.425 %).
