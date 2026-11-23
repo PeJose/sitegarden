@@ -28,7 +28,7 @@ button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @keyframes march { to { stroke-dashoffset: -48; } }
-.march { animation: march 1.6s linear infinite; }
+.march { animation: march 1.6s steps(24) infinite; } /* 15 dash steps per second: each step repaints the road box */
 @keyframes pulse { 0% { transform: scale(calc(17 / 38)); opacity: .6; } 100% { transform: scale(1); opacity: 0; } }
 .pulse { width: 78px; height: 78px; will-change: transform, opacity; animation: pulse 2s ease-out infinite; }
 .fx { position: absolute; z-index: 10; pointer-events: none; } .fx svg { display: block; } /* one small compositor layer per animation, in world coordinates */
