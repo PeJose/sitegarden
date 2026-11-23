@@ -17,7 +17,7 @@ pnpm perf --label my-change --baseline perf/baseline
 
 Options: `--url` (default http://localhost:4173), `--out` (screenshots, default `perf/out`, git-ignored), `--only pan,zoom`, `--baseline <dir>`. Stop `pnpm preview` when done. Seven JSON lines are printed and one block is appended to `results.md`. Compare with the "baseline" block, same machine only.
 
-Scenarios: `light`, `night` (animated scene, 10 s idle), `light-still`, `night-still` (`?still=1`, also saves the screenshot), `pan` (3 s drag), `zoom` (3 s wheel in and out), `pan-4x` (pan with CPU throttled 4x). Every scenario starts in a fresh, cold browser context with the service worker blocked, 1440x900, dpr 1.
+Scenarios: `light`, `night` (animated scene, 10 s idle), `light-still`, `night-still` (`?still=1`, also saves the screenshot), `pan` (3 s drag), `zoom` (3 s wheel in and out), `pan-4x` (pan with CPU throttled 4x). Every scenario starts in a fresh, cold browser context with the service worker blocked, 1440x900, dpr 1 (`--dpr 2` for retina; the screenshot diff is skipped then).
 
 ## Numbers
 
