@@ -213,3 +213,21 @@ commit 2280a17 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless ·
 {"scenario":"fly","zoom":0.340909,"loadMs":201,"bytes":{"total":3539793,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":22.2,"fps":58.2,"paints":1652,"paintAreaMpx":316659394395.08,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":41,"ms":{"style":38,"layout":33,"script":43,"paint":17,"decode":0,"decodeAllThreads":350}}
 {"scenario":"fly-warm","zoom":0.340909,"loadMs":204,"bytes":{"total":3539793,"texture":537502,"tiles":2589958,"js":213642},"gpuPct":20.8,"fps":59.7,"paints":688,"paintAreaMpx":22379.43,"maxPaintMpx":63.28,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"ms":{"style":32,"layout":40,"script":75,"paint":33,"decode":0,"decodeAllThreads":10}}
 ```
+
+## 2026-11-23 fly-async
+
+commit de52cde (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":209,"bytes":{"total":3539803,"texture":537502,"tiles":2589958,"js":213652},"gpuPct":22.2,"fps":58.5,"paints":1648,"paintAreaMpx":316659393454.28,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":41,"ms":{"style":35,"layout":33,"script":42,"paint":14,"decode":0,"decodeAllThreads":311}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":204,"bytes":{"total":3539803,"texture":537502,"tiles":2589958,"js":213652},"gpuPct":20.8,"fps":59.8,"paints":683,"paintAreaMpx":22261.68,"maxPaintMpx":63.32,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"ms":{"style":33,"layout":48,"script":73,"paint":32,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-23 fly-async
+
+commit de52cde (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"fly","zoom":0.340909,"loadMs":209,"bytes":{"total":3539803,"texture":537502,"tiles":2589958,"js":213652},"gpuPct":22.1,"fps":58.4,"paints":1648,"paintAreaMpx":316659393394.36,"maxPaintMpx":281474943.16,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":41,"ms":{"style":37,"layout":33,"script":42,"paint":17,"decode":0,"decodeAllThreads":307}}
+{"scenario":"fly-warm","zoom":0.340909,"loadMs":195,"bytes":{"total":3539803,"texture":537502,"tiles":2589958,"js":213652},"gpuPct":20.1,"fps":59.9,"paints":687,"paintAreaMpx":22347.72,"maxPaintMpx":63.31,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":4,"ms":{"style":32,"layout":48,"script":72,"paint":32,"decode":0,"decodeAllThreads":0}}
+```

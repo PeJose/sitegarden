@@ -30,8 +30,9 @@ const only = arg('only')
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 // Page-side counters, injected so app code stays untouched. A string, because tsx adds __name helpers that do not exist in the page.
-const init = `window.__frames = 0; window.__lt = []
-const tick = () => { window.__frames++; requestAnimationFrame(tick) }
+const init = `window.__frames = 0; window.__lt = []; window.__gaps = []
+let last = performance.now()
+const tick = (t) => { window.__frames++; window.__gaps.push(Math.round(t - last)); last = t; requestAnimationFrame(tick) }
 requestAnimationFrame(tick)
 new PerformanceObserver((l) => l.getEntries().forEach((e) => window.__lt.push(Math.round(e.duration)))).observe({ type: 'longtask', buffered: true })`
 const counters = (p: Page) => p.evaluate(() => { const w = window as unknown as { __frames: number; __lt: number[] }; return { frames: w.__frames, lt: w.__lt.length } })
@@ -110,12 +111,14 @@ for (const [name, s] of Object.entries(scenarios)) {
   const evs = trace.traceEvents
   const mainTid = (evs as (Ev & { args?: { name?: string } })[]).find((e) => e.name === 'thread_name' && e.args?.name === 'CrRendererMain')?.tid
   const paints = evs.filter((e) => e.name === 'Paint' && e.args?.data?.clip)
+  const gaps = await page.evaluate((n) => (window as unknown as { __gaps: number[] }).__gaps.slice(n), c0.frames)
   const lt = await page.evaluate((n) => (window as unknown as { __lt: number[] }).__lt.slice(n), c0.lt)
   const r = {
     scenario: name, zoom, loadMs: load.tilesVisible, bytes,
     gpuPct: +(((g1 - g0) / secs) * 100).toFixed(1),
     fps: +((c1.frames - c0.frames) / secs).toFixed(1),
     paints: paints.length, paintAreaMpx: +(paints.reduce((a, e) => a + quadArea(e.args!.data!.clip!), 0) / 1e6).toFixed(2), maxPaintMpx: +(Math.max(0, ...paints.map((e) => quadArea(e.args!.data!.clip!))) / 1e6).toFixed(2),
+    maxFrameMs: Math.max(0, ...gaps), slowFrames: gaps.filter((g) => g > 25).length,
     longTasks: lt.length, longTaskMs: lt.reduce((a, b) => a + b, 0), maxLongTask: Math.max(0, ...lt),
     tileReqs: tileReqs - reqs0,
     ms: { style: topMs(evs, /^UpdateLayoutTree$/), layout: topMs(evs, /^Layout$/), script: topMs(evs, /^(FunctionCall|EvaluateScript)$/), paint: topMs(evs, /^Paint$/), decode: topMs(evs.filter((e) => e.tid === mainTid), /^Decode/), decodeAllThreads: Math.round(evs.filter((e) => e.ph === 'X' && e.name === 'ImageDecodeTask').reduce((a, e) => a + (e.dur ?? 0) / 1000, 0)) },
