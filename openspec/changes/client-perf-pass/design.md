@@ -19,6 +19,7 @@ Hot spots found in the code (all to be confirmed by the baseline profile):
 | H5 | `Labels`: font size, letter spacing and stroke on every `textPath` change per zoom frame; LOD variables restyle every pin and chip per zoom frame | text relayout + world-sized SVG repaint + style recalc of all pins, per frame |
 | H6 | Tiles: `<img>` without `decoding="async"`, opacity transition per tile, up to 48 kept mounted; preview `<img>` is world-sized | decode jank on the main thread during pan/zoom |
 | H7 | One 565 KB JS bundle (Boring view, rough.js, generator) | slower first paint than needed |
+| H8 | React Flow pin layer during pan (found in the baseline, task 2.8) | hiding pins cut pan GPU 13.4% → 4.4% |
 
 Tools at hand: `playwright-core` (devDependency), `web/src/perf.ts` (page-load marks + long tasks), `?still=1` freezes the mock scene, `pnpm build && pnpm preview` gives the production build.
 
