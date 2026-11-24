@@ -32,7 +32,7 @@ export interface MockEdge {
   label: string
 }
 
-// SSE event shapes from PLAN.md, plus a node.status event for the UI.
+// SSE event shapes from docs/plan.md, plus a node.status event for the UI.
 export type EngineEvent =
   | { type: 'check.ping'; nodeId: string }
   | { type: 'flow.started'; id: string; kind: 'deploy' | 'webhook'; edgeId: string; t0: number }

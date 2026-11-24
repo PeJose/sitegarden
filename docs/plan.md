@@ -4,11 +4,11 @@ A self-hosted, open-source map of everything you run: repos, CMS studios, hosts 
 
 | Doc | What's in it |
 |---|---|
-| **PLAN.md** (this) | why, principles, architecture, config, roadmap, decisions |
-| [FEATURES.md](FEATURES.md) | the full feature catalogue, grouped, with effort and milestone |
-| [PLUGINS.md](PLUGINS.md) | core vs plugins, extension tree, loading, isolation tiers |
-| [SECURITY.md](SECURITY.md) | VPN, auth, tokens, webhooks, SSRF guard, secrets |
-| [VISUAL.md](VISUAL.md) | the garden look, procedural generation, rendering techniques |
+| **plan.md** (this) | why, principles, architecture, config, roadmap, decisions |
+| [features.md](features.md) | the full feature catalogue, grouped, with effort and milestone |
+| [plugins.md](plugins.md) | core vs plugins, extension tree, loading, isolation tiers |
+| [security-model.md](security-model.md) | VPN, auth, tokens, webhooks, SSRF guard, secrets |
+| [visual.md](visual.md) | the garden look, procedural generation, rendering techniques |
 
 ## Why
 
@@ -54,7 +54,7 @@ React Flow handles what it is good at (HTML nodes, selection, drag, keyboard); c
 2. **React Flow (middle):** buildings, pins, labels, selection; transparent background.
 3. **Flow canvas (top):** one rAF loop draws lanterns, pulses and pings from pre-sampled path points. Hundreds of particles cost almost nothing; the loop stops when nothing moves.
 
-Flow events are `flow.started {id, kind, edgeId, t0}` and `flow.finished {id, t1, result}`. The browser computes position from `now − t0`, so a replay (time scrubber) is the same code fed from stored events. Details in [VISUAL.md](VISUAL.md#rendering-techniques).
+Flow events are `flow.started {id, kind, edgeId, t0}` and `flow.finished {id, t1, result}`. The browser computes position from `now − t0`, so a replay (time scrubber) is the same code fed from stored events. Details in [visual.md](visual.md#rendering-techniques).
 
 Alternatives considered: PixiJS (would mean rebuilding cards, keyboard access and hit-testing; keep as a later upgrade for full-screen shaders), Leaflet (stale, poor for rich nodes), Konva / deck.gl (no gain).
 
@@ -90,11 +90,11 @@ Speed work, measured first (profile which filter dominates):
 
 ### Plugins in one paragraph
 
-The core holds the graph model, plugin host, extension tree, scheduler, store, secrets broker, event bus, status vocabulary, auth and the web shell. Everything else is an extension with an ID like `layer:garden:terrain`. A plugin replaces it by registering the same ID, and YAML can disable it. Web plugins load at runtime through an import map that shares one React. Themes and building packs are pure data. See [PLUGINS.md](PLUGINS.md).
+The core holds the graph model, plugin host, extension tree, scheduler, store, secrets broker, event bus, status vocabulary, auth and the web shell. Everything else is an extension with an ID like `layer:garden:terrain`. A plugin replaces it by registering the same ID, and YAML can disable it. Web plugins load at runtime through an import map that shares one React. Themes and building packs are pure data. See [plugins.md](plugins.md).
 
 ### Security in one paragraph
 
-Tailscale Serve exposes the app to your tailnet only; auth trusts the `Tailscale-User-Login` header and fails closed (password mode for tagged devices). Two fine-grained GitHub tokens: read, and deploy with only Actions: write. Deploys use `workflow_dispatch` with workflow and ref pinned server-side. Webhooks come in only through `/hooks/*`, HMAC-verified. Health checks go through a resolved-IP SSRF guard. See [SECURITY.md](SECURITY.md).
+Tailscale Serve exposes the app to your tailnet only; auth trusts the `Tailscale-User-Login` header and fails closed (password mode for tagged devices). Two fine-grained GitHub tokens: read, and deploy with only Actions: write. Deploys use `workflow_dispatch` with workflow and ref pinned server-side. Webhooks come in only through `/hooks/*`, HMAC-verified. Health checks go through a resolved-IP SSRF guard. See [security-model.md](security-model.md).
 
 ### Hosting
 
@@ -173,7 +173,7 @@ Short fields (`repo:`, `sanity:`) fill in the standard links automatically. That
 
 ## Roadmap
 
-Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend day). Each milestone ends with something you can see and use. Months are a guide, not deadlines; full feature list with estimates in [FEATURES.md](FEATURES.md).
+Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend day). Each milestone ends with something you can see and use. Months are a guide, not deadlines; full feature list with estimates in [features.md](features.md).
 
 | # | Name | Month | You get |
 |---|---|---|---|
@@ -276,7 +276,7 @@ A GPU VPS is not worth it for this: small always-on GPU servers cost around €2
 
 ### After M7
 
-Pick from the `later` items in [FEATURES.md](FEATURES.md): external status sources (Gatus / Kuma), importers queue, theme and building-pack editors, automations, weather, villagers, public status page, GitHub App, and more.
+Pick from the `later` items in [features.md](features.md): external status sources (Gatus / Kuma), importers queue, theme and building-pack editors, automations, weather, villagers, public status page, GitHub App, and more.
 
 ## First real data
 

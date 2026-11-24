@@ -83,11 +83,11 @@ How rendering works is described in [web/README.md](web/README.md).
 | Visitors | webhooks, logs, Lighthouse history |
 | Toolshed | plugin gallery, CLI, MCP server |
 
-The full plan is in [PLAN.md](PLAN.md); feature list in [FEATURES.md](FEATURES.md), plugins in [PLUGINS.md](PLUGINS.md), security model in [SECURITY.md](SECURITY.md), visual design in [VISUAL.md](VISUAL.md).
+The full plan is in [docs/plan.md](docs/plan.md); feature list in [docs/features.md](docs/features.md), plugins in [docs/plugins.md](docs/plugins.md), security model in [docs/security-model.md](docs/security-model.md), visual design in [docs/visual.md](docs/visual.md).
 
 ## Security
 
-sitegarden is meant to run privately (behind Tailscale or a VPN), because it holds tokens that can deploy your sites. See [SECURITY.md](SECURITY.md).
+sitegarden is meant to run privately (behind Tailscale or a VPN), because it holds tokens that can deploy your sites. See the [security model](docs/security-model.md) for how it is meant to be deployed, and [SECURITY.md](SECURITY.md) for reporting a vulnerability.
 
 ## License
 

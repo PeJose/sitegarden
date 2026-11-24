@@ -2,7 +2,7 @@ import { f1 } from './geom'
 import { pick, range, type Rng } from './rng'
 import type { Box, Building } from './types'
 
-// type -> family of variants (VISUAL.md). Palettes are [wall/roof, ridge line, ribs], muted watercolour tones from the design.
+// type -> family of variants (docs/visual.md). Palettes are [wall/roof, ridge line, ribs], muted watercolour tones from the design.
 type Spec = { n: number; w: [number, number]; h: [number, number]; pals: [string, string, string][] }
 const SPECS: Record<string, Spec> = {
   cms: { n: 3, w: [50, 64], h: [30, 38], pals: [['#C2D6CC', '#7A9B8F', '#93B2A6'], ['#CADBD0', '#86A596', '#9DBBAD'], ['#BDD3D6', '#7898A0', '#93B1B8']] },

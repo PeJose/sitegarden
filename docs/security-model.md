@@ -142,7 +142,7 @@ Confirm dialog, CSRF token, rate limit, audit log (who, when, what, result). `SI
 
 ### Plugins
 
-Permissions are declared in the manifest and enforced by the host. Four trust tiers; see [PLUGINS.md](PLUGINS.md#isolation-tiers).
+Permissions are declared in the manifest and enforced by the host. Four trust tiers; see [plugins.md](plugins.md#isolation-tiers).
 
 ## 5. Container
 
