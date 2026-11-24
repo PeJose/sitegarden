@@ -104,3 +104,25 @@ test('a stale base on apply is a drift 409', async () => {
   const [s, r] = await apply(withNode('g'), { baseRev: 1 })
   assert.deepEqual([s, r], [409, { error: 'drift', rev: 3 }])
 })
+
+const estate = { id: 'zeta', label: 'zeta', nodes: [{ id: 'zeta-repo', type: 'repo' }], edges: [] }
+
+test('planting and removing an estate in the GUI make revs with source gui', async () => {
+  const before = db.latestRev()
+  assert.deepEqual((await json(post('/api/estates', estate)))[1], { id: 'zeta', nodes: 1 })
+  assert.deepEqual([db.latestRev(), db.getRev(before + 1)?.source], [before + 1, 'gui'])
+  assert.match(db.getRev(before + 1)!.yaml, /id: zeta/)
+  const [s, r] = await json(app.request('/api/estates/last', { method: 'DELETE' }))
+  assert.deepEqual([s, r, db.getRev(before + 2)?.source], [200, { id: 'zeta' }, 'gui'])
+  assert.equal((await json(post('/api/estates', { ...estate, id: 'g1' })))[0], 400)
+})
+
+test('with auth enabled, apply and GUI edits are refused and no rev is made', async () => {
+  const [s] = await apply(db.getRev(db.latestRev())!.yaml + 'auth: { enabled: true }\n')
+  assert.equal(s, 200) // the change that turns it on is the last one
+  const rev = db.latestRev()
+  assert.equal((await apply(withNode('h')))[0], 403)
+  assert.equal((await json(post('/api/estates', estate)))[0], 403)
+  assert.equal((await json(app.request('/api/estates/last', { method: 'DELETE' })))[0], 403)
+  assert.equal(db.latestRev(), rev)
+})

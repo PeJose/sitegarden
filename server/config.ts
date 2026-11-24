@@ -39,6 +39,8 @@ export async function validate(text: string): Promise<Graph> {
 
 // The server's config state is the latest revision in the store; the file is only read once, to bootstrap rev 1.
 export const latestYaml = () => db.getRev(db.latestRev())!.yaml
+// The one check point for config changes. Until real auth exists (M1 item 5) `auth.enabled: true` locks them instead of leaving them open.
+export const canEditConfig = (_c: unknown) => (YAML.parse(latestYaml()) as { auth?: { enabled?: unknown } } | null)?.auth?.enabled !== true
 export function bootstrap() {
   if (!fs.existsSync(CONFIG_FILE)) return
   const rev = db.latestRev()

@@ -9,7 +9,7 @@
 
 - [x] 2.1 `POST /api/plan` with validation issues, graph diff, render estimate, `planId`, drift 409 (D3). Verify: Hono in-process tests for valid change (`+ node`), invalid (line-numbered issue), drift, and a plan that leaves rev unchanged.
 - [x] 2.2 `POST /api/apply`, `GET /api/state`, `config.applied` and `apply.progress` events, unchanged detection (D4). Verify: tests for apply → rev+1 and event, planId mismatch rejected, identical YAML → unchanged, racing applies → one 409.
-- [ ] 2.3 `canEditConfig` and `auth.enabled` in the core schema (D7); GUI `/api/estates` routes through revisions with source `gui` (D8). Verify: tests: auth disabled → GUI edit makes a `gui` rev; auth enabled → apply and GUI edit refused, no rev.
+- [x] 2.3 `canEditConfig` and `auth.enabled` in the core schema (D7); GUI `/api/estates` routes through revisions with source `gui` (D8). Verify: tests: auth disabled → GUI edit makes a `gui` rev; auth enabled → apply and GUI edit refused, no rev.
 
 ## 3. CLI
 

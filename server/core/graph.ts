@@ -20,6 +20,7 @@ export function buildSchema(types: NodeTypes) {
   return z.strictObject({
     world: z.strictObject({ seed: z.string() }),
     plugins: z.array(z.string()).default([]),
+    auth: z.strictObject({ enabled: z.boolean().default(false) }).default({ enabled: false }).describe('Real auth lands in M1 item 5; until then `enabled: true` locks config changes'),
     groups: z.array(z.strictObject({ id: z.string().min(1), label: z.string() })).default([]),
     nodes: z.array(nodes.length ? z.discriminatedUnion('type', nodes as [(typeof nodes)[number]]) : z.never()).default([]),
     edges: z.array(z.strictObject({ from: z.string(), to: z.string(), type: z.string(), label: z.string().optional() })).default([]),

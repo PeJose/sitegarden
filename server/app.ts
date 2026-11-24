@@ -1,13 +1,13 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { serve } from '@hono/node-server'
-import { Hono, type Context } from 'hono'
+import { Hono, type Context, type Next } from 'hono'
 import { compress } from 'hono/compress'
 import type { ConfigEstate, Positions } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
-import { addEstate, bootstrap, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, toRenderConfig, validate } from './config'
+import { addEstate, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, toRenderConfig, validate } from './config'
 import { eventsHandler } from './core/events'
 import { canon, ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
 import { DriftError } from './core/db'
@@ -45,6 +45,10 @@ app.post('/api/want', async (c) => {
   want(b.tiles.filter((t): t is [number, number, number] => Array.isArray(t) && t.length === 3 && t.every(Number.isInteger)).map(([z, x, y]) => `${b.theme}/${z}/${x}/${y}`))
   return c.json({ ok: true })
 })
+
+const guard = async (c: Context, next: Next) => canEditConfig(c) ? next() : c.json({ error: 'config changes need an authorized user' }, 403)
+app.use('/api/apply', guard)
+app.use('/api/estates*', guard)
 
 // Config changes are validated and stored as the next revision on top of `base`; the running graph and the map follow.
 async function commit(yaml: string, source: string, base = db.latestRev(), positions?: Positions) {
