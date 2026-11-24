@@ -9,7 +9,7 @@ The map is rendered on the server once and only downloaded by the browser. `pnpm
 - `pnpm sg plan`: estates added/changed/removed, artifacts still to render, estimated time.
 - `pnpm sg apply`: renders the missing artifacts, publishes `release-<id>.json` and atomically points `current` at it. It renders tile by tile, the light preview and the tiles of the initial view first (`order` in `plan.ts`), then their neighbours, then night and the other levels, and republishes as tiles appear (`rev` in the release). The client reports visible tiles that are still missing (`POST /api/want`); those jump the queue.
 - `pnpm dev` runs apply on start and whenever `sitegarden.yaml` changes; "plant an estate" and `POST/DELETE /api/estates` only edit that file. The browser learns about new releases over SSE (`/api/events`).
-- Env: `SITEGARDEN_DATA` (data dir, default `web/.data`), `SITEGARDEN_CONFIG` (default `web/sitegarden.yaml`), `SG_RENDER_WORKERS` (default cpus - 2; renders run at nice 10).
+- Env: `SITEGARDEN_DATA` (data dir, default `.data`), `SITEGARDEN_CONFIG` (default `sitegarden.yaml`), `SG_RENDER_WORKERS` (default cpus - 2; renders run at nice 10).
 
 Artifacts are files in `.data/a/` named by the hash of their exact inputs (SVG, theme, zoom, renderer version), so the same config renders nothing twice:
 

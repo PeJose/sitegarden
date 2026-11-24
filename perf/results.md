@@ -560,7 +560,7 @@ Not budgeted: `zoom` has one 58 ms long task and loads 39 tiles from intermediat
 
 ### 3.2 look check
 
-The `?still=1` screenshots compared by eye with `design/v42-*.preview.html`: same palette, plots, roads, pins, labels and panels. The differences come from the scene: the mock has 6 estates against the boards' 2, so it opens at a lower zoom and the pin chips are hidden. Night has no campfires and the stars do not twinkle (owner decision). Star brightness is unchanged from the original baseline (bright pixels 7125 then, 7276 now). `pnpm test` passes and `pnpm lint` gives 0 errors (3 old warnings in `ui/Dots.tsx`).
+The `?still=1` screenshots compared by eye with the v4.2 Light and Night boards in the design artifact (the private design artifact): same palette, plots, roads, pins, labels and panels. The differences come from the scene: the mock has 6 estates against the boards' 2, so it opens at a lower zoom and the pin chips are hidden. Night has no campfires and the stars do not twinkle (owner decision). Star brightness is unchanged from the original baseline (bright pixels 7125 then, 7276 now). `pnpm test` passes and `pnpm lint` gives 0 errors (3 old warnings in `ui/Dots.tsx`).
 
 ## 2026-11-23 march-15
 

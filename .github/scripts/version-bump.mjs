@@ -1,9 +1,9 @@
-// Fails unless web/package.json's version is higher than the base branch's.
+// Fails unless package.json's version is higher than the base branch's.
 import { readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import assert from 'node:assert/strict'
 
-const FILE = 'web/package.json'
+const FILE = 'package.json'
 const parse = (v) => String(v).split(/[-+]/)[0].split('.').map(Number) // prerelease/build ignored
 
 export function compare(a, b) {
@@ -27,7 +27,12 @@ if (process.argv[2] === '--self-test') {
   const base = process.argv[2]
   let baseVersion
   try {
-    baseVersion = JSON.parse(execFileSync('git', ['show', `origin/${base}:${FILE}`], { encoding: 'utf8' })).version
+    const show = (f) => JSON.parse(execFileSync('git', ['show', `origin/${base}:${f}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })).version
+    try {
+      baseVersion = show(FILE)
+    } catch {
+      baseVersion = show(`web/${FILE}`) // fallback can go once the web/ -> root move has merged
+    }
   } catch {
     console.log(`No ${FILE} on ${base}; nothing to compare.`)
     process.exit(0)

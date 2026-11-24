@@ -78,7 +78,7 @@ Quantise zoom for label font size and the LOD CSS variables to steps (e.g. 1/16 
 CSS animations on composited layers already stop in hidden tabs; WAAPI lanterns are paused on `visibilitychange`. The existing reduced-motion rule keeps covering every class after D2 (classes move to the wrappers, so the selector list is updated with them).
 
 ### D9. Verify the look by screenshots
-The perf script compares `?still=1` light and night screenshots against the committed baseline with sharp (difference + stats) and fails over a small threshold, so no fix silently changes the map. Once by eye against `design/v42-*.preview.html`.
+The perf script compares `?still=1` light and night screenshots against the committed baseline with sharp (difference + stats) and fails over a small threshold, so no fix silently changes the map. Once by eye against the v4.2 Light and Night boards in the design artifact (the private design artifact).
 
 ## Risks / Trade-offs
 

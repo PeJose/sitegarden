@@ -9,7 +9,6 @@ Google Chrome installed, `pnpm install`, and the API on :8787 (`pnpm dev:server`
 ## Run
 
 ```
-cd web
 pnpm build
 pnpm preview &            # http://localhost:4173, proxies /api and /a to :8787
 pnpm perf --label my-change --baseline perf/baseline

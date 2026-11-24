@@ -1,6 +1,6 @@
 # sitegarden — feature catalogue
 
-Everything we might build, grouped. **Days** = hobby days for one person (an evening ≈ 0.3, a weekend ≈ 1.5). **When** = milestone from the roadmap in [PLAN.md](PLAN.md#roadmap) (M1–M7), or `later`. ★ = top pick.
+Everything we might build, grouped. **Days** = hobby days for one person (an evening ≈ 0.3, a weekend ≈ 1.5). **When** = milestone from the roadmap in [plan.md](plan.md#roadmap) (M1–M7), or `later`. ★ = top pick.
 
 Estimates come from the research agents and are rough. Sources for ideas are in the last column where there is one.
 
@@ -10,7 +10,7 @@ Estimates come from the research agents and are rough. Sources for ideas are in 
 |---|---|---|---|---|
 | Map v0 | Nodes and edges from YAML, plain theme, pan/zoom, fit-to-project | 1 | M1 | |
 | Side panel | Links, notes/runbook, status, copy buttons; tabs from plugins | 1 | M1 | |
-| Seeded layout | Plots placed on a spiral, stable positions, drag saves a position | 2.5 | M3 | VISUAL.md |
+| Seeded layout | Plots placed on a spiral, stable positions, drag saves a position | 2.5 | M3 | visual.md |
 | Focus mode | Click a node, everything unrelated fades | 0.5 | M2 | |
 | Command palette (⌘K) | Jump to a node, open a link, run an action | 1.5 | M2 | |
 | Watchtower node | sitegarden itself on the map; check pings start there | 0.5 | M2 | |
@@ -131,7 +131,7 @@ All actions: confirm, audit log, disabled in read-only mode.
 
 | Feature | What | Days | When | Inspired by |
 |---|---|---|---|---|
-| Watercolour garden theme | Paper, plots, hedges, buildings (VISUAL.md) | 7 | M3 | Felt, Tyler Hobbs |
+| Watercolour garden theme | Paper, plots, hedges, buildings (visual.md) | 7 | M3 | Felt, Tyler Hobbs |
 | Night theme | Ink-blue paper, stars, lit windows, campfire, lamps | 1.5 | M3 | |
 | Day / night by clock | The map follows local time, with a manual override | 1 | M3 | |
 | ★ Garden grows | Flowers bloom after green streaks, wilt after outages | 3 | M7 | TamaGROTchi |

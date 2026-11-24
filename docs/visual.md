@@ -1,6 +1,6 @@
 # sitegarden — visual direction
 
-Look and procedural generation for the garden theme (`@sitegarden/theme-garden`). The core knows nothing about this; it is one theme plugin. See PLAN.md for the plugin system.
+Look and procedural generation for the garden theme (`@sitegarden/theme-garden`). The core knows nothing about this; it is one theme plugin. See plan.md for the plugin system.
 
 ## Visual direction
 
