@@ -6,9 +6,10 @@ import { compress } from 'hono/compress'
 import type { ConfigEstate } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
-import { addEstate, CONFIG_FILE, loadConfig, removeLastEstate } from './config'
+import { addEstate, CONFIG_FILE, loadGraph, removeLastEstate } from './config'
 import { openDb } from './core/db'
 import { createBus, eventsHandler } from './core/events'
+import { createHolder } from './core/holder'
 import { makeEstate } from './mock'
 import { ART, DATA, currentRelease } from './store'
 
@@ -41,7 +42,7 @@ app.post('/api/want', async (c) => {
 app.post('/api/estates', async (c) => {
   // An explicit estate in the body is planted as given; an empty body plants a random one.
   const body = (await c.req.json().catch(() => null)) as ConfigEstate | null
-  const taken = loadConfig().estates.map((x) => x.id)
+  const taken = (graph.get()?.groups ?? []).map((x) => x.id)
   if (body && (typeof body.id !== 'string' || !Array.isArray(body.nodes) || taken.includes(body.id))) return c.json({ error: 'need a new id and nodes' }, 400)
   const e = body ?? makeEstate(rngFor('plant', Date.now(), Math.random()), taken)
   addEstate(e)
@@ -56,6 +57,7 @@ app.delete('/api/estates/last', (c) => {
 const bus = createBus(openDb(path.join(DATA, 'sitegarden.db')))
 const key = (r: ReturnType<typeof currentRelease>) => r && `${r.id}:${r.rev}`
 app.get('/api/events', eventsHandler(bus, () => key(currentRelease())))
+const graph = createHolder(loadGraph, bus.emit)
 let last = key(currentRelease())
 const debounce = (ms: number, f: () => void) => { let t: ReturnType<typeof setTimeout>; return () => { clearTimeout(t); t = setTimeout(f, ms) } }
 fs.watch(DATA, debounce(30, () => { const k = key(currentRelease()); if (k && k !== last) { last = k; bus.emit('release', k) } }))
@@ -73,11 +75,11 @@ async function runApply() {
     } while (again)
   } catch (e) { console.error('[apply] failed, still serving the previous release:', (e as Error).message) } finally { running = false }
 }
-const reapply = debounce(100, () => void runApply())
+const reapply = debounce(100, () => { if (graph.reload()) void runApply() })
 fs.watch(path.dirname(CONFIG_FILE), (_, f) => { if (f === path.basename(CONFIG_FILE)) reapply() })
 
 const port = 8787
 serve({ fetch: app.fetch, port }, () => {
   console.log(`[server] http://localhost:${port}`)
-  void runApply()
+  if (graph.reload()) void runApply()
 })
