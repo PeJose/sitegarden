@@ -714,3 +714,14 @@ Question: why `zoom` shows `tileReqs` 58 with the own viewport vs 42 with React 
 | both together | 146 | 146 |
 
 The viewport sequences and the mount batches are the same, so the own viewport does not cross levels more often or mount tiles mid-gesture. The 16 extra requests are tiles React Flow had already fetched at page load (it mounts the tile layer once for its default viewport before the fit; MapView now frames before the first render, so nothing is mounted for another view) and that the own viewport fetches on the first wheel step instead. They are the same files (all 16 in the window are in React Flow's load-time set), and the total over load plus zoom is 146 for both. A measurement artefact of where the window starts, not a regression; nothing changed in the viewport or tile code. Load is now 16 tile requests lighter.
+
+## 2026-11-24 Preact behaviour check (preact-swap 2.2)
+
+Headless Chrome 159 (Metal), the production build on Preact 10.29 against the pre-swap build (own viewport on React 19), same data, scripted with playwright. Every observable matched, zero console errors (the only message is Playwright's "service worker blocked" warning, also in the React build).
+
+- Command bar: typing "check everything" fills the input (`onChange` through compat), Enter clears it and toasts "Checking everything…"; an unknown command toasts the hint.
+- Status strip: opened from the keyboard, the card stays open while focus moves between its rows and closes when focus leaves (`onBlur` with `relatedTarget`).
+- "All services" (23 rows) and "All links" (45 rows) open and close with Esc; clicking a plot flies from zoom 0.369 to 1.3; a pin opens its popover and a click on empty map closes it.
+- Labels: 17 `textPath` elements keep their `href`, all 17 road labels and 6 estate names have a width, road label opacity 1 at the fly-to zoom. Night theme: 54 light groups, tiles fade in (25 of 25 `onLoad` handlers ran).
+- Screenshot diff against the React build (`light-still`, `night-still`): mean 0 % / 0 %, over-threshold 0.002 % / 0 %, both pass. Animated frames of the panels, fly, popover and night (taken mid-animation, not pass/fail) differ by 0.33 to 0.40 % mean.
+- Main chunk 125645 B raw / 39508 B gzip (React build: 327562 / 99320); no `react.production` in `dist`.

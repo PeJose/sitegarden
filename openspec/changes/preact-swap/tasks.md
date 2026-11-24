@@ -7,7 +7,7 @@
 ## 2. Swap
 
 - [x] 2.1 Packages, `vite.config.ts`, `tsconfig.app.json` (D1) and the four type fixes (D2). Verify: `pnpm ls react` shows no top-level React; `tsc -b` and `pnpm build` clean; `rg "react.production" dist` finds nothing; main chunk ≤ 50 KB gzip.
-- [ ] 2.2 Behaviour checks (D3). Verify: headless script types in the command bar, blurs the status strip, opens Inventory/Links/popover, flies to a plot; zero console errors; screenshot diff passes.
+- [x] 2.2 Behaviour checks (D3). Verify: headless script types in the command bar, blurs the status strip, opens Inventory/Links/popover, flies to a plot; zero console errors; screenshot diff passes.
 
 ## 3. Measure, docs, close
 
