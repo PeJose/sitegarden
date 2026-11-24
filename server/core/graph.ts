@@ -72,7 +72,7 @@ export function parseGraph(text: string, file: string, types: NodeTypes): Graph 
 }
 
 export interface Change { kind: 'group' | 'node' | 'edge' | 'extension'; op: '+' | '~' | '-'; id: string }
-const canon = (v: unknown) => JSON.stringify(v, (_, x) => x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : x)
+export const canon = (v: unknown) => JSON.stringify(v, (_, x) => x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : x)
 // What a config change adds, changes and removes, by kind. `~` when the item's canonical JSON differs.
 export function diffGraphs(a: Graph, b: Graph): Change[] {
   const kinds = (g: Graph): Record<Change['kind'], [string, unknown][]> => ({

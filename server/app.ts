@@ -3,17 +3,18 @@ import path from 'node:path'
 import { serve } from '@hono/node-server'
 import { Hono, type Context } from 'hono'
 import { compress } from 'hono/compress'
-import type { ConfigEstate } from '../src/gen/types'
+import type { ConfigEstate, Positions } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
-import { addEstate, bootstrap, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, schemaJson, toRenderConfig, validate } from './config'
+import { addEstate, bootstrap, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, toRenderConfig, validate } from './config'
 import { eventsHandler } from './core/events'
-import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
+import { canon, ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
+import { DriftError } from './core/db'
 import { createHolder } from './core/holder'
 import { createScheduler } from './core/scheduler'
 import { makeEstate } from './mock'
-import { ART, DATA, currentRelease, hash } from './store'
+import { ART, DATA, RENDERER, currentRelease, hash } from './store'
 
 export const app = new Hono()
 app.use(compress())
@@ -45,13 +46,17 @@ app.post('/api/want', async (c) => {
   return c.json({ ok: true })
 })
 
-// Config changes are validated and stored as the next revision; the running graph and the map follow.
-async function commit(yaml: string, source: string) {
+// Config changes are validated and stored as the next revision on top of `base`; the running graph and the map follow.
+async function commit(yaml: string, source: string, base = db.latestRev(), positions?: Positions) {
   await validate(yaml)
-  db.storeRev(db.latestRev(), yaml, source)
+  const rev = db.storeRev(base, yaml, source)
+  if (positions) savePositions(positions) // before the render starts: it must see the positions the client rendered with
+  bus.emit('config.applied', { rev, source })
   await reloaded()
+  return rev
 }
-app.onError((e, c) => e instanceof ConfigError ? c.json({ error: 'invalid config', issues: e.issues }, 422) : (console.error(e), c.text('internal error', 500)))
+app.onError((e, c) => e instanceof DriftError ? c.json({ error: 'drift', rev: e.latest }, 409) : e instanceof ConfigError ? c.json({ error: 'invalid config', issues: e.issues }, 422) : (console.error(e), c.text('internal error', 500)))
+
 // Validation result for a candidate config: the graph, or every issue with its line.
 async function check(yaml: string): Promise<{ graph: Graph } | { issues: Issue[] }> {
   try { return { graph: await validate(yaml) } } catch (e) { if (e instanceof ConfigError) return { issues: e.issues }; throw e }
@@ -71,6 +76,21 @@ app.post('/api/plan', async (c) => {
   if ('issues' in r) return c.json({ rev, ok: false, issues: r.issues })
   const plan = computePlan(toRenderConfig(r.graph), loadPositions()), todo = missing(plan)
   return c.json({ rev, ok: true, diff: diffGraphs(await validate(latestYaml()), r.graph), render: { jobs: todo.jobs.length, tiles: todo.tiles.length, ms: estimateMs(todo.jobs, todo.tiles.length) }, planId: planId(rev, b.yaml), release: plan.id })
+})
+
+app.get('/api/state', (c) => c.json({ rev: db.latestRev(), yaml: latestYaml(), renderer: RENDERER, positions: loadPositions() }, 200, { 'Cache-Control': 'no-store' }))
+
+// The CLI applies exactly what it planned: the plan id is a hash of the base rev and the YAML.
+app.post('/api/apply', async (c) => {
+  const b = (await c.req.json().catch(() => null)) as { yaml?: unknown; baseRev?: unknown; planId?: unknown; render?: unknown; positions?: unknown } | null
+  if (typeof b?.yaml !== 'string' || !Number.isInteger(b.baseRev) || (b.render !== 'server' && b.render !== 'client')) return c.json({ error: 'need yaml, baseRev, planId and render' }, 400)
+  const base = b.baseRev as number, rev = db.latestRev()
+  if (base !== rev) return c.json({ error: 'drift', rev }, 409)
+  if (b.planId !== planId(base, b.yaml)) return c.json({ error: 'plan id does not match the yaml and base rev' }, 400)
+  const r = await check(b.yaml)
+  if ('issues' in r) return c.json({ error: 'invalid config', issues: r.issues }, 422)
+  if (b.yaml.trim() === latestYaml().trim() || canon(r.graph) === canon(await validate(latestYaml()))) return c.json({ unchanged: true, rev })
+  return c.json({ rev: await commit(b.yaml, 'cli', base, b.render === 'client' && b.positions && typeof b.positions === 'object' ? (b.positions as Positions) : undefined) })
 })
 
 app.post('/api/estates', async (c) => {
@@ -104,14 +124,20 @@ let last = key(currentRelease())
 const debounce = (ms: number, f: () => void) => { let t: ReturnType<typeof setTimeout>; return () => { clearTimeout(t); t = setTimeout(f, ms) } }
 
 // Apply on startup (a no-op when the current release already matches) and after every config change.
-let running = false, again = false
+export const engine = { apply } // swapped for a stub in tests
+let running = false, again = false, lastProgress = 0
+const progress = (done: number, total: number) => { // about four a second, plus the last one
+  if (done < total && Date.now() - lastProgress < 250) return
+  lastProgress = Date.now()
+  bus.emit('apply.progress', { rev: db.latestRev(), done, total })
+}
 async function runApply() {
   if (running) { again = true; return }
   running = true
   try {
     do {
       again = false
-      const s = await apply((m) => console.log(`[apply] ${m}`), () => again)
+      const s = await engine.apply((m) => console.log(`[apply] ${m}`), () => again, progress)
       console.log(`[apply] ${s.aborted ? 'superseded' : 'done'} in ${s.ms} ms`, s.rendered)
     } while (again)
   } catch (e) { console.error('[apply] failed, still serving the previous release:', (e as Error).message) } finally { running = false }

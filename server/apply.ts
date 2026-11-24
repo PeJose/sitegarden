@@ -98,7 +98,7 @@ const keyOf = (t: TileSpec) => `${t.theme}/${t.z}/${t.x}/${t.y}`
 // Renders what is missing tile by tile in `order` (the preview, the initial view, its neighbours, the rest), `cores` renders at a time,
 // and publishes a release whenever tiles have appeared so the map fills in as soon as the first ones are done. Tiles a client asked for
 // come first. Stops early when `stale` says the config changed again.
-export async function apply(log: (m: string) => void = () => {}, stale: () => boolean = () => false): Promise<Summary> {
+export async function apply(log: (m: string) => void = () => {}, stale: () => boolean = () => false, progress: (done: number, total: number) => void = () => {}): Promise<Summary> {
   const t0 = Date.now()
   const plan = computePlan(await loadConfig(), loadPositions())
   savePositions(plan.world.positions)
@@ -118,6 +118,8 @@ export async function apply(log: (m: string) => void = () => {}, stale: () => bo
     while (queue.length) { const t = queue.shift()!; if (pending.delete(keyOf(t))) return [t, 0] }
     return null
   }
+  let done = 0
+  const total = queue.length
   const first = new Set(firstWave(plan).filter((t) => pending.has(keyOf(t))).map(keyOf))
   for (const theme of THEMES) if (!left0[theme] && !has(plan.previews[theme])) await preview(plan, theme)
   let lastPublish = 0, timer: ReturnType<typeof setTimeout> | undefined
@@ -130,6 +132,7 @@ export async function apply(log: (m: string) => void = () => {}, stale: () => bo
       const [t, prio] = n
       await Promise.all([t.texture, t.terrain, ...t.pieces.map((x) => x.name)].filter((x): x is string => !!x).map((x) => ensure(plan, x, prio)))
       await cpu(prio, () => flatten(t))
+      progress(++done, total)
       if (t.z === 0 && !--left0[t.theme]) await preview(plan, t.theme)
       if (first.delete(keyOf(t)) && !first.size) { sum.first = Date.now() - t0; log(`first wave (preview + initial view) rendered after ${sum.first} ms`) }
       kick()

@@ -54,3 +54,53 @@ test('an unchanged config plans to nothing', async () => {
   const [, p] = await json(post('/api/plan', { yaml: base, baseRev: 1 }))
   assert.deepEqual(p.diff, [])
 })
+
+const { engine } = await import('./app')
+engine.apply = async () => ({ rendered: {}, tiles: 0, ms: 0, first: 0, aborted: false }) // no rendering in these tests
+const apply = async (yaml: string, o: Record<string, unknown> = {}) => {
+  const baseRev = db.latestRev()
+  return json(post('/api/apply', { yaml, baseRev, planId: hash(`${baseRev}:${yaml}`), render: 'server', ...o }))
+}
+const { hash } = await import('./store')
+const withNode = (id: string) => base.replace('edges:', `  - { id: ${id}, type: repo, group: g1 }\nedges:`)
+
+test('apply stores the next rev, emits config.applied and serves it from /api/state', async () => {
+  const [s, r] = await apply(withNode('c'))
+  assert.deepEqual([s, r], [200, { rev: 2 }])
+  assert.deepEqual([db.getRev(2)?.source, db.getRev(2)?.yaml], ['cli', withNode('c')])
+  assert.deepEqual(db.eventsAfter(0).filter((e) => e.type === 'config.applied').map((e) => e.data), [{ rev: 2, source: 'cli' }])
+  const [, st] = await json(app.request('/api/state'))
+  assert.deepEqual([st.rev, st.yaml, st.renderer], [2, withNode('c'), 'r8'])
+})
+
+test('a plan id that does not match what is sent is rejected', async () => {
+  const [s] = await apply(withNode('d'), { planId: 'nope' })
+  assert.equal(s, 400)
+  assert.equal(db.latestRev(), 2)
+})
+
+test('an invalid config is rejected with its issues and stores nothing', async () => {
+  const [s, r] = await apply(withNode('c').replace('to: b', 'to: nope'))
+  assert.equal(s, 422)
+  assert.equal(r.issues[0].line, 10)
+  assert.equal(db.latestRev(), 2)
+})
+
+test('the same config again is "unchanged", comments included or not', async () => {
+  assert.deepEqual(await apply(withNode('c')), [200, { unchanged: true, rev: 2 }])
+  assert.deepEqual(await apply(withNode('c').replace('world: { seed: t }', 'world:\n  seed: t')), [200, { unchanged: true, rev: 2 }])
+  assert.equal(db.latestRev(), 2)
+})
+
+test('two applies on the same base: one becomes the next rev, the other is a drift 409', async () => {
+  const baseRev = db.latestRev(), send = (id: string) => json(post('/api/apply', { yaml: withNode(id), baseRev, planId: hash(`${baseRev}:${withNode(id)}`), render: 'server' }))
+  const res = await Promise.all([send('e'), send('f')])
+  assert.deepEqual(res.map((r) => r[0]).sort(), [200, 409])
+  assert.deepEqual(res.find((r) => r[0] === 409)![1], { error: 'drift', rev: 3 })
+  assert.equal(db.latestRev(), 3)
+})
+
+test('a stale base on apply is a drift 409', async () => {
+  const [s, r] = await apply(withNode('g'), { baseRev: 1 })
+  assert.deepEqual([s, r], [409, { error: 'drift', rev: 3 }])
+})
