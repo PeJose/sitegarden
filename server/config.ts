@@ -66,12 +66,13 @@ export const schemaJson = async (text?: string) => { await loadPlugins(text); re
 
 // What the render pipeline and the mock UI read: nodes and edges nested per group, mock fields flattened back onto the node.
 export function toRenderConfig(g: Graph): Config {
+  const drop = new Set(host.shorthands().map((s) => s.field)) // the UI wants the final links, not the fields that produced them
   const home = new Map(g.nodes.map((n) => [n.id, n.group]))
   return {
     accountSeed: g.world.seed,
     estates: g.groups.map((x) => ({
       id: x.id, label: x.label,
-      nodes: g.nodes.filter((n) => n.group === x.id).map(({ group: _group, mock, ...n }) => ({ ...n, ...mock })),
+      nodes: g.nodes.filter((n) => n.group === x.id).map(({ group: _group, mock, ...n }) => { drop.forEach((k) => delete (n as Record<string, unknown>)[k]); return { ...n, ...mock } }),
       edges: g.edges.filter((e) => home.get(e.from) === x.id),
     })),
   }
