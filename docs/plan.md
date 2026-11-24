@@ -246,7 +246,7 @@ Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend 
 Why: on the CPU, the design's watercolour filters (`aq`, `aqS`, `aqT`, `wash`, all `feDisplacementMap`-based) cost ~5.5 s per 512-unit tile (58 ms without filters). Baking hides that for revisits, but every config change pays it, and live effects (seasons, weather, growth) are impossible.
 
 1. Re-implement the watercolour look as fragment shaders: domain-warped fbm for pigment, SDF edge darkening, granulation, paper grain, desaturate/fade for the grey neighbourhood (2 d)
-2. Tune the shaders side by side against the v4.2 boards until the look matches (2 d; this is the risk)
+2. Tune the shaders side by side against the v4.2 Light and Night boards in the design artifact (the private design artifact) until the look matches (2 d; this is the risk)
 3. Render target, in this order of preference:
    - **In the browser (WebGL2):** every phone and laptop has a GPU, so the client renders terrain and plots from the World JSON in milliseconds, and the server only sends geometry. Bitmap tiles stay as the fallback for old devices and for postcards
    - **Server, no GPU:** the same shaders through headless GL / SwiftShader on the CPU, still much faster than SVG filters because there's no full-bbox filter pass per tile
