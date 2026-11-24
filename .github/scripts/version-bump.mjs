@@ -1,7 +1,8 @@
-// Fails unless package.json's version is higher than the base branch's.
+// Fails unless package.json's version is higher than the base branch's and CHANGELOG.md has an entry for it.
 import { readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import assert from 'node:assert/strict'
+import { section } from './release-notes.mjs'
 
 const FILE = 'package.json'
 const parse = (v) => String(v).split(/[-+]/)[0].split('.').map(Number) // prerelease/build ignored
@@ -22,6 +23,7 @@ if (process.argv[2] === '--self-test') {
   assert.equal(compare('0.10.0', '0.9.0'), 1) // numeric, not lexical
   assert.equal(compare('1.2.3-beta.1', '1.2.3'), 0) // prerelease ignored
   assert.equal(compare('0.0.9', '0.1.0'), -1)
+  assert.equal(section('## [0.2.0] - 2026-01-01\n- x', '0.3.0'), null) // no entry for the new version
   console.log('self-test ok')
 } else {
   const base = process.argv[2]
@@ -36,6 +38,10 @@ if (process.argv[2] === '--self-test') {
   console.log(`base (${base}): ${baseVersion}\nthis PR: ${version}`)
   if (compare(version, baseVersion) <= 0) {
     console.error(`::error file=${FILE}::${FILE} version must be higher than ${base}'s (${baseVersion}). Bump at least the patch.`)
+    process.exit(1)
+  }
+  if (!section(readFileSync('CHANGELOG.md', 'utf8'), version)) {
+    console.error(`::error file=CHANGELOG.md::CHANGELOG.md needs a "## [${version}]" section.`)
     process.exit(1)
   }
 }
