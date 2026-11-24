@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+import { z } from 'zod'
+import { ConfigError, parseGraph, type NodeTypes } from './graph'
+
+const types: NodeTypes = { repo: {}, site: { url: z.url().optional() } }
+const ok = `world: { seed: s }
+groups:
+  - { id: g, label: G }
+nodes:
+  - { id: a, type: repo, group: g }
+  - { id: b, type: site, group: g }
+edges:
+  - { from: a, to: b, type: deploy }
+`
+const lines = (text: string) => { try { parseGraph(text, 'x.yaml', types) } catch (e) { return (e as ConfigError).issues } throw new Error('parsed') }
+
+test('a valid config gives the graph', () => {
+  const g = parseGraph(ok, 'x.yaml', types)
+  assert.deepEqual([g.groups.length, g.nodes.length, g.edges.length, g.plugins], [1, 2, 1, []])
+})
+
+test('duplicate id reports the second one', () => {
+  const [i] = lines(ok.replace('id: b', 'id: a'))
+  assert.equal(i.line, 6)
+  assert.match(i.message, /duplicate node id "a"/)
+})
+
+test('edge to a missing node names its line and the id', () => {
+  const [i] = lines(ok.replace('to: b', 'to: nowhere'))
+  assert.equal(i.line, 8)
+  assert.match(i.message, /"nowhere"/)
+})
+
+test('node in a missing group', () => {
+  const [i] = lines(ok.replace('group: g }\n  - { id: b', 'group: x }\n  - { id: b'))
+  assert.equal(i.line, 5)
+  assert.match(i.message, /group "x"/)
+})
+
+test('unknown node type lists the known ones', () => {
+  const [i] = lines(ok.replace('type: site', 'type: spaceship'))
+  assert.equal(i.line, 6)
+  assert.match(i.message, /spaceship.*known: repo, site/)
+})
+
+test('a bad field reports its own line', () => {
+  const [i] = lines(ok.replace('{ id: b, type: site, group: g }', '{ id: b, type: site, group: g, url: nope }'))
+  assert.equal(i.line, 6)
+  assert.equal(i.path, 'nodes.1.url')
+})
+
+test('a missing field falls back to the parent line', () => {
+  const [i] = lines(ok.replace(', group: g }\n  - { id: b', ' }\n  - { id: b'))
+  assert.equal(i.line, 5)
+  assert.equal(i.path, 'nodes.0.group')
+})
+
+test('the old estates shape gets the migration message', () => {
+  assert.match(lines('accountSeed: a\nestates: []\n')[0].message, /old `estates:` shape, see CHANGELOG 0.2.0/)
+})
