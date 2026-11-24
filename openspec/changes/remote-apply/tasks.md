@@ -3,7 +3,7 @@
 ## 1. Revisions on the server
 
 - [x] 1.1 `config_revs` table and `latestRev`/`getRev`/`storeRev` with `DriftError` (D1). Verify: db tests for increasing revs, compare-and-set rejecting a stale base, two racing stores where exactly one wins.
-- [ ] 1.2 Server loads from the latest revision, bootstrap import as rev 1, config file watcher removed, startup log line (D2). Verify: test that an empty store imports the file once; editing the file after start changes nothing; `pnpm sg plan` still renders the same map (nothing to do against the existing release).
+- [x] 1.2 Server loads from the latest revision, bootstrap import as rev 1, config file watcher removed, startup log line (D2). Verify: test that an empty store imports the file once; editing the file after start changes nothing; `pnpm sg plan` still renders the same map (nothing to do against the existing release).
 
 ## 2. Plan and apply API
 

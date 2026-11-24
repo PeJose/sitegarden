@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { test } from 'node:test'
-import { loadConfig } from '../../server/config'
 import { makeEstate, syntheticEstates } from '../../server/mock'
 import { bboxOf, boxPoly, distPoly, polysHit, rectPoly } from './geom'
 import { pinBox } from './labels'
@@ -8,6 +10,9 @@ import { rngFor } from './rng'
 import { generateWorld } from './world'
 import type { Config, ConfigEstate, Pt, World } from './types'
 
+process.env.SITEGARDEN_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-gen-')) // before store.ts loads
+const { bootstrap, loadConfig } = await import('../../server/config')
+bootstrap()
 const full = await loadConfig()
 const cfg: Config = { ...full, estates: full.estates.slice(0, 2) } // the two original estates; the planted ones are not part of the test base
 

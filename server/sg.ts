@@ -1,12 +1,13 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { CONFIG_FILE, loadConfig, loadPositions, schemaJson } from './config'
+import { bootstrap, CONFIG_FILE, loadConfig, loadPositions, schemaJson } from './config'
 import { apply } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
 import { currentRelease } from './store'
 
 // pnpm sg plan | apply | schema
 const cmd = process.argv[2]
+bootstrap()
 if (cmd === 'plan') {
   const plan = computePlan(await loadConfig(), loadPositions())
   const cur = currentRelease()
