@@ -2,7 +2,7 @@
 
 ## 1. Tile requests
 
-- [ ] 1.1 Explain the zoom tile requests (58 vs 42) and fix or document them (D4). Verify: a note in `perf/results.md` with both builds' level-change counts; if fixed, the zoom scenario's `tileReqs` is back to React Flow's level within noise.
+- [x] 1.1 Explain the zoom tile requests (58 vs 42) and fix or document them (D4). Verify: a note in `perf/results.md` with both builds' level-change counts; if fixed, the zoom scenario's `tileReqs` is back to React Flow's level within noise.
 
 ## 2. Swap
 

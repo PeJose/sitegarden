@@ -699,3 +699,18 @@ Budgets met: pan 60 fps (>= 55), pan-4x 59.9-60 (>= 50), idle GPU equal to A wit
 Screenshot diff against the A build's light-still / night-still (taken on battery, a still frame does not depend on it): light-still mean 0.002 %, over-threshold 0.011 %; night-still 0.014 % / 0.016 %; both pass.
 
 Main chunk: 570590 B raw / 181152 B gzip before, 327562 B raw / 99320 B gzip after (-43 % raw, -45 % gzip); css 30105 / 6731 B before, 19067 / 4964 B after.
+
+## 2026-11-24 zoom tile requests (preact-swap 1.1)
+
+Question: why `zoom` shows `tileReqs` 58 with the own viewport vs 42 with React Flow. Both builds (660c0a3, the commit before the swap, and the own-viewport head) ran the same scripted wheel zoom (3 s in and out) with a page-side log of the viewport zoom per frame, tile `img` mounts and tile resource entries, on headless Chrome 159 / Metal.
+
+| | React Flow | own viewport |
+|---|---|---|
+| distinct zoom steps, min and max | 21, 0.369 to 1.947 | 21, 0.369 to 1.947 |
+| level changes (`levelFor`, dpr 1) | 6 | 6 |
+| tile `img` mounts in the window | 424, in 18 batches | 424, in 18 batches (same sizes, same zoom steps) |
+| tile requests before the window (page load) | 104 | 88 |
+| tile requests in the window | 42 | 58 |
+| both together | 146 | 146 |
+
+The viewport sequences and the mount batches are the same, so the own viewport does not cross levels more often or mount tiles mid-gesture. The 16 extra requests are tiles React Flow had already fetched at page load (it mounts the tile layer once for its default viewport before the fit; MapView now frames before the first render, so nothing is mounted for another view) and that the own viewport fetches on the first wheel step instead. They are the same files (all 16 in the window are in React Flow's load-time set), and the total over load plus zoom is 146 for both. A measurement artefact of where the window starts, not a regression; nothing changed in the viewport or tile code. Load is now 16 tile requests lighter.
