@@ -6,7 +6,8 @@ export type Disposer = () => void
 export type Status = 'ok' | 'degraded' | 'down' | 'working' | 'paused' | 'unknown'
 export interface CheckNode { id: string; type: string; [k: string]: unknown }
 export interface CheckResult { status: Status; detail?: string }
-export interface CheckDef { id: string; every: string; run(node: CheckNode): CheckResult | Promise<CheckResult> }
+// Runs once per node of the listed types (every node when `nodeTypes` is left out).
+export interface CheckDef { id: string; every: string; nodeTypes?: string[]; run(node: CheckNode): CheckResult | Promise<CheckResult> }
 
 export interface PluginContext {
   id: string

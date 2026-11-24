@@ -6,9 +6,10 @@ import { compress } from 'hono/compress'
 import type { ConfigEstate } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
-import { addEstate, CONFIG_FILE, db, loadGraph, removeLastEstate, schemaJson } from './config'
+import { addEstate, CONFIG_FILE, db, host, loadGraph, removeLastEstate, schemaJson } from './config'
 import { createBus, eventsHandler } from './core/events'
 import { createHolder } from './core/holder'
+import { createScheduler } from './core/scheduler'
 import { makeEstate } from './mock'
 import { ART, DATA, currentRelease } from './store'
 
@@ -59,6 +60,12 @@ const bus = createBus(db)
 const key = (r: ReturnType<typeof currentRelease>) => r && `${r.id}:${r.rev}`
 app.get('/api/events', eventsHandler(bus, () => key(currentRelease())))
 const graph = createHolder(loadGraph, bus.emit)
+const scheduler = createScheduler({ db, emit: bus.emit })
+app.post('/api/refresh', async (c) => {
+  const b = (await c.req.json().catch(() => null)) as { node?: unknown } | null
+  if (b?.node !== undefined && typeof b.node !== 'string') return c.json({ error: 'node must be a node id' }, 400)
+  return c.json({ ok: true, queued: scheduler.refresh(b?.node as string | undefined) })
+})
 let last = key(currentRelease())
 const debounce = (ms: number, f: () => void) => { let t: ReturnType<typeof setTimeout>; return () => { clearTimeout(t); t = setTimeout(f, ms) } }
 fs.watch(DATA, debounce(30, () => { const k = key(currentRelease()); if (k && k !== last) { last = k; bus.emit('release', k) } }))
@@ -76,11 +83,13 @@ async function runApply() {
     } while (again)
   } catch (e) { console.error('[apply] failed, still serving the previous release:', (e as Error).message) } finally { running = false }
 }
-const reapply = debounce(100, () => void graph.reload().then((ok) => { if (ok) void runApply() }))
+// A good reload re-plans the checks (plugins were reloaded first) and re-renders.
+const reloaded = () => graph.reload().then((ok) => { if (ok) { scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
+const reapply = debounce(100, () => void reloaded())
 fs.watch(path.dirname(CONFIG_FILE), (_, f) => { if (f === path.basename(CONFIG_FILE)) reapply() })
 
 const port = Number(process.env.PORT) || 8787
 serve({ fetch: app.fetch, port }, () => {
   console.log(`[server] http://localhost:${port}`)
-  void graph.reload().then((ok) => { if (ok) void runApply() })
+  void reloaded()
 })

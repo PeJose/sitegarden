@@ -18,7 +18,7 @@
 
 ## 4. Scheduler
 
-- [ ] 4.1 `server/core/scheduler.ts` (D6) with injectable clock and random: jitter, concurrency limit, backoff cap, reset on success, snapshots, `check.result`/`node.status`, `refresh` and `POST /api/refresh`. Verify: tests for each scenario in specs/check-scheduler with a fake clock.
+- [x] 4.1 `server/core/scheduler.ts` (D6) with injectable clock and random: jitter, concurrency limit, backoff cap, reset on success, snapshots, `check.result`/`node.status`, `refresh` and `POST /api/refresh`. Verify: tests for each scenario in specs/check-scheduler with a fake clock.
 
 ## 5. Web extension tree
 
