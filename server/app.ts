@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { serve } from '@hono/node-server'
 import { Hono, type Context, type Next } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { compress } from 'hono/compress'
 import type { ConfigEstate, Positions } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
@@ -47,13 +48,10 @@ app.post('/api/artifacts/missing', guard, async (c) => {
   if (!Array.isArray(b?.names) || !b.names.every((n) => typeof n === 'string' && NAME.test(n))) return c.json({ error: 'need names' }, 400)
   return c.json({ missing: b.names.filter((n) => !has(n)) })
 })
-app.put('/a/:file', guard, async (c) => {
+app.put('/a/:file', guard, bodyLimit({ maxSize: CAP, onError: (c) => c.json({ error: 'too big' }, 413) }), async (c) => {
   const f = c.req.param('file') ?? ''
   if (!NAME.test(f)) return c.json({ error: 'bad name' }, 400)
-  if (Number(c.req.header('Content-Length')) > CAP) return c.json({ error: 'too big' }, 413)
-  const buf = Buffer.from(await c.req.arrayBuffer())
-  if (buf.length > CAP) return c.json({ error: 'too big' }, 413)
-  writeAtomic(path.join(ART, f), buf)
+  writeAtomic(path.join(ART, f), Buffer.from(await c.req.arrayBuffer()))
   return c.json({ ok: true })
 })
 

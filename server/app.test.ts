@@ -125,6 +125,9 @@ test('artifact upload checks the name and the size, and missing lists what the s
   for (const n of ['.hidden', 'a$b']) assert.equal((await put(n, 'x')).status, 400, n)
   assert.equal((await put('big.webp', Buffer.alloc(20 * 1024 * 1024 + 1))).status, 413)
   assert.equal(fs.existsSync(path.join(dir, 'a/big.webp')), false)
+  const chunked = new ReadableStream({ start(c) { c.enqueue(Buffer.alloc(20 * 1024 * 1024 + 1)); c.close() } }) // no Content-Length
+  assert.equal((await app.request('/a/big2.webp', { method: 'PUT', body: chunked, duplex: 'half' } as RequestInit)).status, 413)
+  assert.equal(fs.existsSync(path.join(dir, 'a/big2.webp')), false)
   assert.deepEqual((await json(post('/api/artifacts/missing', { names: ['tile-abc.webp', 'tile-zzz.webp'] })))[1], { missing: ['tile-zzz.webp'] })
   assert.equal((await json(post('/api/artifacts/missing', { names: ['../x'] })))[0], 400)
 })
