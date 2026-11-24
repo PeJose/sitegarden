@@ -13,7 +13,7 @@
 
 ## 3. CLI
 
-- [ ] 3.1 `sg plan` / `sg apply` / `sg pull` as HTTP client with `.sitegarden/state.json`, confirmation, `--yes`, `--no-wait`, `--force`, drift exit code 3 (D5). Verify: test running the CLI against an in-process server on a random port: plan prints diff; apply bumps rev and waits for the release; GUI edit then `sg plan` refuses with the drift message; `sg pull` fixes it; `pull` refuses over unapplied local edits.
+- [x] 3.1 `sg plan` / `sg apply` / `sg pull` as HTTP client with `.sitegarden/state.json`, confirmation, `--yes`, `--no-wait`, `--force`, drift exit code 3 (D5). Verify: test running the CLI against an in-process server on a random port: plan prints diff; apply bumps rev and waits for the release; GUI edit then `sg plan` refuses with the drift message; `sg pull` fixes it; `pull` refuses over unapplied local edits.
 
 ## 4. Local render
 
