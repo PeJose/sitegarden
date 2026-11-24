@@ -172,7 +172,7 @@ async function runApply() {
   } finally { running = false }
 }
 // A good reload re-plans the checks (plugins were reloaded first) and re-renders.
-const reloaded = () => graph.reload().then((ok) => { if (ok) { secretWarnings(graph.get()!).forEach((w) => log.warn(`[secrets] ${w.message}`)); scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
+const reloaded = () => graph.reload().then((ok) => { if (ok) { secretWarnings(graph.get()!).forEach((w) => log.warn(`[secrets] ${w.message}`)); scheduler.set(graph.get()!.nodes, host.checks(), host.configured(graph.get()!.nodes)); void runApply() } })
 
 export function start(port: number) {
   bootstrap()

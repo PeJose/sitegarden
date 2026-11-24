@@ -7,7 +7,7 @@
 
 ## 2. Checks
 
-- [ ] 2.1 `ctx.registerCheckType`, core `checks:` field, scheduler instances per entry with key + config reuse (D3). Verify: tests for unknown type error with line, `every` from the entry, an apply that leaves a check unchanged keeps its timer and fail count.
+- [x] 2.1 `ctx.registerCheckType`, core `checks:` field, scheduler instances per entry with key + config reuse (D3). Verify: tests for unknown type error with line, `every` from the entry, an apply that leaves a check unchanged keeps its timer and fail count.
 - [ ] 2.2 Essentials `http` check (D4, D5): status and text matching, timing, `alert_after` via plugin KV, `allow_private`. Verify: tests against local servers (with `allow_private: true`) for ok, wrong status, missing text, timeout, `alert_after: 2` degraded then down then ok; a check to `192.168.1.1` without `allow_private` fails with the blocked reason without a connection (injected lookup).
 
 ## 3. Config spec and close-out

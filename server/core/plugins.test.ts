@@ -110,3 +110,16 @@ test('ctx.http reaches only what the manifest permits, and substitutes only the 
     await assert.rejects(Promise.resolve(bare.checks()[0].run({ id: 'n', type: 't' })), /plugin base may not call 127\.0\.0\.1/)
   } finally { server.close() }
 })
+
+test('a check type is listed, builds scheduler entries from node config and is removed with its plugin', async () => {
+  const seen: unknown[] = []
+  const h = createHost({ baseDir, importModule: async () => ({ default: { id: 'base', register: (ctx) => { ctx.registerCheckType({ type: 'ping', schema: {}, run: (cfg, n, c) => { seen.push([cfg.type, n.id, c.id, c.index]); return { status: 'ok' } } }) } } }) })
+  await h.load(['./base'])
+  const nodes = [{ id: 'n', type: 'site', checks: [{ type: 'ping', every: '1m' }, { type: 'gone', every: '1m' }, { type: 'ping', every: '2m' }] }]
+  const [a, b] = h.configured(nodes)
+  assert.deepEqual([h.checkTypes().map((c) => c.type), a.check.id, a.check.every, b.check.id, b.check.every], [['ping'], 'ping#0', '1m', 'ping#2', '2m'])
+  await b.check.run(nodes[0])
+  assert.deepEqual(seen, [['ping', 'n', 'base', 2]])
+  await h.unloadAll()
+  assert.deepEqual([h.checkTypes(), h.configured(nodes)], [[], []])
+})

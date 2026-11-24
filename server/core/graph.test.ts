@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { z } from 'zod'
 import { ConfigError, diffGraphs, parseGraph, type NodeTypes } from './graph'
-import type { ShorthandDef } from './sdk'
+import type { CheckTypeDef, ShorthandDef } from './sdk'
 
 const types: NodeTypes = { repo: {}, site: { url: z.url().optional() } }
 const ok = `world: { seed: s }
@@ -109,4 +109,17 @@ test('a bad shorthand value is an error on its line with the field schema messag
     const [i] = (e as ConfigError).issues
     assert.deepEqual([i.line, i.path, i.message], [5, 'nodes.0.repo', 'must be owner/name'])
   }
+})
+
+const ping: CheckTypeDef = { type: 'ping', schema: { host: z.string().optional() }, run: () => ({ status: 'ok' }) }
+const checked = (extra: string) => `world: { seed: s }\ngroups:\n  - { id: g, label: G }\nnodes:\n  - { id: a, type: repo, group: g, checks: [${extra}] }\n`
+
+test('checks entries are validated against their type with the line, and every defaults to 5m', () => {
+  const g = parseGraph(checked('{ type: ping, host: x }, { type: ping, every: 30s }'), 'x.yaml', { repo: {} }, [], [ping])
+  assert.deepEqual((g.nodes[0] as { checks: unknown[] }).checks, [{ type: 'ping', host: 'x', every: '5m' }, { type: 'ping', every: '30s' }])
+  const bad = (extra: string) => { try { parseGraph(checked(extra), 'x.yaml', { repo: {} }, [], [ping]) } catch (e) { return (e as ConfigError).issues[0] } throw new Error('parsed') }
+  assert.deepEqual([bad('{ type: pong }').line, bad('{ type: pong }').message], [5, 'unknown check type "pong", known: ping'])
+  assert.match(bad('{ type: ping, every: soon }').message, /bad interval/)
+  assert.match(bad('{ type: ping, hots: x }').message, /hots/)
+  assert.deepEqual((parseGraph(checked(''), 'x.yaml', { repo: {} }).nodes[0] as { checks: unknown[] }).checks, [])
 })
