@@ -95,6 +95,20 @@ test('an invalid config is rejected with its issues and stores nothing', async (
   assert.equal(db.latestRev(), 2)
 })
 
+test('a rejected apply, plan or GUI edit emits config.invalid with the issues', async () => {
+  const seen = () => db.eventsAfter(0).filter((e) => e.type === 'config.invalid') as { data: { message: string; issues: { line: number }[] } }[]
+  const n = seen().length
+  await apply(withNode('c').replace('to: b', 'to: nope'))
+  assert.equal(seen().length, n + 1)
+  assert.deepEqual([seen()[n].data.issues[0].line, /nope/.test(seen()[n].data.message)], [10, true])
+  await json(post('/api/plan', { yaml: withNode('c').replace('type: site', 'type: spaceship'), baseRev: db.latestRev() }))
+  assert.match(seen()[n + 1].data.message, /unknown node type "spaceship"/)
+  const [s] = await json(post('/api/estates', { id: 'bad', label: 'bad', nodes: [{ id: 'z', type: 'spaceship' }], edges: [] }))
+  assert.equal(s, 422)
+  assert.equal(seen().length, n + 3)
+  assert.equal(db.latestRev(), 2)
+})
+
 test('the same text again is "unchanged"; a comment-only edit is a new rev', async () => {
   assert.deepEqual(await apply(withNode('c')), [200, { unchanged: true, rev: 2 }])
   assert.deepEqual(await apply(withNode('c') + '\n'), [200, { unchanged: true, rev: 2 }])

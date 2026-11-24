@@ -12,5 +12,5 @@
 
 ## 3. Config spec and close-out
 
-- [ ] 3.1 Make the server emit `config.invalid` when a plan, apply or GUI edit is rejected as invalid, if it does not already (spec `garden-config` modified requirement). Verify: app test asserting the event on a rejected apply.
+- [x] 3.1 Make the server emit `config.invalid` when a plan, apply or GUI edit is rejected as invalid, if it does not already (spec `garden-config` modified requirement). Verify: app test asserting the event on a rejected apply.
 - [ ] 3.2 README (shorthands, `checks:` example with `expect_text` and `alert_after`), CHANGELOG 0.5.0, `package.json` 0.5.0, SDK 1.2.0. Verify: `pnpm test`, `pnpm build`, `npx oxlint` (no new errors in `server/` or `plugins/`); version check passes against main.
