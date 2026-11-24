@@ -70,3 +70,20 @@ export function parseGraph(text: string, file: string, types: NodeTypes): Graph 
   if (bad.length) fail(...bad)
   return g
 }
+
+export interface Change { kind: 'group' | 'node' | 'edge' | 'extension'; op: '+' | '~' | '-'; id: string }
+const canon = (v: unknown) => JSON.stringify(v, (_, x) => x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : x)
+// What a config change adds, changes and removes, by kind. `~` when the item's canonical JSON differs.
+export function diffGraphs(a: Graph, b: Graph): Change[] {
+  const kinds = (g: Graph): Record<Change['kind'], [string, unknown][]> => ({
+    group: g.groups.map((x) => [x.id, x]), node: g.nodes.map((x) => [x.id, x]), edge: g.edges.map((e) => [`${e.from}>${e.to}:${e.type}`, e]), extension: Object.entries(g.extensions),
+  })
+  const [x, y] = [kinds(a), kinds(b)]
+  return (Object.keys(x) as Change['kind'][]).flatMap((kind) => {
+    const old = new Map(x[kind].map(([id, v]) => [id, canon(v)])), now = new Map(y[kind].map(([id, v]) => [id, canon(v)]))
+    return [
+      ...[...now].flatMap(([id, v]): Change[] => (!old.has(id) ? [{ kind, op: '+', id }] : old.get(id) !== v ? [{ kind, op: '~', id }] : [])),
+      ...[...old.keys()].filter((id) => !now.has(id)).map((id): Change => ({ kind, op: '-', id })),
+    ]
+  })
+}

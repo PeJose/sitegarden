@@ -1,20 +1,21 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { compress } from 'hono/compress'
 import type { ConfigEstate } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
-import { addEstate, bootstrap, bus, db, forgetPosition, host, latestYaml, loadGraph, removeLastEstate, schemaJson, validate } from './config'
+import { computePlan, estimateMs, missing } from './plan'
+import { addEstate, bootstrap, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, schemaJson, toRenderConfig, validate } from './config'
 import { eventsHandler } from './core/events'
-import { ConfigError } from './core/graph'
+import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
 import { createHolder } from './core/holder'
 import { createScheduler } from './core/scheduler'
 import { makeEstate } from './mock'
-import { ART, DATA, currentRelease } from './store'
+import { ART, DATA, currentRelease, hash } from './store'
 
-const app = new Hono()
+export const app = new Hono()
 app.use(compress())
 
 app.get('/schema.json', async (c) => c.json(await schemaJson(latestYaml())))
@@ -51,6 +52,27 @@ async function commit(yaml: string, source: string) {
   await reloaded()
 }
 app.onError((e, c) => e instanceof ConfigError ? c.json({ error: 'invalid config', issues: e.issues }, 422) : (console.error(e), c.text('internal error', 500)))
+// Validation result for a candidate config: the graph, or every issue with its line.
+async function check(yaml: string): Promise<{ graph: Graph } | { issues: Issue[] }> {
+  try { return { graph: await validate(yaml) } } catch (e) { if (e instanceof ConfigError) return { issues: e.issues }; throw e }
+}
+const planId = (baseRev: number, yaml: string) => hash(`${baseRev}:${yaml}`)
+const planBody = async (c: Context) => {
+  const b = (await c.req.json().catch(() => null)) as { yaml?: unknown; baseRev?: unknown } | null
+  return typeof b?.yaml === 'string' && Number.isInteger(b.baseRev) ? { yaml: b.yaml, baseRev: b.baseRev as number } : null
+}
+
+// Nothing changes: the candidate is validated and compared with the latest revision.
+app.post('/api/plan', async (c) => {
+  const b = await planBody(c), rev = db.latestRev()
+  if (!b) return c.json({ error: 'need yaml and baseRev' }, 400)
+  if (b.baseRev !== rev) return c.json({ error: 'drift', rev }, 409)
+  const r = await check(b.yaml)
+  if ('issues' in r) return c.json({ rev, ok: false, issues: r.issues })
+  const plan = computePlan(toRenderConfig(r.graph), loadPositions()), todo = missing(plan)
+  return c.json({ rev, ok: true, diff: diffGraphs(await validate(latestYaml()), r.graph), render: { jobs: todo.jobs.length, tiles: todo.tiles.length, ms: estimateMs(todo.jobs, todo.tiles.length) }, planId: planId(rev, b.yaml), release: plan.id })
+})
+
 app.post('/api/estates', async (c) => {
   // An explicit estate in the body is planted as given; an empty body plants a random one.
   const body = (await c.req.json().catch(() => null)) as ConfigEstate | null

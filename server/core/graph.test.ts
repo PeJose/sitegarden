@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { z } from 'zod'
-import { ConfigError, parseGraph, type NodeTypes } from './graph'
+import { ConfigError, diffGraphs, parseGraph, type NodeTypes } from './graph'
 
 const types: NodeTypes = { repo: {}, site: { url: z.url().optional() } }
 const ok = `world: { seed: s }
@@ -70,4 +70,14 @@ test('an unknown node field is rejected at its node line', () => {
   const [i] = lines(ok.replace('{ id: b, type: site, group: g }', '{ id: b, type: site, group: g, urll: x }'))
   assert.equal(i.line, 6)
   assert.match(i.message, /urll/)
+})
+
+test('a diff lists added, changed and removed items by kind', () => {
+  const g = (t: string) => parseGraph(t, 'x.yaml', types)
+  assert.deepEqual(diffGraphs(g(ok), g(ok)), [])
+  const next = g(ok.replace('{ id: b, type: site, group: g }', '{ group: g, type: site, id: b, host: h }\n  - { id: c, type: repo, group: g }').replace('type: deploy', 'type: sync'))
+  assert.deepEqual(diffGraphs(g(ok), next), [
+    { kind: 'node', op: '~', id: 'b' }, { kind: 'node', op: '+', id: 'c' },
+    { kind: 'edge', op: '+', id: 'a>b:sync' }, { kind: 'edge', op: '-', id: 'a>b:deploy' },
+  ])
 })
