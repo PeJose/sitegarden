@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-11-24
+
+### Changed
+- The web app runs on Preact 10 (through `preact/compat`) instead of React 19. The map, panels, command bar and status strip look and behave the same. The main chunk drops from 99 KB to 40 KB gzip.
+- Web plugins are compiled into the web build and share the host's Preact; the import-map loader in the plan is dropped. The supported React API is listed in `docs/plugins.md`.
+
 ## [0.6.0] - 2026-11-24
 
 ### Added

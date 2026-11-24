@@ -37,7 +37,7 @@ One `docker compose up`: the app, a Tailscale sidecar, and an optional screensho
 |---|---|
 | Server | Node + Hono: plugin host, scheduler, API, SSE, serves the web app |
 | Storage | SQLite (WAL): cache, append-only events, status snapshots, audit log. Backup = `sqlite3 .backup` or Litestream |
-| Web app | React + `@xyflow/react` (now v13.0.2, check the v12 → v13 migration notes), Vite |
+| Web app | Preact 10 (through `preact/compat`, so the source still imports `react`), our own pan/zoom viewport, Vite |
 | Live updates | Server-Sent Events, typed events, `Last-Event-ID` catch-up |
 | Config | `sitegarden.yaml` in a private git repo + generated `schema.json` for editor autocompletion |
 | Secrets | Env vars or `_FILE` secret files, referenced by name from YAML |
@@ -48,10 +48,10 @@ There is no GitHub scheduled Action: the server does all scheduling.
 
 ### Map rendering: three layers
 
-React Flow handles what it is good at (HTML nodes, selection, drag, keyboard); canvases handle terrain and motion.
+HTML handles what it is good at (pins, selection, keyboard); server-rendered tiles handle terrain; one rAF loop handles motion. Pan and zoom are our own code (`src/map/viewport.ts`): one transform on a world layer, written imperatively, no library.
 
 1. **World tiles (bottom):** paper, neighbourhood, plots and buildings, rendered **on the server** by the render pipeline below and served as immutable image tiles. The browser only draws images, never filters.
-2. **React Flow (middle):** buildings, pins, labels, selection; transparent background.
+2. **Pins and labels (middle):** DOM pins in the viewport layer, labels in a world-sized SVG; transparent background.
 3. **Flow canvas (top):** one rAF loop draws lanterns, pulses and pings from pre-sampled path points. Hundreds of particles cost almost nothing; the loop stops when nothing moves.
 
 Flow events are `flow.started {id, kind, edgeId, t0}` and `flow.finished {id, t1, result}`. The browser computes position from `now − t0`, so a replay (time scrubber) is the same code fed from stored events. Details in [visual.md](visual.md#rendering-techniques).
@@ -90,7 +90,7 @@ Speed work, measured first (profile which filter dominates):
 
 ### Plugins in one paragraph
 
-The core holds the graph model, plugin host, extension tree, scheduler, store, secrets broker, event bus, status vocabulary, auth and the web shell. Everything else is an extension with an ID like `layer:garden:terrain`. A plugin replaces it by registering the same ID, and YAML can disable it. Web plugins load at runtime through an import map that shares one React. Themes and building packs are pure data. See [plugins.md](plugins.md).
+The core holds the graph model, plugin host, extension tree, scheduler, store, secrets broker, event bus, status vocabulary, auth and the web shell. Everything else is an extension with an ID like `layer:garden:terrain`. A plugin replaces it by registering the same ID, and YAML can disable it. Web plugins are compiled into the web build and share the host's Preact. Themes and building packs are pure data. See [plugins.md](plugins.md).
 
 ### Security in one paragraph
 
@@ -193,8 +193,9 @@ Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend 
 3. `essentials`: node types, `repo:` / `sanity:` shorthands, HTTP + keyword checks (1.5 d)
 4. Map v0 (plain theme), side panel, Inventory + Links lists, Refresh (2 d)
 5. Dockerfile, compose with Tailscale sidecar, `tailscale` + `password` auth, README (1.5 d)
-6. One web plugin end to end via import map, to prove the SDK before it freezes (0.5 d)
-7. Client performance pass, before more UI lands (1.5 d). Observed 2026-11-20: the browser's GPU process sits at ~300% while the POC map is open, even when idle and fully loaded, and pan/zoom animations feel slow. Profile first (Chrome Performance + Layers panels, dev vs production build), then fix what the data shows. Suspects: React Flow re-rendering every pin/chip/label per frame, `backdrop-filter` blur on panels over a moving map, many rough.js SVG pins, CSS opacity transitions, idle animations (deploy path, red wash) that never stop. Target: near-zero GPU when idle, 60 fps pan on a mid phone
+6. One web plugin end to end, built at build time against the host's Preact, to prove the SDK before it freezes (0.5 d)
+7. Client performance pass, before more UI lands (1.5 d). Observed 2026-11-20: the browser's GPU process sits at ~300% while the POC map is open, even when idle and fully loaded, and pan/zoom animations feel slow. Profile first (Chrome Performance + Layers panels, dev vs production build), then fix what the data shows. Suspects (React Flow, since replaced by the own viewport and Preact, was the first): re-rendering every pin/chip/label per frame, `backdrop-filter` blur on panels over a moving map, many rough.js SVG pins, CSS opacity transitions, idle animations (deploy path, red wash) that never stop. Target: near-zero GPU when idle, 60 fps pan on a mid phone
+8. pre4, smaller and faster client: our own viewport instead of React Flow (0.6.0) and Preact instead of React (0.7.0). Main chunk 181 KB to 40 KB gzip, pan and zoom unchanged (budgets in `perf/results.md`)
 
 ### M2 — Roots and lanterns (~9 days)
 
@@ -290,7 +291,7 @@ Pick from the `later` items in [features.md](features.md): external status sourc
 1. ~~Name~~ — sitegarden (free on npm and GitHub as of 2026-11-19).
 2. ~~Hono vs Fastify~~ — Hono.
 3. ~~Paper texture: SVG filter or own code~~ — the design's SVG filters, rendered server-side by sharp (librsvg) into cached WebP tiles (POC, 2026-11-20). resvg-js crashes on `feDisplacementMap`; client-side rasterising was too slow.
-4. ~~Module Federation vs import maps~~ — import maps with shared React.
+4. ~~Module Federation vs import maps~~ — neither: web plugins are compiled into the web build (0.7.0) and share the host's Preact.
 5. License (MIT suggested).
 6. Hosting: Oracle on pay-as-you-go vs small paid VPS vs home box.
 7. Webhooks in: Tailscale Funnel (rules out Headscale) vs Caddy proxy vs polling forever.
@@ -304,7 +305,6 @@ Pick from the `later` items in [features.md](features.md): external status sourc
 | Whether a Sanity Viewer token can list webhooks | M5 |
 | Sanity Manage deep-link paths (`/manage/project/<id>/...`) | M1 |
 | undici `connect.lookup` option for the SSRF guard | M1 |
-| React Flow v12 → v13 migration notes | M1 |
 | Headscale release with Serve HTTPS (if using Headscale) | M1 |
 
 ## Next step
