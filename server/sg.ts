@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import readline from 'node:readline/promises'
 
-// pnpm sg plan | apply | pull | schema [--server URL] [--yes] [--no-wait] [--force]
+// pnpm sg plan | apply | pull | schema [--server URL] [--yes] [--no-wait] [--local-render] [--force]
 // plan/apply/pull talk to a server (SITEGARDEN_SERVER, default http://localhost:8787); the server's latest revision is the state.
 const args = process.argv.slice(2), cmd = args[0], flag = (n: string) => args.includes(`--${n}`)
 const CONFIG_FILE = path.resolve(process.env.SITEGARDEN_CONFIG ?? path.join(import.meta.dirname, '../sitegarden.yaml'))
@@ -62,9 +63,30 @@ async function release(id: string, ctl: AbortController) {
   } }
 }
 
+// --local-render renders in a scratch DATA dir here; the pipeline is imported only after DATA is set, and only on this path.
+async function localRenderer() {
+  const s = await call('/api/state'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-render-'))
+  process.env.SITEGARDEN_DATA = tmp
+  process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }))
+  const [{ RENDERER, art }, { loadGraph, toRenderConfig }, { computePlan }, { renderTiles }] = await Promise.all([import('./store'), import('./config'), import('./plan'), import('./apply')])
+  if (RENDERER !== s.renderer) die(1, `renderer mismatch: server has ${s.renderer}, this machine ${RENDERER}: nothing was uploaded`)
+  // Renders the tiles the server lacks and uploads them; returns the positions the plan was made with.
+  return async (yaml: string) => {
+    const plan = computePlan(toRenderConfig(await loadGraph(yaml)), s.positions), names = [...new Set(plan.tiles.map((t) => t.name))]
+    const miss = new Set((await call('/api/artifacts/missing', { names })).missing as string[]), todo = [...new Map(plan.tiles.filter((t) => miss.has(t.name)).map((t) => [t.name, t])).values()]
+    console.log(`rendering ${todo.length} of ${names.length} tiles here`)
+    await renderTiles(plan, todo)
+    const put = async (n: string) => { const r = await fetch(`${server}/a/${n}`, { method: 'PUT', body: fs.readFileSync(art(n)) }); if (!r.ok) die(1, `upload of ${n} failed: ${r.status}`) }
+    for (let i = 0; i < todo.length; i += 8) await Promise.all(todo.slice(i, i + 8).map((t) => put(t.name)))
+    console.log(`uploaded ${todo.length} tiles`)
+    return plan.world.positions
+  }
+}
+
 if (cmd === 'plan') {
   await plan()
 } else if (cmd === 'apply') {
+  const render = flag('local-render') ? await localRenderer() : null // first: a renderer mismatch stops everything
   const { yaml, p } = await plan()
   if (!flag('yes') && (p.diff.length || p.render.tiles)) {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout }), a = await rl.question('Apply? [y/N] ')
@@ -72,7 +94,8 @@ if (cmd === 'plan') {
     if (!/^y(es)?$/i.test(a.trim())) die(1, 'aborted')
   }
   const ctl = new AbortController(), rel = flag('no-wait') ? null : await release(p.release, ctl)
-  const r = await call('/api/apply', { yaml, baseRev: p.rev, planId: p.planId, render: 'server' })
+  const positions = await render?.(yaml)
+  const r = await call('/api/apply', { yaml, baseRev: p.rev, planId: p.planId, render: render ? 'client' : 'server', positions })
   if (r.unchanged) console.log(`no changes, server stays at rev ${r.rev}`)
   else {
     remember(r.rev, yaml)
@@ -93,6 +116,6 @@ if (cmd === 'plan') {
   fs.writeFileSync(file, `${JSON.stringify(await schemaJson(), null, 2)}\n`)
   console.log(`wrote ${file}`)
 } else {
-  die(2, 'usage: pnpm sg plan | apply | pull | schema [--server URL] [--yes] [--no-wait] [--force]')
+  die(2, 'usage: pnpm sg plan | apply | pull | schema [--server URL] [--yes] [--no-wait] [--local-render] [--force]')
 }
 process.exit(0)

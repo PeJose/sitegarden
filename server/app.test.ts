@@ -117,12 +117,26 @@ test('planting and removing an estate in the GUI make revs with source gui', asy
   assert.equal((await json(post('/api/estates', { ...estate, id: 'g1' })))[0], 400)
 })
 
+const put = (name: string, body: string | Buffer) => app.request(`/a/${name}`, { method: 'PUT', body })
+
+test('artifact upload checks the name and the size, and missing lists what the server lacks', async () => {
+  assert.equal((await put('tile-abc.webp', 'x')).status, 200)
+  assert.equal(fs.readFileSync(path.join(dir, 'a/tile-abc.webp'), 'utf8'), 'x')
+  for (const n of ['.hidden', 'a$b']) assert.equal((await put(n, 'x')).status, 400, n)
+  assert.equal((await put('big.webp', Buffer.alloc(20 * 1024 * 1024 + 1))).status, 413)
+  assert.equal(fs.existsSync(path.join(dir, 'a/big.webp')), false)
+  assert.deepEqual((await json(post('/api/artifacts/missing', { names: ['tile-abc.webp', 'tile-zzz.webp'] })))[1], { missing: ['tile-zzz.webp'] })
+  assert.equal((await json(post('/api/artifacts/missing', { names: ['../x'] })))[0], 400)
+})
+
 test('with auth enabled, apply and GUI edits are refused and no rev is made', async () => {
   const [s] = await apply(db.getRev(db.latestRev())!.yaml + 'auth: { enabled: true }\n')
   assert.equal(s, 200) // the change that turns it on is the last one
   const rev = db.latestRev()
   assert.equal((await apply(withNode('h')))[0], 403)
   assert.equal((await json(post('/api/estates', estate)))[0], 403)
+  assert.equal((await put('tile-nope.webp', 'x')).status, 403)
+  assert.equal((await json(post('/api/artifacts/missing', { names: [] })))[0], 403)
   assert.equal((await json(app.request('/api/estates/last', { method: 'DELETE' })))[0], 403)
   assert.equal(db.latestRev(), rev)
 })

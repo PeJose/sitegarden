@@ -62,6 +62,11 @@ async function quad(texture: string, qx: number, qy: number, z: number): Promise
   return quads.get(k)!
 }
 
+const renderTile = async (p: Plan, t: TileSpec, prio: number) => {
+  await Promise.all([t.texture, t.terrain, ...t.pieces.map((x) => x.name)].filter((x): x is string => !!x).map((x) => ensure(p, x, prio)))
+  await cpu(prio, () => flatten(t))
+}
+
 async function flatten(t: TileSpec) {
   const base = await quad(t.texture, ...t.quad, t.z)
   const layers: OverlayOptions[] = t.terrain ? [{ input: art(t.terrain), left: 0, top: 0 }] : []
@@ -86,6 +91,14 @@ function manifest(p: Plan, complete: boolean): Manifest {
   for (const t of p.tiles) names[t.theme][t.z][(t.y - y0) * cols + (t.x - x0)] = has(t.name) ? t.name : null
   const rev = Object.values(names).flat(2).filter(Boolean).length + THEMES.filter((t) => has(p.previews[t])).length
   return { id: p.id, rev, complete, world: p.worldName, config: p.configName, estates: p.estates, tiles: { size: T, x0, y0, cols, rows, names }, previews: Object.fromEntries(THEMES.filter((t) => has(p.previews[t])).map((t) => [t, p.previews[t]])), textures: Object.fromEntries(THEMES.map((th) => [th, SCALE.map((_, z) => p.tiles.find((t) => t.theme === th && t.z === z)!.texture)])) as Manifest['textures'] }
+}
+
+// Renders just these tiles, and the layers they stand on, into DATA: what a client does before it uploads them.
+export async function renderTiles(plan: Plan, tiles: TileSpec[], progress: (done: number, total: number) => void = () => {}) {
+  started.clear(); quads.clear()
+  const todo = [...tiles]
+  let done = 0
+  await Promise.all(Array.from({ length: cores * 2 }, async () => { for (let t = todo.shift(); t; t = todo.shift()) { await renderTile(plan, t, 0); progress(++done, tiles.length) } }))
 }
 
 export interface Summary { rendered: Record<string, number>; tiles: number; ms: number; first: number | null; aborted: boolean }
@@ -130,8 +143,7 @@ export async function apply(log: (m: string) => void = () => {}, stale: () => bo
   const worker = async () => {
     for (let n = next(); n && !stale(); n = next()) {
       const [t, prio] = n
-      await Promise.all([t.texture, t.terrain, ...t.pieces.map((x) => x.name)].filter((x): x is string => !!x).map((x) => ensure(plan, x, prio)))
-      await cpu(prio, () => flatten(t))
+      await renderTile(plan, t, prio)
       progress(++done, total)
       if (t.z === 0 && !--left0[t.theme]) await preview(plan, t.theme)
       if (first.delete(keyOf(t)) && !first.size) { sum.first = Date.now() - t0; log(`first wave (preview + initial view) rendered after ${sum.first} ms`) }

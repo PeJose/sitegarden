@@ -14,10 +14,12 @@ import { DriftError } from './core/db'
 import { createHolder } from './core/holder'
 import { createScheduler } from './core/scheduler'
 import { makeEstate } from './mock'
-import { ART, DATA, RENDERER, currentRelease, hash } from './store'
+import { ART, DATA, RENDERER, currentRelease, has, hash, writeAtomic } from './store'
 
 export const app = new Hono()
 app.use(compress())
+
+const guard = async (c: Context, next: Next) => canEditConfig(c) ? next() : c.json({ error: 'config changes need an authorized user' }, 403)
 
 app.get('/schema.json', async (c) => c.json(await schemaJson(latestYaml())))
 
@@ -38,6 +40,23 @@ app.get('/a/:file', (c) => {
   return c.body(fs.readFileSync(file), 200, { 'Content-Type': TYPE[f.split('.').pop()!] ?? 'application/octet-stream', 'Cache-Control': 'public, max-age=31536000, immutable' })
 })
 
+// A client that renders locally asks which artifacts the server lacks, then uploads them. Names are input hashes, so the content is trusted, not checked: only for authorized clients.
+const NAME = /^[\w-][\w.-]*$/, CAP = 20 * 1024 * 1024
+app.post('/api/artifacts/missing', guard, async (c) => {
+  const b = (await c.req.json().catch(() => null)) as { names?: unknown } | null
+  if (!Array.isArray(b?.names) || !b.names.every((n) => typeof n === 'string' && NAME.test(n))) return c.json({ error: 'need names' }, 400)
+  return c.json({ missing: b.names.filter((n) => !has(n)) })
+})
+app.put('/a/:file', guard, async (c) => {
+  const f = c.req.param('file') ?? ''
+  if (!NAME.test(f)) return c.json({ error: 'bad name' }, 400)
+  if (Number(c.req.header('Content-Length')) > CAP) return c.json({ error: 'too big' }, 413)
+  const buf = Buffer.from(await c.req.arrayBuffer())
+  if (buf.length > CAP) return c.json({ error: 'too big' }, 413)
+  writeAtomic(path.join(ART, f), buf)
+  return c.json({ ok: true })
+})
+
 // A client tells which tiles it is waiting for (visible, not rendered yet); the running apply renders those next and the release event brings them.
 app.post('/api/want', async (c) => {
   const b = (await c.req.json().catch(() => null)) as { theme?: string; tiles?: unknown } | null
@@ -46,7 +65,6 @@ app.post('/api/want', async (c) => {
   return c.json({ ok: true })
 })
 
-const guard = async (c: Context, next: Next) => canEditConfig(c) ? next() : c.json({ error: 'config changes need an authorized user' }, 403)
 app.use('/api/apply', guard)
 app.use('/api/estates*', guard)
 

@@ -17,7 +17,7 @@
 
 ## 4. Local render
 
-- [ ] 4.1 `--local-render`: renderer check, `/api/artifacts/missing`, `PUT /a/:name` with name and size checks, positions upload, apply with `render: 'client'` (D6). Verify: against a local server on another `SITEGARDEN_DATA` dir, `sg apply --local-render` with one changed estate uploads the missing tiles and the server log shows no tile rendering; renderer mismatch stops before upload.
+- [x] 4.1 `--local-render`: renderer check, `/api/artifacts/missing`, `PUT /a/:name` with name and size checks, positions upload, apply with `render: 'client'` (D6). Verify: against a local server on another `SITEGARDEN_DATA` dir, `sg apply --local-render` with one changed estate uploads the missing tiles and the server log shows no tile rendering; renderer mismatch stops before upload.
 
 ## 5. Close-out
 
