@@ -11,5 +11,5 @@
 
 ## 3. Measure, docs, close
 
-- [ ] 3.1 Interleaved A/B on AC (D5), appended to `perf/results.md`. Verify: budgets met.
+- [x] 3.1 Interleaved A/B on AC (D5), appended to `perf/results.md`. Verify: budgets met.
 - [ ] 3.2 Update `docs/plan.md` (stack table, map rendering layers, M1 list with pre4 = own viewport + Preact, item 6 build-time web plugin), `docs/plugins.md` (build-time plugins replace the import map; supported React API via preact/compat), `docs/visual.md` where it names React; CHANGELOG 0.7.0, `package.json` 0.7.0; archive the change. Verify: `rg -i "react flow|@xyflow|import map" docs` only finds intentional history mentions; `pnpm test`, `npx oxlint` clean; version check passes against main.
