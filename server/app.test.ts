@@ -20,7 +20,7 @@ edges:
 `
 fs.writeFileSync(process.env.SITEGARDEN_CONFIG, base)
 const { app } = await import('./app')
-const { bootstrap, db } = await import('./config')
+const { auth, bootstrap, db } = await import('./config')
 bootstrap()
 
 const post = (url: string, body: unknown) => app.request(url, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } })
@@ -129,7 +129,15 @@ test('artifact upload checks the name and the size, and missing lists what the s
   assert.equal((await json(post('/api/artifacts/missing', { names: ['../x'] })))[0], 400)
 })
 
+test('enabling auth is a 422 on the auth.enabled line while no auth provider exists', async () => {
+  const rev = db.latestRev(), yaml = withNode('c') + 'auth: { enabled: true }\n'
+  const [s, r] = await apply(yaml)
+  assert.deepEqual([s, r.issues], [422, [{ line: yaml.split('\n').length - 1, path: 'auth.enabled', message: 'auth is not available yet (M1 item 5)' }]])
+  assert.equal(db.latestRev(), rev)
+})
+
 test('with auth enabled, apply and GUI edits are refused and no rev is made', async () => {
+  auth.provider = true // stub: the provider exists, so the config may turn auth on
   const [s] = await apply(db.getRev(db.latestRev())!.yaml + 'auth: { enabled: true }\n')
   assert.equal(s, 200) // the change that turns it on is the last one
   const rev = db.latestRev()

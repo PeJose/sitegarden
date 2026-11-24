@@ -7,7 +7,7 @@ import type { ConfigEstate, Positions } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
-import { addEstate, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, toRenderConfig, validate } from './config'
+import { addEstate, authIssue, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, toRenderConfig, validate } from './config'
 import { eventsHandler } from './core/events'
 import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
 import { DriftError } from './core/db'
@@ -81,7 +81,10 @@ app.onError((e, c) => e instanceof DriftError ? c.json({ error: 'drift', rev: e.
 
 // Validation result for a candidate config: the graph, or every issue with its line.
 async function check(yaml: string): Promise<{ graph: Graph } | { issues: Issue[] }> {
-  try { return { graph: await validate(yaml) } } catch (e) { if (e instanceof ConfigError) return { issues: e.issues }; throw e }
+  try {
+    const graph = await validate(yaml), bad = authIssue(yaml, graph)
+    return bad ? { issues: [bad] } : { graph }
+  } catch (e) { if (e instanceof ConfigError) return { issues: e.issues }; throw e }
 }
 const planId = (baseRev: number, yaml: string) => hash(`${baseRev}:${yaml}`)
 const planBody = async (c: Context) => {

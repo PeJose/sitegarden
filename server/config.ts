@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import YAML from 'yaml'
 import type { Config, ConfigEstate, Positions } from '../src/gen/types'
-import { jsonSchema, parseGraph, type Graph } from './core/graph'
+import { jsonSchema, parseGraph, type Graph, type Issue } from './core/graph'
 import { openDb } from './core/db'
 import { createBus } from './core/events'
 import { createHost } from './core/plugins'
@@ -41,6 +41,13 @@ export async function validate(text: string): Promise<Graph> {
 export const latestYaml = () => db.getRev(db.latestRev())!.yaml
 // The one check point for config changes. Until real auth exists (M1 item 5) `auth.enabled: true` locks them instead of leaving them open.
 export const canEditConfig = (_c: unknown) => (YAML.parse(latestYaml()) as { auth?: { enabled?: unknown } } | null)?.auth?.enabled !== true
+// Flipped by the auth provider when M1 item 5 lands (stubbed in tests); until then no config can turn auth on, or nobody could change it back.
+export const auth = { provider: false }
+export function authIssue(text: string, g: Graph): Issue | null {
+  if (!g.auth.enabled || auth.provider) return null
+  const lc = new YAML.LineCounter(), r = (YAML.parseDocument(text, { lineCounter: lc }).getIn(['auth', 'enabled'], true) as { range?: number[] } | undefined)?.range
+  return { line: r ? lc.linePos(r[0]).line : 1, path: 'auth.enabled', message: 'auth is not available yet (M1 item 5)' }
+}
 export function bootstrap() {
   if (!fs.existsSync(CONFIG_FILE)) return
   const rev = db.latestRev()

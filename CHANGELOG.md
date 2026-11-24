@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `POST /api/plan` (validation errors with lines, graph diff, render estimate), `POST /api/apply`, `GET /api/state`, and `config.applied` and `apply.progress` events.
 - `sg plan`, `sg apply` and `sg pull` work against a server (`--server`, `SITEGARDEN_SERVER`), with a drift guard on plan and apply (exit code 3), confirmation (`--yes`) and `--no-wait`; local state in `.sitegarden/state.json`.
 - `sg apply --local-render` renders the missing tiles on the local machine and uploads them (`POST /api/artifacts/missing`, `PUT /a/:name`).
-- `auth.enabled` in the config: until real auth exists, `true` locks config changes (apply, GUI edits, uploads).
+- `auth.enabled` in the config: rejected (422) until real auth exists, so a config cannot lock itself out; with a provider, it requires an authorized user for apply, GUI edits and uploads.
 
 ### Changed
 - **BREAKING:** the server no longer watches `sitegarden.yaml`. It imports the file once as rev 1 on first start with an empty store and ignores it afterwards; change the config with `pnpm sg apply`.

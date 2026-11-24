@@ -72,5 +72,9 @@ Config changes from the GUI SHALL be validated and stored as revisions with sour
 - **THEN** a new revision with source `gui` exists and the map renders it
 
 #### Scenario: Auth enabled, no permission
-- **WHEN** auth is enabled and a request without an authorized user tries to change the config
+- **WHEN** an auth provider exists, auth is enabled and a request without an authorized user tries to change the config
 - **THEN** it is refused and no revision is created
+
+#### Scenario: Enabling auth without a provider
+- **WHEN** a config that sets `auth.enabled: true` is planned or applied while no auth provider exists
+- **THEN** it is rejected with an issue on the `auth.enabled` line and no revision is created
