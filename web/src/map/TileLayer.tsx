@@ -1,36 +1,25 @@
 import { useEffect, useRef } from 'react'
-import type { Viewport } from '@xyflow/react'
 import type { Scheme } from '../prefs'
-import { levelFor } from '../lib/view'
+import type { TileView } from '../lib/view'
 import type { WorldData } from '../world'
+import { nameAt as tileName, srcOf, wantOf, type Tile } from './tiles'
 
-interface Tile { z: number; x: number; y: number; src: string }
 const keyOf = (t: Tile) => `${t.z}/${t.x}/${t.y}/${t.src}` // identical paper tiles share one file, so the file name alone is not a position
 const KEEP = 48 // decoded tiles kept mounted after they scroll out of view
 
 // Server-rendered map tiles under the React Flow viewport: only visible tiles are requested, recent ones stay mounted (LRU),
 // and level 1 always sits under the sharper level so zooming never shows a hole while it loads.
-export function TileLayer({ world, scheme, vp, size }: { world: WorldData; scheme: Scheme; vp: Viewport; size: { w: number; h: number } }) {
+export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: Scheme; view: TileView }) {
   const lru = useRef(new Map<string, Tile>())
   const loaded = useRef(new Set<string>())
   const reported = useRef(false)
   const { tiles } = world
   const T = tiles.size
-  const level = levelFor(vp.zoom, window.devicePixelRatio) // level 0 is the preview's source, never fetched
-  const nameAt = (theme: Scheme, z: number, x: number, y: number) => (x >= tiles.x0 && y >= tiles.y0 && x < tiles.x0 + tiles.cols && y < tiles.y0 + tiles.rows ? tiles.names[theme][z]?.[(y - tiles.y0) * tiles.cols + (x - tiles.x0)] : null)
-  const srcOf = (name: string) => `/a/${name}`
+  const { level } = view // level 0 is the preview's source, never fetched
+  const nameAt = (theme: Scheme, z: number, x: number, y: number) => tileName(tiles, theme, z, x, y)
 
-  // viewport rect in world units, with half a tile of margin so panning rarely waits
-  const m = T / 2
-  const rx0 = -vp.x / vp.zoom - m, ry0 = -vp.y / vp.zoom - m, rx1 = (size.w - vp.x) / vp.zoom + m, ry1 = (size.h - vp.y) / vp.zoom + m
-  const want: Tile[] = [], missing: [number, number, number][] = []
-  for (const z of level > 1 ? [1, level] : [1]) {
-    for (let y = Math.floor(ry0 / T); y <= Math.floor(ry1 / T); y++) for (let x = Math.floor(rx0 / T); x <= Math.floor(rx1 / T); x++) {
-      const n = nameAt(scheme, z, x, y)
-      if (n) want.push({ z, x, y, src: srcOf(n) })
-      else if (n === null) missing.push([z, x, y]) // in the grid, not rendered yet
-    }
-  }
+  const m = T / 2, [rx0, ry0, rx1, ry1] = view.rect
+  const { want, missing } = wantOf(world, scheme, view)
   for (const t of want) { lru.current.delete(keyOf(t)); lru.current.set(keyOf(t), t) }
   const wanted = new Set(want.map(keyOf))
   for (const k of lru.current.keys()) if (lru.current.size > KEEP && !wanted.has(k)) lru.current.delete(k)
@@ -73,11 +62,9 @@ export function TileLayer({ world, scheme, vp, size }: { world: WorldData; schem
   const prev = world.previews[scheme]
   return (
     <>
-      {/* paper under everything, so nothing the viewport shows is ever a bare background (the texture is a tile's own base, so it continues seamlessly) */}
-      <div style={{ position: 'absolute', left: -102400, top: -102400, width: 204800, height: 204800, zIndex: -2, backgroundImage: `url(/a/${world.textures?.[scheme]?.[level]})`, backgroundSize: '1024px' }} />
-      {prev && <img className="tile preview" src={`/a/${prev}`} onLoad={(e) => { e.currentTarget.style.opacity = '1' }} style={{ left: tiles.x0 * T, top: tiles.y0 * T, width: tiles.cols * T, height: tiles.rows * T, zIndex: -1 }} alt="" draggable={false} />}
+      {prev && <img className="tile preview" decoding="async" src={`/a/${prev}`} onLoad={(e) => { e.currentTarget.style.opacity = '1' }} style={{ left: tiles.x0 * T, top: tiles.y0 * T, width: tiles.cols * T, height: tiles.rows * T, zIndex: -1 }} alt="" draggable={false} />}
       {mounted.map((t) => (
-        <img key={keyOf(t)} className="tile" src={t.src} onLoad={onLoad(keyOf(t))} style={{ left: t.x * T, top: t.y * T, width: T, height: T, zIndex: t.z }} alt="" draggable={false} />
+        <img key={keyOf(t)} className="tile" decoding="async" src={t.src} onLoad={onLoad(keyOf(t))} style={{ left: t.x * T, top: t.y * T, width: T, height: T, zIndex: t.z }} alt="" draggable={false} />
       ))}
     </>
   )

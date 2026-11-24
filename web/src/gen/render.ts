@@ -75,7 +75,7 @@ function plots(es: Estate[], t: Theme, gates: Gate[]): { soft: string; crisp: st
   return { soft: night(land), crisp: night(drops + ponds + roads + flora + blds) }
 }
 
-// Static night lights (street lamps). Lit windows, campfires and lanterns depend on status and stay live.
+// Static night lights (street lamps). Lit windows and lanterns depend on status and stay live.
 const lamp = (x: number, y: number, r: number, dot: number) => circle(x, y, r, 'url(#lampG)') + circle(x, y, dot, '#FFF1C8')
 
 type Parts = { defs: string; body: string }
@@ -138,20 +138,17 @@ export const estateGrainSvg = (e: Estate, scale: number) => { // the same in bot
   return doc(v, scale, `<defs>${pinRegions(aqGrain(e), v)}</defs>${rectAt(v, `fill="#fff" filter="url(#aqm_${e.id})"`)}`)
 }
 
-// Live night extras. Fires flicker through CSS classes; stars twinkle. Stars are keyed on a fixed 360-unit lattice,
+// Live night extras: static stars. Stars are keyed on a fixed 360-unit lattice,
 // so they do not move when the world grows.
-export const campfireSvg = ([x, y]: [number, number]) =>
-  `<g transform="translate(${x} ${y})"><circle class="fireglow" r="38" fill="url(#fireG)"/><path d="M-7 5 L7 1 M-7 1 L7 5" stroke="#5A3A24" stroke-width="2.4" stroke-linecap="round"/>` +
-  '<path class="flame" d="M0 2 C-5 -2 -3 -7 0 -12 C1 -7 5 -5 3 0 C2 2 1 3 0 2 Z" fill="#FFB347"/><path class="flame" d="M0 1 C-2 -2 -1 -5 0 -7 C1 -5 2 -3 1 0 Z" fill="#FFE59A"/></g>'
-export function twinkleSvg(w: World): string {
+export function twinkleSvg(w: World): [string, string, string] { // three groups, kept as before
   const S = 360, b = w.bounds
-  let out = ''
+  const out = ['', '', '']
   for (let i = Math.floor(b.x / S); i < Math.ceil((b.x + b.w) / S); i++) for (let j = Math.floor(b.y / S); j < Math.ceil((b.y + b.h) / S); j++) {
     const r = rngFor(w.seed, 'star', i, j)
     if (r() > 0.45) continue
     const x = f1((i + r()) * S), y = f1((j + r()) * S), s = f1(1.4 + r() * 0.5)
-    out += `<g class="tw${1 + Math.floor(r() * 3)}"><circle cx="${x}" cy="${y}" r="${s}"/><circle cx="${x}" cy="${y}" r="${f1(s * 3.4)}" opacity="0.25"/></g>`
+    out[Math.floor(r() * 3)] += `<circle cx="${x}" cy="${y}" r="${s}"/><circle cx="${x}" cy="${y}" r="${f1(s * 3.4)}" opacity="0.25"/>`
   }
-  return `<g fill="#FFE7A8">${out}</g>`
+  return out.map((o) => `<g fill="#FFE7A8">${o}</g>`) as [string, string, string]
 }
 export { DEFS }

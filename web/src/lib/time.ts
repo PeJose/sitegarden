@@ -10,8 +10,10 @@ export function ago(ts: number, now = Date.now()): string {
 export function useNow(ms = 1000) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms)
-    return () => clearInterval(t)
+    const tick = () => { if (!document.hidden) setNow(Date.now()) } // no re-render in the background; catch up on return
+    const t = setInterval(tick, ms)
+    document.addEventListener('visibilitychange', tick)
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', tick) }
   }, [ms])
   return now
 }

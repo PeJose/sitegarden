@@ -28,21 +28,20 @@ button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @keyframes march { to { stroke-dashoffset: -48; } }
-.march { animation: march 1.6s linear infinite; }
-@keyframes pulse { 0% { r: 17; opacity: .6; } 100% { r: 38; opacity: 0; } }
-.pulse { animation: pulse 2s ease-out infinite; }
-@keyframes tw { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
-.tw1 { animation: tw 3.1s ease-in-out infinite; } .tw2 { animation: tw 4.3s ease-in-out 1s infinite; } .tw3 { animation: tw 2.6s ease-in-out .5s infinite; }
-@keyframes flick { 0%, 100% { opacity: .9; transform: scale(1); } 30% { opacity: .7; transform: scale(.94); } 60% { opacity: 1; transform: scale(1.06); } }
-.fireglow, .flame { animation: flick .9s ease-in-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+.march { animation: march 1.6s steps(24) infinite; } /* 15 dash steps per second: each step repaints the road box */
+@keyframes pulse { 0% { transform: scale(calc(17 / 38)); opacity: .6; } 100% { transform: scale(1); opacity: 0; } }
+.pulse { width: 78px; height: 78px; will-change: transform, opacity; animation: pulse 2s steps(24) infinite; } /* 12 steps per second, hand-animated feel */
+.fx { position: absolute; z-index: 10; pointer-events: none; } .fx svg { display: block; } /* one small compositor layer per animation, in world coordinates */
 @keyframes ink { to { stroke-dashoffset: -40; } }
 .ink { animation: ink 1s linear infinite; }
-@media (prefers-reduced-motion: reduce) { .chipbox, .road-labels, .world .tile { transition: none !important; } .march, .pulse, .tw1, .tw2, .tw3, .fireglow, .flame, .ink { animation: none; } .funswitch, .wash-fade, .hero, .hero-smear, .cmd { transition: none !important; } .hero-tab { animation: none; } }
+html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) { .chipbox, .road-labels, .world .tile { transition: none !important; } .march, .pulse, .ink { animation: none; } .funswitch, .wash-fade, .hero, .hero-smear, .cmd { transition: none !important; } .hero-tab { animation: none; } }
 
 /* ---- layout ---- */
 .app { position: relative; height: 100vh; min-height: 560px; overflow: hidden; background: var(--bg); }
 .mapbox { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
 .mapbox .react-flow { background: transparent; }
+.paper { position: absolute; inset: 0; pointer-events: none; }
 .world { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; will-change: transform; pointer-events: none; }
 .world .tile { position: absolute; max-width: none; user-select: none; opacity: 0; transition: opacity .25s; }
 .world .live { position: absolute; left: 0; top: 0; overflow: visible; z-index: 10; } /* above every tile level */
@@ -50,9 +49,12 @@ button { font: inherit; color: inherit; }
 .wash-fade { transition: opacity 1.4s ease; }
 .est-labels { font: 600 15px Outfit, sans-serif; fill: var(--est); stroke: var(--est-halo); paint-order: stroke; stroke-linejoin: round; }
 .road-labels { font: 500 13px 'JetBrains Mono', monospace; fill: var(--road); stroke: var(--road-halo); stroke-linejoin: round; paint-order: stroke; }
+.react-flow__viewport { will-change: transform; } /* pins and chips become one composited layer that pan only moves (task 2.8) */
 .react-flow__node { cursor: pointer; }
 .pin { position: relative; width: 34px; height: 34px; }
 .pin svg { transform: scale(calc(.88 * var(--pin-k, 1))); } /* pins keep a minimum on-screen size when zoomed out */
+.pin .pulse-wrap { position: absolute; left: -22px; top: -22px; width: 78px; height: 78px; transform: scale(calc(.88 * var(--pin-k, 1))); } /* ring centred on the pin, sized as the old scaled svg */
+.pin .pulse svg { transform: none; } /* the wrapper already carries the pin scale */
 .pin::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(34px * var(--pin-k, 1)); height: calc(34px * var(--pin-k, 1)); transform: translate(-50%, -50%); } /* so does their tap target */
 .chipbox { position: absolute; display: flex; align-items: center; opacity: var(--chip-o, 1); transition: opacity .2s, transform .2s; pointer-events: none; }
 /* chips fade out when their text would be too small to read; a hovered or focused pin always shows its own, enlarged to stay legible */

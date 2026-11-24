@@ -1,5 +1,5 @@
 import { useCallback, type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ReactFlowProvider, useViewport } from '@xyflow/react'
+import { ReactFlowProvider, useReactFlowStoreApi } from '@xyflow/react'
 import { engine } from './mock/engine'
 import { nodeById } from './mock/data'
 import { usePrefs } from './prefs'
@@ -99,9 +99,26 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
   )
 }
 
-// Re-renders on every pan frame, so it lives apart from the rest of the screen.
+// Follows the pin without a React render per frame: the store subscription writes --x/--y on the card; React only sees the card flip above/below the pin.
 function Anchored({ id, boxW }: { id: string; boxW: number }) {
-  const { x, y, zoom } = useViewport()
+  const store = useReactFlowStoreApi().viewportStore
+  const wrap = useRef<HTMLDivElement>(null)
   const [px, py] = pinAt(id)
-  return <Popover nodeId={id} x={px * zoom + x} y={py * zoom + y} boxW={boxW} />
+  const at = ([x, y, zoom]: number[]) => ({ x: px * zoom + x, y: py * zoom + y })
+  const [pos, setPos] = useState(() => at(store.getState().transform))
+  useLayoutEffect(() => {
+    let below = pos.y < 430
+    const apply = (t: number[]) => {
+      const p = at(t)
+      if (p.y < 430 !== below) { below = !below; setPos(p) }
+      wrap.current?.querySelector<HTMLElement>('.pop')?.style.setProperty('--x', String(Math.min(Math.max(p.x, 147), Math.max(147, boxW - 147))))
+      wrap.current?.querySelector<HTMLElement>('.pop')?.style.setProperty('--y', String(p.y))
+      const arrow = wrap.current?.querySelector<HTMLElement>('.pop-arrow')
+      arrow?.style.setProperty('--x', String(p.x)); arrow?.style.setProperty('--y', String(p.y))
+    }
+    apply(store.getState().transform)
+    return store.subscribe((s) => apply(s.transform))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, boxW, px, py])
+  return <div ref={wrap} style={{ display: 'contents' }}><Popover nodeId={id} x={pos.x} y={pos.y} boxW={boxW} /></div>
 }

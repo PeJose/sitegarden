@@ -1,5 +1,5 @@
 import { useReactFlow } from '@xyflow/react'
-import { useFlyTo } from '../map/MapView'
+import { preloadFly, useFlyTo } from '../map/MapView'
 import { engine, useEngine } from '../mock/engine'
 import { summarize } from '../summary'
 import { useNow } from '../lib/time'
@@ -36,6 +36,7 @@ export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (p: 'inve
   const sum = summarize(st, now)
   const { getZoom } = useReactFlow(), flyTo = useFlyTo()
   const fly = (id: string) => { const e = estateOf(id); if (e) flyTo(e.cx, e.cy, Math.max(getZoom(), 1.3)) }
+  const warm = (id: string) => { const e = estateOf(id); if (e) preloadFly(e.cx, e.cy, Math.max(getZoom(), 1.3)) } // hover or focus: the tiles are ready when it is clicked
   useWorld()
   const redeploy = sum.first && edges.find((e) => e.type === 'deploy' && nodeById(e.from)?.group === sum.first!.group)
   return (
@@ -70,7 +71,7 @@ export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (p: 'inve
       <nav aria-label="Estates" className="estates">
         <div className="mono-label">ESTATES</div>
         {sum.estates.map((e) => (
-          <button key={e.id} className="estate" onClick={() => fly(e.id)}>
+          <button key={e.id} className="estate" onClick={() => fly(e.id)} onPointerEnter={() => warm(e.id)} onFocus={() => warm(e.id)}>
             <EstateThumb id={e.id} />
             <span className="name">{e.label}</span>
             <span className="dots" role="img" aria-label={e.text}>

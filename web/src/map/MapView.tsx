@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
-import { ReactFlow, useReactFlow, useViewport, type Node } from '@xyflow/react'
+import { ReactFlow, useReactFlow, useViewportStore, type Node } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import type { Scheme } from '../prefs'
 import { clampViewport, heroInset, initialViewport, PULL, minZoom, panExtent } from '../lib/view'
 import type { WorldData } from '../world'
 import { WorldLayer } from './WorldLayer'
+import { endFlight, preloadTiles, startFlight } from './tiles'
 import { PinNode } from './PinNode'
 
 const nodeTypes = { pin: PinNode }
@@ -13,12 +14,22 @@ const proOptions = { hideAttribution: true }
 // Centre a world point in the part of the map the hero does not cover.
 const mapSize = { w: 1440, h: 900, collapsed: false } // kept current by MapView
 const bounds = { current: { x: 0, y: 0, w: 1, h: 1 } as WorldData['bounds'] }
+const scene = { world: null as WorldData | null, scheme: 'light' as Scheme }
+const FLY_MS = 700
+const targetOf = (x: number, y: number, zoom: number) => {
+  const { w, h } = mapSize, left = heroInset(w, mapSize.collapsed)
+  return clampViewport({ zoom, x: left + (w - left) / 2 - x * zoom, y: h / 2 - y * zoom }, panExtent(bounds.current, w, zoom, mapSize.collapsed), w, h)
+}
+// Fetch and decode the destination's tiles ahead of a fly-to (the sidebar rows call this on hover and focus).
+export function preloadFly(x: number, y: number, zoom: number) {
+  if (scene.world) preloadTiles(scene.world, scene.scheme, targetOf(x, y, zoom), mapSize)
+}
 export function useFlyTo() {
   const { setViewport } = useReactFlow()
   return (x: number, y: number, zoom: number) => {
-    const { w, h } = mapSize, left = heroInset(w, mapSize.collapsed)
-    const b = bounds.current
-    setViewport(clampViewport({ zoom, x: left + (w - left) / 2 - x * zoom, y: h / 2 - y * zoom }, panExtent(b, w, zoom, mapSize.collapsed), w, h), { duration: 700 })
+    preloadFly(x, y, zoom)
+    startFlight(FLY_MS)
+    setViewport(targetOf(x, y, zoom), { duration: FLY_MS })
   }
 }
 
@@ -34,10 +45,11 @@ export function MapView({ world, scheme, size, collapsed, onSelect }: { world: W
   const was = useRef(collapsed)
   mapSize.collapsed = collapsed
   bounds.current = world.bounds
+  scene.world = world; scene.scheme = scheme
   const moved = useRef(false)
   const { setViewport, getViewport } = useReactFlow()
   const glide = useRef({ to: { x: 0, y: 0, zoom: 1 }, until: 0 })
-  const { zoom } = useViewport()
+  const zoom = useViewportStore((s) => s.transform[2]) // zoom only: a pan does not render MapView
   const [[ex0, ey0], [ex1, ey1]] = panExtent(world.bounds, size.w, zoom, collapsed)
   const extent = useMemo<[[number, number], [number, number]]>(() => [[ex0, ey0], [ex1, ey1]], [ex0, ey0, ex1, ey1])
   useEffect(() => {
@@ -72,7 +84,8 @@ export function MapView({ world, scheme, size, collapsed, onSelect }: { world: W
         nodesDraggable={false}
         nodesConnectable={false}
         zoomOnDoubleClick={false}
-        onMoveStart={(e) => { if (e) moved.current = true }}
+        onMoveStart={(e) => { if (e) { moved.current = true; endFlight() } }} // the user took over mid-flight: show tiles for where it is now
+        onMoveEnd={endFlight}
         onNodeClick={(_, n) => onSelect(n.id)}
         onPaneClick={() => onSelect(null)}
       />

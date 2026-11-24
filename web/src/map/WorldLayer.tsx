@@ -1,25 +1,54 @@
-import { memo, useMemo } from 'react'
-import { useViewport } from '@xyflow/react'
+import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useViewportStore, useReactFlowStoreApi } from '@xyflow/react'
 import { useEngine } from '../mock/engine'
 import { edges } from '../mock/data'
 import type { Scheme } from '../prefs'
-import { DEFS, campfireSvg, twinkleSvg } from '../gen/render'
+import { DEFS, twinkleSvg } from '../gen/render'
 import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
+import { viewOf, type TileView } from '../lib/view'
 import { TileLayer } from './TileLayer'
+import { flight } from './tiles'
+import { Lantern, March, Wash } from './Fx'
 
 // The baked world (server tiles) sits under React Flow and follows its viewport transform. On top of it,
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
-export function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
-  const vp = useViewport()
+// The transform is written straight to the DOM from React Flow's store; React only re-renders when the tile level or the visible tile range changes.
+export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
+  const store = useReactFlowStoreApi().viewportStore
+  const paper = useRef<HTMLDivElement>(null), el = useRef<HTMLDivElement>(null)
+  const T = world.tiles.size
+  const [view, setView] = useState<TileView>(() => viewOf(store.getState().transform, T, size, window.devicePixelRatio))
+  useLayoutEffect(() => {
+    let key = ''
+    const apply = ([x, y, zoom]: number[]) => {
+      const k = 1024 * zoom // the texture repeats every 1024 world units
+      el.current!.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`
+      paper.current!.style.backgroundSize = `${k}px`
+      paper.current!.style.backgroundPosition = `${x % k}px ${y % k}px`
+      const v = viewOf([x, y, zoom], T, size, window.devicePixelRatio)
+      const kk = `${v.level}/${v.c0}/${v.c1}/${v.r0}/${v.r1}`
+      if (kk !== key && !flight.active) { key = kk; setView(v) } // mid-flight the mounted tiles stay as they are; landing calls apply again
+    }
+    apply(store.getState().transform)
+    const land = () => apply(store.getState().transform)
+    flight.onEnd.add(land)
+    const off = store.subscribe((s) => apply(s.transform))
+    return () => { off(); flight.onEnd.delete(land) }
+  }, [store, T, size])
+  const tex = world.textures?.[scheme]?.[view.level]
   return (
-    <div className="world" style={{ transform: `translate(${vp.x}px, ${vp.y}px) scale(${vp.zoom})` }}>
-      <TileLayer world={world} scheme={scheme} vp={vp} size={size} />
+    <>
+    {/* paper under everything, one screen big: the texture is a tile's own base, so it continues seamlessly under the tiles */}
+    <div className="paper" ref={paper} style={{ backgroundImage: `url(/a/${tex})` }} />
+    <div className="world" ref={el}>
+      <TileLayer world={world} scheme={scheme} view={view} />
       <Live world={world} scheme={scheme} />
-      <Labels world={world} zoom={vp.zoom} />
+      <Labels world={world} />
     </div>
+    </>
   )
-}
+})
 
 const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: Scheme }) {
   const night = scheme === 'night'
@@ -34,30 +63,21 @@ const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: S
     <>
       {/* one hidden copy of the defs for every live svg below to reference */}
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><defs dangerouslySetInnerHTML={{ __html: DEFS[scheme] }} /></svg>
+      {/* each animation is its own layer in world coordinates; same stacking order as before: wash, stars and windows, lanterns, dashes */}
+      {blds.map((bl) => <Wash key={bl.id} x={bl.x} y={bl.y} down={status[bl.id]?.status === 'down'} />)}
       <svg className="live" style={at} viewBox={`${b.x} ${b.y} ${b.w} ${b.h}`} aria-hidden="true">
-        {night && <g dangerouslySetInnerHTML={{ __html: stars }} />}
-        {blds.map((bl) => (
-          <g key={bl.id} transform={`translate(${bl.x} ${bl.y})`} className="wash-fade" style={{ opacity: status[bl.id]?.status === 'down' ? 1 : 0 }}>
-            <g filter="url(#aq)"><circle r="70" fill="#C25A4A" opacity="0.3" /><circle r="38" fill="#B8443A" opacity="0.25" /></g>
-          </g>
-        ))}
+        {night && stars.map((html, i) => <g key={'s' + i} dangerouslySetInnerHTML={{ __html: html }} />)}
         {night && blds.map((bl) => <g key={'l' + bl.id} dangerouslySetInnerHTML={{ __html: lightsSvg(bl, status[bl.id]?.status !== 'down') }} />)}
-        {night && world.estates.map((e) => <g key={'f' + e.id} dangerouslySetInnerHTML={{ __html: campfireSvg(e.campfire) }} />)}
-        {edges.map((e) => roads[e.id] && flows[e.id] === 'deploy' && night && (
-          <circle key={'l' + e.id} className="lantern" r="7" fill="#FFC56B" filter="url(#glow)">
-            <animateMotion dur="3.2s" repeatCount="indefinite" path={roads[e.id].d} />
-          </circle>
-        ))}
-        {edges.map((e) => roads[e.id] && flows[e.id] && (
-          <path key={e.id} className="march" d={roads[e.id].d} fill="none" stroke="#D98A1C" strokeWidth="3" strokeDasharray="8 8" strokeLinecap="round" />
-        ))}
       </svg>
+      {edges.map((e) => roads[e.id] && flows[e.id] === 'deploy' && night && <Lantern key={'l' + e.id} d={roads[e.id].d} />)}
+      {edges.map((e) => roads[e.id] && flows[e.id] && <March key={e.id} d={roads[e.id].d} />)}
     </>
   )
 })
 
 // Estate names and path labels follow the viewport: their on-screen size stays between a minimum and a maximum. Estate names always show; path labels fade out when zoomed so far out they would only overlap.
-function Labels({ world, zoom }: { world: WorldData; zoom: number }) {
+function Labels({ world }: { world: WorldData }) {
+  const zoom = useViewportStore((s) => s.transform[2]) // task 2.4 steps this
   const { bounds: b } = world
   const px = (natural: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, natural * zoom)) / zoom
   const fr = Math.min(px(11.5, 9.5, 13.5), 11.5 * 1.35) /* never wider than the room the generator reserved */, fe = px(13, 11, 17)
