@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
 import { openDb } from './db'
-import { createScheduler, parseEvery } from './scheduler'
+import { createScheduler, parseEvery, type Planned } from './scheduler'
 import type { CheckDef, CheckResult } from './sdk'
 
 // Virtual time: timers fire in order as `advance` moves the clock, with a tick between them so awaited check runs settle.
@@ -131,4 +131,21 @@ test('nodeTypes limits which nodes a check runs for', async () => {
   s.set([node('a'), { id: 'r', type: 'repo' }], [{ id: 'c', every: '5m', nodeTypes: ['repo'], run: (n) => { ran.push(n.id); return { status: 'ok' } } }])
   await c.advance(1)
   assert.deepEqual(ran, ['r'])
+})
+
+test('configured checks run on their own interval; an unchanged entry keeps its timer and backoff across set(), a changed one restarts', async () => {
+  const { c, s } = setup(() => 0.5)
+  const at: number[] = []
+  const entry = (cfg: string, every: string): Planned => ({ node: node('a'), cfg, check: { id: 'http#0', every, run: () => { at.push(c.now()); return { status: 'down' } } } })
+  s.set([node('a')], [], [entry('x', '1m')])
+  await c.advance(30_000)
+  assert.deepEqual(at, [30_000]) // first run lands at every * random
+  await c.advance(MIN) // next run after 2 min of backoff is still ahead
+  s.set([node('a')], [], [entry('x', '1m')]) // an apply that did not touch the check
+  await c.advance(MIN)
+  assert.deepEqual(at.map((x) => x / MIN), [0.5, 2.5]) // timer kept: backoff 2^1 x 1 min
+  s.set([node('a')], [], [entry('y', '10m')])
+  await c.advance(5 * MIN)
+  assert.equal(at.length, 3) // restarted: first run at 10m * 0.5
+  s.stop()
 })

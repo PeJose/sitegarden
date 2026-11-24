@@ -1,5 +1,8 @@
 import YAML from 'yaml'
 import { z } from 'zod'
+import { log } from './log'
+import { parseEvery } from './scheduler'
+import type { CheckTypeDef, ShorthandDef } from './sdk'
 
 const STATUS = z.enum(['ok', 'degraded', 'down', 'working', 'paused', 'unknown'])
 // The fields every node has. Mock-only fields stay under `mock:` until real checks replace them.
@@ -15,8 +18,12 @@ const nodeBase = {
 }
 export type NodeTypes = Record<string, z.ZodRawShape> // node type -> extra fields a plugin adds to it
 
-export function buildSchema(types: NodeTypes) {
-  const nodes = Object.entries(types).map(([t, shape]) => z.strictObject({ ...nodeBase, ...shape, type: z.literal(t) }))
+const every = z.string().default('5m').refine((v) => { try { return !!parseEvery(v) } catch { return false } }, 'bad interval (use 30s, 5m, 1h or 1d)')
+
+export function buildSchema(types: NodeTypes, checkTypes: CheckTypeDef[] = []) {
+  const entries = checkTypes.map((c) => z.strictObject({ ...c.schema, type: z.literal(c.type), every }))
+  const checks = z.array(entries.length ? z.discriminatedUnion('type', entries as [(typeof entries)[number]]) : z.never()).default([])
+  const nodes = Object.entries(types).map(([t, shape]) => z.strictObject({ ...nodeBase, checks, ...shape, type: z.literal(t) }))
   return z.strictObject({
     world: z.strictObject({ seed: z.string() }),
     plugins: z.array(z.string()).default([]),
@@ -28,7 +35,7 @@ export function buildSchema(types: NodeTypes) {
     extensions: z.record(z.string(), z.strictObject({ disabled: z.boolean().optional(), config: z.unknown().optional() })).default({}),
   })
 }
-export const jsonSchema = (types: NodeTypes) => z.toJSONSchema(buildSchema(types), { target: 'draft-2020-12', io: 'input', unrepresentable: 'any' })
+export const jsonSchema = (types: NodeTypes, checkTypes: CheckTypeDef[] = []) => z.toJSONSchema(buildSchema(types, checkTypes), { target: 'draft-2020-12', io: 'input', unrepresentable: 'any' })
 export type Graph = z.output<ReturnType<typeof buildSchema>>
 
 export interface Issue { line: number; path: string; message: string }
@@ -41,7 +48,7 @@ export class ConfigError extends Error {
 }
 
 // Parses and validates one config text. Every problem carries the line of the offending YAML node, or of its nearest parent.
-export function parseGraph(text: string, file: string, types: NodeTypes): Graph {
+export function parseGraph(text: string, file: string, types: NodeTypes, shorthands: ShorthandDef[] = [], checkTypes: CheckTypeDef[] = []): Graph {
   const lc = new YAML.LineCounter(), doc = YAML.parseDocument(text, { lineCounter: lc })
   const lineAt = (path: (string | number)[]) => {
     for (let p = path; ; p = p.slice(0, -1)) {
@@ -54,11 +61,12 @@ export function parseGraph(text: string, file: string, types: NodeTypes): Graph 
   if (doc.errors.length) fail(...doc.errors.map((e) => ({ line: e.linePos?.[0].line ?? 1, path: '', message: e.message })))
   if (doc.has('estates') || doc.has('accountSeed')) fail({ line: lineAt(['estates']), path: '', message: 'config uses the old `estates:` shape, see CHANGELOG 0.2.0' })
 
-  const r = buildSchema(types).safeParse(doc.toJS())
+  const r = buildSchema(types, checkTypes).safeParse(doc.toJS())
   if (!r.success) fail(...r.error.issues.map((i) => {
     const path = i.path.filter((k): k is string | number => typeof k !== 'symbol')
-    const unknownType = i.code === 'invalid_union' && path[0] === 'nodes' && path.at(-1) === 'type'
-    return { line: lineAt(path), path: path.join('.'), message: unknownType ? `unknown node type "${doc.getIn(path)}", known: ${Object.keys(types).join(', ') || 'none'}` : i.message }
+    const unknownType = i.code === 'invalid_union' && path[0] === 'nodes' && path.at(-1) === 'type', check = path.at(-3) === 'checks'
+    const known = (check ? checkTypes.map((c) => c.type) : Object.keys(types)).join(', ') || 'none'
+    return { line: lineAt(path), path: path.join('.'), message: unknownType ? `unknown ${check ? 'check' : 'node'} type "${doc.getIn(path)}", known: ${known}` : i.message }
   }))
   const g = r.data!, bad: Issue[] = []
   const refs = (v: unknown, path: (string | number)[]): void => {
@@ -75,7 +83,22 @@ export function parseGraph(text: string, file: string, types: NodeTypes): Graph 
   const home = new Map(g.nodes.map((n) => [n.id, n.group]))
   g.edges.forEach((e, i) => { if (nodes.has(e.from) && nodes.has(e.to) && home.get(e.from) !== home.get(e.to)) bad.push({ line: lineAt(['edges', i, 'to']), path: `edges.${i}.to`, message: `edge from "${e.from}" (group "${home.get(e.from)}") to "${e.to}" (group "${home.get(e.to)}") crosses groups, which is not supported yet` }) })
   if (bad.length) fail(...bad)
-  return g
+  return expandLinks(g, shorthands)
+}
+
+// Generated links first (a later shorthand wins a label), then the explicit ones, which replace generated links with the same label.
+export function expandLinks(g: Graph, shorthands: ShorthandDef[]): Graph {
+  return { ...g, nodes: g.nodes.map((n) => {
+    const gen = new Map<string, string>()
+    for (const s of shorthands) {
+      const v = (n as Record<string, unknown>)[s.field]
+      if (s.nodeType !== n.type || v === undefined) continue
+      for (const l of s.links(v, n)) { if (gen.get(l.label) !== undefined && gen.get(l.label) !== l.url) log.warn(`[config] node ${n.id}: shorthand "${s.field}" overrides the "${l.label}" link`); gen.set(l.label, l.url) }
+    }
+    if (!gen.size) return n
+    const own = n.links ?? []
+    return { ...n, links: [...[...gen].filter(([label]) => !own.some((l) => l.label === label)).map(([label, url]) => ({ label, url })), ...own] }
+  }) }
 }
 
 export interface Change { kind: 'group' | 'node' | 'edge' | 'extension'; op: '+' | '~' | '-'; id: string }

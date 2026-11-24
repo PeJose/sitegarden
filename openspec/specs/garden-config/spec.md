@@ -24,11 +24,11 @@ The loader SHALL reject a config with a duplicate ID, an edge or node that refer
 - **THEN** loading fails with an error naming the node and the known types
 
 ### Requirement: A bad edit keeps the last good config
-When the config file changes and the new version is invalid, the server SHALL keep serving the last valid graph and SHALL report the errors in the log and as a `config.invalid` event.
+An invalid config SHALL never replace the running one: a plan, an apply or a GUI edit with an invalid config SHALL be rejected with its errors, and the server SHALL keep serving the latest valid revision. Rejections SHALL be reported in the log and as a `config.invalid` event.
 
 #### Scenario: Typo while the server runs
-- **WHEN** the owner saves a config with an unknown node type
-- **THEN** the map keeps showing the previous graph and a `config.invalid` event carries the error
+- **WHEN** the owner applies a config with an unknown node type
+- **THEN** the apply is rejected with the error on its line, the map keeps showing the previous revision, and a `config.invalid` event carries the error
 
 ### Requirement: Merged JSON Schema
 The server SHALL build one JSON Schema from the core schema and every loaded plugin's schema fragments. It SHALL serve it at `/schema.json`, and `pnpm sg schema` SHALL write it next to the config file.

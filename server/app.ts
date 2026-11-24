@@ -76,15 +76,17 @@ async function commit(yaml: string, source: string, base = db.latestRev(), posit
   await reloaded()
   return rev
 }
-app.onError((e, c) => e instanceof DriftError ? c.json({ error: 'drift', rev: e.latest }, 409) : e instanceof ConfigError ? c.json({ error: 'invalid config', issues: clean(e.issues) }, 422) : (log.error(e), c.text('internal error', 500)))
+app.onError((e, c) => e instanceof DriftError ? c.json({ error: 'drift', rev: e.latest }, 409) : e instanceof ConfigError ? c.json({ error: 'invalid config', issues: rejected(e.message, e.issues) }, 422) : (log.error(e), c.text('internal error', 500)))
 
 const clean = (issues: Issue[]) => issues.map((i) => ({ ...i, message: secrets.redact(i.message) }))
+// A rejected plan, apply or GUI edit is reported like a failed reload: the log and a config.invalid event.
+const rejected = (message: string, issues: Issue[]) => { log.error(`[config] rejected:\n${secrets.redact(message)}`); bus.emit('config.invalid', { message, issues }); return clean(issues) }
 // Validation result for a candidate config: the graph, or every issue with its line.
 async function check(yaml: string): Promise<{ graph: Graph } | { issues: Issue[] }> {
   try {
     const graph = await validate(yaml), bad = authIssue(yaml, graph)
-    return bad ? { issues: [bad] } : { graph }
-  } catch (e) { if (e instanceof ConfigError) return { issues: clean(e.issues) }; throw e }
+    return bad ? { issues: rejected(`line ${bad.line} ${bad.path}: ${bad.message}`, [bad]) } : { graph }
+  } catch (e) { if (e instanceof ConfigError) return { issues: rejected(e.message, e.issues) }; throw e }
 }
 const planId = (baseRev: number, yaml: string) => hash(`${baseRev}:${yaml}`)
 const planBody = async (c: Context) => {
@@ -172,7 +174,7 @@ async function runApply() {
   } finally { running = false }
 }
 // A good reload re-plans the checks (plugins were reloaded first) and re-renders.
-const reloaded = () => graph.reload().then((ok) => { if (ok) { secretWarnings(graph.get()!).forEach((w) => log.warn(`[secrets] ${w.message}`)); scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
+const reloaded = () => graph.reload().then((ok) => { if (ok) { secretWarnings(graph.get()!).forEach((w) => log.warn(`[secrets] ${w.message}`)); scheduler.set(graph.get()!.nodes, host.checks(), host.configured(graph.get()!.nodes)); void runApply() } })
 
 export function start(port: number) {
   bootstrap()

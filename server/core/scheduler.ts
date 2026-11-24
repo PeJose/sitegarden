@@ -16,7 +16,9 @@ export interface Timers { set(f: () => void, ms: number): () => void }
 const realTimers: Timers = { set: (f, ms) => { const t = setTimeout(f, ms); t.unref(); return () => clearTimeout(t) } }
 export interface SchedulerOptions { db: Db; emit: (type: string, data: unknown) => void; limit?: number; redact?: (s: string) => string; now?: () => number; random?: () => number; timers?: Timers }
 
-interface Inst { key: string; check: CheckDef; node: CheckNode; every: number; fails: number; cancel?: () => void; queued: boolean }
+// A check bound to one node; `cfg` is the config entry it came from, so an unchanged entry keeps its instance.
+export interface Planned { node: CheckNode; check: CheckDef; cfg: string }
+interface Inst { key: string; check: CheckDef; node: CheckNode; cfg: string; every: number; fails: number; cancel?: () => void; queued: boolean }
 
 // One timer per (check, node). First run lands anywhere in the first interval, later ones every ±10 %; a `down` result backs off 2^n up to 4x.
 export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random = Math.random, timers = realTimers }: SchedulerOptions) {
@@ -57,14 +59,14 @@ export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random
   }
 
   return {
-    // Replaces the set of running checks; an instance that is still there keeps its backoff state.
-    set(nodes: CheckNode[], checks: CheckDef[]) {
+    // Replaces the set of running checks; an instance whose check, interval and config are unchanged keeps its timer and backoff state.
+    set(nodes: CheckNode[], checks: CheckDef[], configured: Planned[] = []) {
       const keep = new Map<string, Inst>()
-      for (const c of checks) for (const n of nodes) {
-        if (c.nodeTypes && !c.nodeTypes.includes(n.type)) continue
+      const all = [...checks.flatMap((check) => nodes.filter((n) => !check.nodeTypes || check.nodeTypes.includes(n.type)).map((node) => ({ node, check, cfg: '' }))), ...configured]
+      for (const { node: n, check: c, cfg } of all) {
         const key = `${c.id}@${n.id}`, old = insts.get(key), every = parseEvery(c.every)
-        if (old && old.every === every) { old.check = c; old.node = n; keep.set(key, old); continue }
-        const i: Inst = { key, check: c, node: n, every, fails: 0, queued: false }
+        if (old && old.every === every && old.cfg === cfg) { old.check = c; old.node = n; keep.set(key, old); continue }
+        const i: Inst = { key, check: c, node: n, cfg, every, fails: 0, queued: false }
         keep.set(key, i)
         arm(i, random() * every)
       }

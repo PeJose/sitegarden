@@ -47,9 +47,7 @@ nodes:
     group: fernhill
     name: acme/fernhill
     host: GitHub
-    links:
-      - label: Actions
-        url: https://github.com/acme/fernhill/actions
+    repo: acme/fernhill   # shorthand: Actions, Settings, Secrets, Pull requests and Issues links
 edges: []
 extensions: {}            # e.g. layer:garden:labels: { disabled: true }
 ```
@@ -67,6 +65,29 @@ pnpm sg schema  # write schema.json (git-ignored) for editor completion and vali
 ```
 
 `--server URL` (or `SITEGARDEN_SERVER`, default `http://localhost:8787`) picks the server. `plan` and `apply` refuse when the server has a newer rev than the one you last pulled or applied (exit code 3); `pull` refuses to overwrite local edits that were never applied unless `--force`. `apply --local-render` renders the missing tiles on your machine and uploads them, so the server renders nothing (both need the same renderer version). `--no-wait` returns once the rev is stored. The last pulled or applied rev is kept in `.sitegarden/state.json` next to the config (git-ignored). `auth.enabled: true` is rejected until real auth exists, so the config cannot lock itself.
+
+### Shorthands and checks
+
+A plugin can register a short field on a node type that expands into links when the config loads. `essentials` has `repo: owner/name` on `repo` nodes (GitHub: Actions, Settings, Secrets, Pull requests, Issues), `sanity: <projectId>` and optional `studio: <name>` on `cms` nodes (Sanity manage, API, Webhooks, Studio) and `url:` on `site` nodes (a link labelled with the host). Generated links come first; an explicit `links:` entry with the same label replaces the generated one. The stored YAML is untouched.
+
+Nodes can have `checks:`, run on their own `every` (default `5m`). `essentials` provides the `http` check:
+
+```yaml
+  - id: fernhill-site
+    type: site
+    group: fernhill
+    url: https://fernhill.example
+    checks:
+      - type: http              # url defaults to the node's url
+        every: 5m
+        expect_status: 200      # a number or a list; default any 2xx
+        expect_text: Fernhill   # case-sensitive; catches "200 but broken"
+        timeout: 10s
+        alert_after: 2          # degraded until it failed twice in a row, then down
+        allow_private: false    # true to reach a private or loopback address
+```
+
+A failing check is `degraded` until it has failed `alert_after` times in a row (default 1), then `down`; one success is `ok` again. The detail says what happened: `200 in 182 ms`, `expected 200, got 503 (95 ms)`, `text "Fernhill" not found (200, 182 ms)`, or the request error. Requests go through `ctx.http`, so the address rules in the next section apply.
 
 ### Secrets
 
@@ -94,7 +115,7 @@ secrets:
 Plugins never see a value. A plugin makes requests only through `ctx.http(url, init)`, which replaces `${secret:NAME}` in the URL and header values at send time, and only for names in the plugin's manifest `permissions.secrets`. `permissions.network` lists the hosts it may call (`api.github.com`, `*.example.org`, or `*`). Requests to loopback, private, link-local, CGNAT and metadata addresses are refused after DNS resolution (every answer is checked, and the connection uses the checked address); `allowPrivate: true` on a request opts in for an internal service (cloud metadata addresses stay blocked). Redirects are followed at most 5 times, each hop re-checked, and `authorization` and secret headers are dropped when the origin (scheme, host or port) changes. Requests time out after 10 s and responses are capped at 5 MB. Secret values (and their base64 form) are replaced with `[secret:NAME]` in logs, events and check details.
 
 ```json
-{ "sitegarden": { "id": "github", "apiVersion": "^1.1", "server": "./server.ts", "permissions": { "network": ["api.github.com"], "secrets": ["GITHUB_READ"] } } }
+{ "sitegarden": { "id": "github", "apiVersion": "^1.2", "server": "./server.ts", "permissions": { "network": ["api.github.com"], "secrets": ["GITHUB_READ"] } } }
 ```
 
 | Variable | Default | Purpose |

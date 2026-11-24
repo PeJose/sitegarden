@@ -6,9 +6,9 @@ import type { Db } from './db'
 import type { NodeTypes } from './graph'
 import { createHttp } from './http'
 import { log } from './log'
-import { parseEvery } from './scheduler'
+import { parseEvery, type Planned } from './scheduler'
 import { createSecrets } from './secrets'
-import { SDK_VERSION, type CheckDef, type Disposer, type Plugin, type PluginContext } from './sdk'
+import { SDK_VERSION, type CheckDef, type CheckNode, type CheckTypeDef, type Disposer, type Plugin, type PluginContext, type ShorthandDef } from './sdk'
 
 const list = z.array(z.string()).optional()
 export const Manifest = z.object({
@@ -39,12 +39,12 @@ export interface HostOptions { baseDir: string; db?: Db; http?: ReturnType<typeo
 
 export function createHost({ baseDir, db, http = createHttp({ secrets: createSecrets() }), emit = () => {}, importModule = (f) => import(pathToFileURL(f).href) }: HostOptions) {
   const records: PluginRecord[] = [], disposers = new Map<string, Disposer[]>()
-  const types = new Map<string, { plugin: string; shape: z.ZodRawShape }>(), fragments: { plugin: string; type: string; shape: z.ZodRawShape }[] = [], checks = new Map<string, { plugin: string; def: CheckDef }>()
+  const types = new Map<string, { plugin: string; shape: z.ZodRawShape }>(), fragments: { plugin: string; type: string; shape: z.ZodRawShape }[] = [], checks = new Map<string, { plugin: string; def: CheckDef }>(), shorthands: { plugin: string; def: ShorthandDef }[] = [], checkTypes = new Map<string, { plugin: string; def: CheckTypeDef; ctx: PluginContext }>()
 
   function context(manifest: Manifest, own: Disposer[]): PluginContext {
     const id = manifest.id
     const reg = (undo: Disposer) => { let done = false; const d = () => { if (!done) { done = true; undo() } }; own.push(d); return d }
-    return {
+    const c: PluginContext = {
       id,
       registerNodeType(type, shape = {}) {
         if (types.has(type)) throw new Error(`node type "${type}" is already registered by "${types.get(type)!.plugin}"`)
@@ -63,6 +63,18 @@ export function createHost({ baseDir, db, http = createHttp({ secrets: createSec
         checks.set(def.id, { plugin: id, def })
         return reg(() => void checks.delete(def.id))
       },
+      registerShorthand(def) {
+        if (!types.has(def.nodeType)) throw new Error(`node type "${def.nodeType}" is not registered`)
+        if (shorthands.some((s) => s.def.nodeType === def.nodeType && s.def.field === def.field)) throw new Error(`field "${def.field}" of "${def.nodeType}" is already registered`)
+        const s = { plugin: id, def }
+        shorthands.push(s)
+        return reg(() => void shorthands.splice(shorthands.indexOf(s), 1))
+      },
+      registerCheckType(def) {
+        if (checkTypes.has(def.type)) throw new Error(`check type "${def.type}" is already registered by "${checkTypes.get(def.type)!.plugin}"`)
+        checkTypes.set(def.type, { plugin: id, def, ctx: c })
+        return reg(() => void checkTypes.delete(def.type))
+      },
       store: {
         kv: db?.kv(id) ?? { get: () => undefined, set() {}, delete() {} },
         cache: { get: (k) => db?.cacheGet(`${id}:${k}`), set: (k, v) => db?.cacheSet(`${id}:${k}`, v) },
@@ -70,6 +82,7 @@ export function createHost({ baseDir, db, http = createHttp({ secrets: createSec
       emit,
       http: http.forPlugin(manifest),
     }
+    return c
   }
 
   function resolve(entry: string) {
@@ -143,7 +156,14 @@ export function createHost({ baseDir, db, http = createHttp({ secrets: createSec
     load, unloadAll,
     plugins: (): PluginRecord[] => records,
     // Node types with their plugin-added fields merged in.
-    nodeTypes: (): NodeTypes => Object.fromEntries([...types].map(([t, { shape }]) => [t, Object.assign({}, shape, ...fragments.filter((f) => f.type === t).map((f) => f.shape))])),
+    nodeTypes: (): NodeTypes => Object.fromEntries([...types].map(([t, { shape }]) => [t, Object.assign({}, shape, ...fragments.filter((f) => f.type === t).map((f) => f.shape), ...shorthands.filter((s) => s.def.nodeType === t).map((s) => ({ [s.def.field]: s.def.schema.optional() })))])),
+    shorthands: () => shorthands.map((s) => s.def),
+    checkTypes: () => [...checkTypes.values()].map((c) => c.def),
+    // The `checks:` entries of the given nodes, each as a check that runs with its own config.
+    configured: (nodes: CheckNode[]): Planned[] => nodes.flatMap((node) => ((node.checks ?? []) as { type: string; every: string }[]).flatMap((e, index) => {
+      const t = checkTypes.get(e.type)
+      return t ? [{ node, cfg: JSON.stringify(e), check: { id: `${e.type}#${index}`, every: e.every, run: (n: CheckNode) => t.def.run(e, n, { ...t.ctx, index }) } }] : []
+    })),
     checks: () => [...checks.values()].map((c) => c.def),
   }
 }
