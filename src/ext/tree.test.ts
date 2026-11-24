@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createElement, type ReactElement } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
+import { render as renderToStaticMarkup } from 'preact-render-to-string'
 import { createRegistry, type Extension } from './tree'
 
 const ext = (id: string, out: string, order?: number): Extension => ({ id, slot: 'map', input: 'layers', order, render: (_p, c) => `${out}${c ?? ''}` })

@@ -44,7 +44,7 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
   const toggle = () => setHidden((h) => { try { localStorage.setItem('sitegarden-hero', h ? 'open' : 'hidden') } catch { /* private mode */ } return !h })
   const toggleRef = useRef(toggle)
   toggleRef.current = toggle
-  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const say = useCallback((m: string) => {
     setToast(m)

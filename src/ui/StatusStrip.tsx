@@ -15,7 +15,7 @@ export function StatusStrip({ onPick }: { onPick: (id: string) => void }) {
   const [open, setOpen] = useState(false)
   const probs = nodes.filter((n) => PROBLEM.includes(st.nodes[n.id].status))
   return (
-    <div className="strip-wrap" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false) }}>
+    <div className="strip-wrap" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false) }}>
       <div className="strip">
         {probs.length ? (
           <button className="dots" aria-expanded={open} aria-label={`${probs.length} need attention`} onClick={() => setOpen(!open)}>

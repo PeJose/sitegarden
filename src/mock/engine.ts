@@ -65,7 +65,7 @@ class Engine {
     else delete flows[edgeId]
     this.set({ flows })
   }
-  // In-flight results always land (so StrictMode's stop/start can't strand a deploy as 'working').
+  // In-flight results always land (so a stop/start can't strand a deploy as 'working').
   private later(ms: number, fn: () => void) {
     setTimeout(fn, ms)
   }

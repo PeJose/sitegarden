@@ -42,7 +42,7 @@ export function CommandBar({ say }: { say: (m: string) => void }) {
     <form className="cmd" onSubmit={submit}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
       <label htmlFor="cmd3" className="sr">Command</label>
-      <input id="cmd3" type="text" value={v} onChange={(e) => setV(e.target.value)} placeholder={`Try “redeploy ${eg()[0]}” or “open ${eg()[1]} secrets”`} autoComplete="off" />
+      <input id="cmd3" type="text" value={v} onChange={(e) => setV(e.currentTarget.value)} placeholder={`Try “redeploy ${eg()[0]}” or “open ${eg()[1]} secrets”`} autoComplete="off" />
       <button type="submit" aria-label="Run">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
       </button>
