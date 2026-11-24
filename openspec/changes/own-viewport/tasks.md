@@ -11,7 +11,7 @@
 
 ## 3. Isolation
 
-- [ ] 3.1 Per-extension error boundary in `resolve()` (D5). Verify: tree test with a throwing extension renders the failure card and the others.
+- [x] 3.1 Per-extension error boundary in `resolve()` (D5). Verify: tree test with a throwing extension renders the failure card and the others.
 
 ## 4. Measure and close
 

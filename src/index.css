@@ -215,3 +215,8 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
 .b-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
 .b-actions button { flex: 1 1 120px; min-height: 44px; font: 500 14px Inter, sans-serif; color: #111827; background: #fff; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer; }
 .b-actions .p { flex-basis: 140px; font-weight: 600; color: #fff; background: #111827; border: none; }
+
+/* a plugin that threw while rendering: a small card in its place (map layers float over the map box) */
+.ext-failed { position: relative; z-index: 6; margin: 8px; padding: 6px 12px; background: var(--solid); border: 1px solid var(--round-line); border-radius: 12px; box-shadow: 0 8px 24px var(--shadow-cmd); color: var(--ink); font: 500 13px Outfit, sans-serif; }
+.mapbox > .ext-failed { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; }
+.ext-failed code { font: 500 12px 'JetBrains Mono', monospace; color: var(--accent); }
