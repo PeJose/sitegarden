@@ -116,3 +116,12 @@ test('the timeout and the body cap fail the request with a clear message', async
 test('errors never carry a secret value', async () => {
   await assert.rejects(ask(local(['*'], ['TOK']), '/loop?t=${secret:TOK}'), (e: Error) => e.message.includes('[secret:TOK]') && !e.message.includes(TOKEN))
 })
+
+test('a secret placeholder in the scheme, userinfo, host or port is refused, in the path or query it works', async () => {
+  const c = local(['*'], ['TOK']), msg = /secrets are only allowed in the path, query or headers/
+  conns = 0
+  for (const u of ['http://${secret:TOK}.a.test/', 'http://${secret:TOK}@a.test/', 'http://user:${secret:TOK}@a.test/', `http://a.test:\${secret:TOK}/`, '${secret:TOK}://a.test/', 'http:\\\\${secret:TOK}.a.test/', '${secret:TOK}']) await assert.rejects(c(u), msg, u)
+  assert.equal(conns, 0)
+  assert.equal(await (await ask(c, '/echo?k=${secret:TOK}')).text().then((t) => JSON.parse(t).host), `a.test:${port}`)
+  assert.equal((await ask(c, '/a/${secret:TOK}/b')).status, 200)
+})

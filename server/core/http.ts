@@ -50,6 +50,8 @@ export function createHttp({ secrets, lookup = dns.lookup, isBlocked = blocked }
       try {
         const signal = AbortSignal.timeout(timeoutMs), carrying = new Set<string>(['authorization'])
         let headers = Object.fromEntries(Object.entries(init.headers ?? {}).map(([k, v]) => { const s = sub(v); if (s !== v) carrying.add(k.toLowerCase()); return [k, s] }))
+        // A secret in the scheme, userinfo, host or port would leave the server through DNS or the connection, so only path and query may carry one.
+        if (/\$\{secret:/.test(/^[^/\\?#]*(?:[/\\]{2}[^/\\?#]*)?/.exec(url)![0])) throw new HttpError('secrets are only allowed in the path, query or headers')
         let u = new URL(sub(url)), method = init.method ?? 'GET', body = init.body
         for (let hop = 0; ; hop++) {
           const host = u.hostname.replace(/^\[|\]$/g, '')
