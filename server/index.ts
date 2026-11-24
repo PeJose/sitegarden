@@ -6,8 +6,8 @@ import { compress } from 'hono/compress'
 import type { ConfigEstate } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
-import { addEstate, CONFIG_FILE, db, host, loadGraph, removeLastEstate, schemaJson } from './config'
-import { createBus, eventsHandler } from './core/events'
+import { addEstate, bus, CONFIG_FILE, db, host, loadGraph, removeLastEstate, schemaJson } from './config'
+import { eventsHandler } from './core/events'
 import { createHolder } from './core/holder'
 import { createScheduler } from './core/scheduler'
 import { makeEstate } from './mock'
@@ -59,7 +59,6 @@ app.delete('/api/estates/last', (c) => {
 })
 
 // Typed events with stored IDs (see core/events.ts). `release` is emitted whenever `current` moves (this process, or `pnpm sg apply` in another).
-const bus = createBus(db)
 const key = (r: ReturnType<typeof currentRelease>) => r && `${r.id}:${r.rev}`
 app.get('/api/events', eventsHandler(bus, () => key(currentRelease())))
 const graph = createHolder(loadGraph, bus.emit)

@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { test } from 'node:test'
+import fs from 'node:fs'
+import os from 'node:os'
+import { openDb } from './db'
+import { createBus } from './events'
 import { createHost, satisfies } from './plugins'
 
 const baseDir = path.join(import.meta.dirname, 'fixtures')
@@ -63,4 +67,11 @@ test('a registration disposer removes just that registration', async () => {
   const h = createHost({ baseDir, importModule: async () => ({ default: { id: 'base', register: (ctx) => { ctx.registerNodeType('a'); ctx.registerNodeType('b')(); } } }) })
   await h.load(['./base'])
   assert.deepEqual(Object.keys(h.nodeTypes()), ['a'])
+})
+
+test('a plugin ctx.emit lands in the events table', async () => {
+  const db = openDb(path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sg-pl-')), 'sg.db'))
+  const h = createHost({ baseDir, emit: createBus(db).emit, importModule: async () => ({ default: { id: 'base', register: (ctx) => void ctx.emit('hello', { n: 1 }) } }) })
+  await h.load(['./base'])
+  assert.deepEqual(db.eventsAfter(0).map((e) => [e.type, e.data]), [['hello', { n: 1 }]])
 })
