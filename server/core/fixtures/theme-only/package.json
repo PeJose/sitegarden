@@ -1,0 +1,1 @@
+{ "name": "fx-theme-only", "version": "1.0.0", "sitegarden": { "id": "theme-only", "apiVersion": "^1", "contributes": { "themes": ["./tokens.json"] } } }

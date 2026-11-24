@@ -13,7 +13,7 @@
 
 ## 3. Plugin host
 
-- [ ] 3.1 `server/core/sdk.ts` (`SDK_VERSION`, `definePlugin`, ctx types) and `server/core/plugins.ts`: resolve, manifest validation, caret/tilde/exact range check, `dependsOn` sort, tier A without import, disposers, per-plugin error isolation (D3). Verify: tests with fixture plugins under `server/core/fixtures/` for: newer apiVersion refused, missing dependency refused, throwing register isolated, theme-only plugin not imported, unload leaves no registrations.
+- [x] 3.1 `server/core/sdk.ts` (`SDK_VERSION`, `definePlugin`, ctx types) and `server/core/plugins.ts`: resolve, manifest validation, caret/tilde/exact range check, `dependsOn` sort, tier A without import, disposers, per-plugin error isolation (D3). Verify: tests with fixture plugins under `server/core/fixtures/` for: newer apiVersion refused, missing dependency refused, throwing register isolated, theme-only plugin not imported, unload leaves no registrations.
 - [ ] 3.2 `plugins/essentials` with the five node types (D4); config lists it; schema merge from plugin fragments; `/schema.json` and `pnpm sg schema`; `# yaml-language-server` header in the sample config. Verify: test that a fixture fragment field appears under `site` in the JSON Schema; `pnpm sg schema` writes `schema.json`.
 
 ## 4. Scheduler
