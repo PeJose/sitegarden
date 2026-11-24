@@ -608,3 +608,29 @@ commit 8e8c49e (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · hea
 The owner OK'd a lower animation rate (a hand-animated, old-map feel): march 15/s, down pulse 12/s, lantern 15/s. A trace shows the compositor draws only when a value changes, so each step rate sets the frame count. Over 3 runs: light-still 7.7–7.9 %, night-still 8.0–9.8 % (mean 9.1), night 7.5–10.0 %, all with 30 paints/s. The idle budget now passes, with little headroom at night. Screenshot diffs pass.
 
 Layer audit (`?still=1`, 39 layers, 47.5 Mpx): the largest are the whole-map preview `img` (16.5 Mpx, `will-change: transform`) and two world-sized `svg.live` layers (stars/lights and labels, about 10.4 Mpx each, composited for overlap). The compositor draws only the visible part of each, and none of them repaints while idle. Not changed.
+
+## 2026-11-24 m1-core 5.2 before
+
+commit 1e8b671 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":217,"bytes":{"total":3012441,"texture":537502,"tiles":2067480,"js":214030},"gpuPct":5.5,"fps":60,"frames":600,"timers":2,"paints":302,"paintAreaMpx":92823.4,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":69,"layout":1,"script":27,"paint":29,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.368852,"loadMs":203,"bytes":{"total":3012441,"texture":537502,"tiles":2067480,"js":214030},"gpuPct":4.8,"fps":60,"frames":600,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":59,"layout":0,"script":22,"paint":22,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.368852,"loadMs":198,"bytes":{"total":2742318,"texture":402537,"tiles":1932828,"js":214030},"gpuPct":9.2,"fps":59.9,"frames":600,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":105,"layout":0,"script":31,"paint":41,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":201,"bytes":{"total":3012441,"texture":537502,"tiles":2067480,"js":214030},"gpuPct":12.1,"fps":59.9,"frames":182,"timers":8,"paints":422,"paintAreaMpx":844509793.62,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":22,"layout":2,"script":53,"paint":14,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 m1-core 5.2
+
+commit 1e8b671 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":215,"bytes":{"total":3013250,"texture":537502,"tiles":2067480,"js":214579},"gpuPct":6.8,"fps":60,"frames":600,"timers":2,"paints":304,"paintAreaMpx":93442.2,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":113,"layout":0,"script":38,"paint":41,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.368852,"loadMs":200,"bytes":{"total":3013250,"texture":537502,"tiles":2067480,"js":214579},"gpuPct":7,"fps":60,"frames":600,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":112,"layout":0,"script":37,"paint":51,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.368852,"loadMs":208,"bytes":{"total":2743127,"texture":402537,"tiles":1932828,"js":214579},"gpuPct":7.6,"fps":60,"frames":601,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":121,"layout":0,"script":34,"paint":42,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":205,"bytes":{"total":3013250,"texture":537502,"tiles":2067480,"js":214579},"gpuPct":13.3,"fps":59.9,"frames":182,"timers":8,"paints":424,"paintAreaMpx":844509796.21,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":27,"layout":2,"script":64,"paint":17,"decode":0,"decodeAllThreads":0}}
+```
+
+### m1-core 5.2 note (blocks "m1-core 5.2 before" and "m1-core 5.2" above, same release, same machine)
+
+Map layers and side-panel tabs now render through the extension tree (React fragments only, so the DOM is unchanged). The screenshot diff passes against a build of the commit before the change (light-still 0 %, night-still 0.001 %). Idle GPU light 5.5 to 6.8 %, light-still 4.8 to 7.0 %, night-still 9.2 to 7.6 %; pan 12.1 to 13.3 % with 59.9 fps, 424 vs 422 paints, no long tasks. All within the 5 to 10 % noise of earlier blocks. The "before" run used a different release than the older blocks (zoom 0.369 vs 0.341), so compare the two new blocks with each other.

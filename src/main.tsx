@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { loadWorld } from './world'
 import { startPerf } from './perf'
+import './ext/garden'
 
 startPerf()
 // Chrome throttles hidden tabs but not reliably for every animation: pause the CSS ones outright (the Lantern pauses its own).

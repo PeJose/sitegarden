@@ -18,6 +18,9 @@ app.use(compress())
 
 app.get('/schema.json', async (c) => c.json(await schemaJson()))
 
+// What the browser needs to arrange its extensions; nothing secret.
+app.get('/api/config', (c) => c.json({ extensions: graph.get()?.extensions ?? {} }, 200, { 'Cache-Control': 'no-cache' }))
+
 app.get('/api/release', (c) => {
   const r = currentRelease()
   return r ? c.json(r, 200, { 'Cache-Control': 'no-cache' }) : c.json({ pending: true }, 503, { 'Cache-Control': 'no-store' })

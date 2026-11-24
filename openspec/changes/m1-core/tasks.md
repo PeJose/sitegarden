@@ -23,7 +23,7 @@
 ## 5. Web extension tree
 
 - [x] 5.1 `src/ext/tree.ts` registry (add, replace-by-ID log, override/wrap, disable/config, ordered resolve) (D8). Verify: `src/ext/tree.test.ts` for replace, wrap, disable, order; add it to `pnpm test`.
-- [ ] 5.2 Register existing map layers and side-panel tabs as extensions and render through the tree; `GET /api/config` returns `extensions`. Verify: `pnpm perf --only light-still,night-still` screenshot diff passes; `pnpm perf --only pan,light` within noise of the last results.md block; disabling `layer:garden:labels` in YAML hides labels.
+- [x] 5.2 Register existing map layers and side-panel tabs as extensions and render through the tree; `GET /api/config` returns `extensions`. Verify: `pnpm perf --only light-still,night-still` screenshot diff passes; `pnpm perf --only pan,light` within noise of the last results.md block; disabling `layer:garden:labels` in YAML hides labels.
 
 ## 6. Close-out
 

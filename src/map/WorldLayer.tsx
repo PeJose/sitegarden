@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useViewportStore, useReactFlowStoreApi } from '@xyflow/react'
 import { useEngine } from '../mock/engine'
 import { edges } from '../mock/data'
@@ -7,7 +7,7 @@ import { DEFS, twinkleSvg } from '../gen/render'
 import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
 import { viewOf, type TileView } from '../lib/view'
-import { TileLayer } from './TileLayer'
+import { extConfig, registry } from '../ext/registry'
 import { flight } from './tiles'
 import { Lantern, March, Wash } from './Fx'
 
@@ -42,15 +42,13 @@ export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { wo
     {/* paper under everything, one screen big: the texture is a tile's own base, so it continues seamlessly under the tiles */}
     <div className="paper" ref={paper} style={{ backgroundImage: `url(/a/${tex})` }} />
     <div className="world" ref={el}>
-      <TileLayer world={world} scheme={scheme} view={view} />
-      <Live world={world} scheme={scheme} />
-      <Labels world={world} />
+      {registry.resolve('map', 'layers', extConfig.extensions).map((l) => <Fragment key={l.id}>{l.render({ world, scheme, view })}</Fragment>)}
     </div>
     </>
   )
 })
 
-const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: Scheme }) {
+export const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: Scheme }) {
   const night = scheme === 'night'
   const flows = useEngine((s) => s.flows)
   const status = useEngine((s) => s.nodes)
@@ -76,7 +74,7 @@ const Live = memo(function Live({ world, scheme }: { world: WorldData; scheme: S
 })
 
 // Estate names and path labels follow the viewport: their on-screen size stays between a minimum and a maximum. Estate names always show; path labels fade out when zoomed so far out they would only overlap.
-function Labels({ world }: { world: WorldData }) {
+export function Labels({ world }: { world: WorldData }) {
   const zoom = useViewportStore((s) => s.transform[2]) // task 2.4 steps this
   const { bounds: b } = world
   const px = (natural: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, natural * zoom)) / zoom

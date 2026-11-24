@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { Estate, Pt, World } from './gen/types'
 import { setConfig } from './mock/data'
 import { engine } from './mock/engine'
+import { configReady } from './ext/registry'
 
 export interface TileIndex { size: number; x0: number; y0: number; cols: number; rows: number; names: Record<'light' | 'night', (string | null)[][]> } // names[theme][zoom level][row * cols + col]
 export type WorldData = World & { id: string; tiles: TileIndex; previews: Partial<Record<'light' | 'night', string>>; textures: Record<'light' | 'night', string[]> }
@@ -27,7 +28,7 @@ async function loadRelease() {
     return
   }
   rev = r.rev
-  const [cfg, w] = await Promise.all([fetch(`/a/${r.config}`).then((x) => x.json()), fetch(`/a/${r.world}`).then((x) => x.json())])
+  const [cfg, w] = await Promise.all([fetch(`/a/${r.config}`).then((x) => x.json()), fetch(`/a/${r.world}`).then((x) => x.json()), configReady])
   performance.mark('world-json')
   // one synchronous burst, so React renders config, engine and world together
   setConfig(cfg)
