@@ -87,6 +87,8 @@ pnpm perf       # performance measurements, see perf/README.md
 
 How rendering works is described in [docs/rendering.md](docs/rendering.md).
 
+Releases: every PR bumps the version in `package.json` and adds a matching entry to [CHANGELOG.md](CHANGELOG.md); merging to `main` tags `v<version>` and publishes a GitHub release with that entry as notes.
+
 ## Roadmap
 
 | Milestone | Scope |
