@@ -75,3 +75,10 @@ test('a plugin ctx.emit lands in the events table', async () => {
   await h.load(['./base'])
   assert.deepEqual(db.eventsAfter(0).map((e) => [e.type, e.data]), [['hello', { n: 1 }]])
 })
+
+test('a check with a bad interval fails its plugin with a clear message', async () => {
+  const h = createHost({ baseDir, importModule: async () => ({ default: { id: 'base', register: (ctx) => void ctx.registerCheck({ id: 'x', every: '5 minutes', run: () => ({ status: 'ok' }) }) } }) })
+  await h.load(['./base'])
+  assert.match(status(h).base!, /bad interval "5 minutes"/)
+  assert.deepEqual(h.checks(), [])
+})

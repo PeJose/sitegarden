@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { z } from 'zod'
 import type { Db } from './db'
 import type { NodeTypes } from './graph'
+import { parseEvery } from './scheduler'
 import { SDK_VERSION, type CheckDef, type Disposer, type Plugin, type PluginContext } from './sdk'
 
 const list = z.array(z.string()).optional()
@@ -53,6 +54,7 @@ export function createHost({ baseDir, db, emit = () => {}, importModule = (f) =>
         return reg(() => void fragments.splice(fragments.indexOf(f), 1))
       },
       registerCheck(def) {
+        parseEvery(def.every)
         if (checks.has(def.id)) throw new Error(`check "${def.id}" is already registered`)
         checks.set(def.id, { plugin: id, def })
         return reg(() => void checks.delete(def.id))
