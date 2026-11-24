@@ -2,7 +2,7 @@
 
 ## 1. Baseline
 
-- [ ] 1.1 Record the "before" numbers (D6) on the current code: 3 runs of `pnpm perf --only light,pan,pan-4x,zoom,zoom-4x`, plus `vite build` main chunk raw/gzip. Verify: a "own-viewport before" block in `perf/results.md`.
+- [x] 1.1 Record the "before" numbers (D6) on the current code: 3 runs of `pnpm perf --only light,pan,pan-4x,zoom,zoom-4x`, plus `vite build` main chunk raw/gzip. Verify: a "own-viewport before" block in `perf/results.md`.
 
 ## 2. Viewport
 
