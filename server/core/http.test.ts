@@ -136,3 +136,13 @@ test('cloud metadata stays blocked with allowPrivate, as a literal, mapped, by n
   assert.equal(conns, 0)
   assert.equal(await (await client('127.0.0.1')(`http://x.test:${port}/`, open)).text(), 'hello')
 })
+
+test('a redirect to another port of the same host also drops authorization and secret headers', async () => {
+  const other = http.createServer((req, res) => res.end(JSON.stringify(req.headers)))
+  await new Promise<void>((r) => other.listen(0, '127.0.0.1', r))
+  try {
+    const p2 = (other.address() as AddressInfo).port
+    const h = JSON.parse(await (await ask(local(['*'], ['TOK']), `/redir?to=${encodeURIComponent(`http://a.test:${p2}/`)}`, { headers: { authorization: 'Bearer x', 'x-key': '${secret:TOK}', 'x-plain': 'v' } })).text())
+    assert.deepEqual([h.authorization, h['x-key'], h['x-plain']], [undefined, undefined, 'v'])
+  } finally { other.close() }
+})

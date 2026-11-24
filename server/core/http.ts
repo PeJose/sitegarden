@@ -68,7 +68,7 @@ export function createHttp({ secrets, lookup = dns.lookup, isBlocked = blocked }
             await res.body?.cancel()
             if (hop === MAX_HOPS) throw new HttpError(`more than ${MAX_HOPS} redirects, last to ${u}`)
             const next = new URL(to, u)
-            if (next.hostname !== u.hostname) headers = Object.fromEntries(Object.entries(headers).filter(([k]) => !carrying.has(k.toLowerCase())))
+            if (next.origin !== u.origin) headers = Object.fromEntries(Object.entries(headers).filter(([k]) => !carrying.has(k.toLowerCase())))
             if (res.status === 303 || (method === 'POST' && (res.status === 301 || res.status === 302))) { method = 'GET'; body = undefined }
             u = next
             continue
