@@ -7,7 +7,7 @@
 
 ## 2. Outbound guard
 
-- [ ] 2.1 Add `undici`; `server/core/http.ts` guard (D3): BlockList ranges incl. IPv4-mapped, metadata name, IP literals, checked-lookup Agent, `allowPrivate` Agent. Verify: `http.test.ts` with an injected lookup: private/loopback/link-local/CGNAT/ULA/mapped answers refused, mixed answer refused, public answer allowed and the socket connects to the checked address, literal `169.254.169.254` refused, `allowPrivate` allows `192.168.1.20` (use a local test server bound to 127.0.0.1 with `allowPrivate` for the positive path).
+- [x] 2.1 Add `undici`; `server/core/http.ts` guard (D3): BlockList ranges incl. IPv4-mapped, metadata name, IP literals, checked-lookup Agent, `allowPrivate` Agent. Verify: `http.test.ts` with an injected lookup: private/loopback/link-local/CGNAT/ULA/mapped answers refused, mixed answer refused, public answer allowed and the socket connects to the checked address, literal `169.254.169.254` refused, `allowPrivate` allows `192.168.1.20` (use a local test server bound to 127.0.0.1 with `allowPrivate` for the positive path).
 - [ ] 2.2 Host allowlist, secret substitution with permission check, manual redirects (5 max, re-checked, secret headers dropped on host change), timeout, body cap, redacted errors (D3). Verify: tests for each spec scenario in `outbound-guard` and `secrets` using local servers.
 
 ## 3. Wiring
