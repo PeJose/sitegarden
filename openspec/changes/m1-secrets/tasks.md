@@ -17,4 +17,4 @@
 
 ## 4. Close-out
 
-- [ ] 4.1 README secrets section (env, `_FILE`, compose `secrets:` example, `permissions` in plugin manifests); CHANGELOG 0.4.0; `package.json` 0.4.0. Verify: `pnpm test`, `pnpm build`, `npx oxlint` (no new errors) pass; version check script passes against main.
+- [x] 4.1 README secrets section (env, `_FILE`, compose `secrets:` example, `permissions` in plugin manifests); CHANGELOG 0.4.0; `package.json` 0.4.0. Verify: `pnpm test`, `pnpm build`, `npx oxlint` (no new errors) pass; version check script passes against main.

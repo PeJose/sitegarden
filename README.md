@@ -68,6 +68,35 @@ pnpm sg schema  # write schema.json (git-ignored) for editor completion and vali
 
 `--server URL` (or `SITEGARDEN_SERVER`, default `http://localhost:8787`) picks the server. `plan` and `apply` refuse when the server has a newer rev than the one you last pulled or applied (exit code 3); `pull` refuses to overwrite local edits that were never applied unless `--force`. `apply --local-render` renders the missing tiles on your machine and uploads them, so the server renders nothing (both need the same renderer version). `--no-wait` returns once the rev is stored. The last pulled or applied rev is kept in `.sitegarden/state.json` next to the config (git-ignored). `auth.enabled: true` is rejected until real auth exists, so the config cannot lock itself.
 
+### Secrets
+
+Secrets are declared by name in the config; the values never are. The server reads each value from the environment variable `NAME`, or else from the file named by `NAME_FILE` (surrounding whitespace is trimmed), so Docker secrets work as they are. A declared secret with no value does not stop the server: `sg plan` and the log warn, and a request that needs it fails with "secret NAME is not set".
+
+```yaml
+secrets:
+  GITHUB_READ: { expires: 2027-03-01 }
+nodes:
+  - { id: fernhill-repo, type: repo, group: fernhill, notes: "token ${secret:GITHUB_READ}" }   # an undeclared name is a config error with its line
+```
+
+```yaml
+# docker-compose.yml
+services:
+  sitegarden:
+    environment:
+      GITHUB_READ_FILE: /run/secrets/github_read
+    secrets: [github_read]
+secrets:
+  github_read:
+    file: ./github_read.txt
+```
+
+Plugins never see a value. A plugin makes requests only through `ctx.http(url, init)`, which replaces `${secret:NAME}` in the URL and header values at send time, and only for names in the plugin's manifest `permissions.secrets`. `permissions.network` lists the hosts it may call (`api.github.com`, `*.example.org`, or `*`). Requests to loopback, private, link-local, CGNAT and metadata addresses are refused after DNS resolution (every answer is checked, and the connection uses the checked address); `allowPrivate: true` on a request opts in for an internal service. Redirects are followed at most 5 times, each hop re-checked, and `authorization` and secret headers are dropped when the host changes. Requests time out after 10 s and responses are capped at 5 MB. Secret values (and their base64 form) are replaced with `[secret:NAME]` in logs, events and check details.
+
+```json
+{ "sitegarden": { "id": "github", "apiVersion": "^1.1", "server": "./server.ts", "permissions": { "network": ["api.github.com"], "secrets": ["GITHUB_READ"] } } }
+```
+
 | Variable | Default | Purpose |
 |---|---|---|
 | `SITEGARDEN_CONFIG` | `sitegarden.yaml` | config file |
