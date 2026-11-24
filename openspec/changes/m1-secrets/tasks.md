@@ -3,7 +3,7 @@
 ## 1. Secrets
 
 - [x] 1.1 `server/core/secrets.ts` (D1): env, `_FILE` with trim, lazy cache, `missing`, `redact` incl. base64 forms. Verify: `secrets.test.ts` covers env, file with trailing newline, missing, unreadable file, redaction of plain and base64 values.
-- [ ] 1.2 Core schema `secrets:`, undeclared `${secret:NAME}` as a line-numbered config error, missing-value warnings in `/api/plan`, `sg plan` and the server log (D2). Verify: graph tests for the undeclared reference line; app test for the plan warning; `sg plan` prints it.
+- [x] 1.2 Core schema `secrets:`, undeclared `${secret:NAME}` as a line-numbered config error, missing-value warnings in `/api/plan`, `sg plan` and the server log (D2). Verify: graph tests for the undeclared reference line; app test for the plan warning; `sg plan` prints it.
 
 ## 2. Outbound guard
 

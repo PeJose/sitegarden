@@ -72,6 +72,14 @@ test('an unknown node field is rejected at its node line', () => {
   assert.match(i.message, /urll/)
 })
 
+test('a secret reference must be declared, and the error carries the line of the field', () => {
+  const ref = ok.replace('{ id: b, type: site, group: g }', '{ id: b, type: site, group: g, notes: "x ${secret:TOKEN_A} y" }')
+  const [i] = lines(ref)
+  assert.deepEqual([i.line, i.path, i.message], [6, 'nodes.1.notes', 'secret TOKEN_A is not declared under secrets:'])
+  assert.equal(parseGraph('secrets:\n  TOKEN_A: { expires: "2027-01-01" }\n' + ref, 'x.yaml', types).secrets.TOKEN_A.expires, '2027-01-01')
+  assert.match(lines('secrets:\n  lower: {}\n' + ok)[0].path, /^secrets/)
+})
+
 test('a diff lists added, changed and removed items by kind', () => {
   const g = (t: string) => parseGraph(t, 'x.yaml', types)
   assert.deepEqual(diffGraphs(g(ok), g(ok)), [])

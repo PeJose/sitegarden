@@ -8,7 +8,7 @@ import type { ConfigEstate, Positions } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
-import { addEstate, authIssue, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, toRenderConfig, validate } from './config'
+import { addEstate, authIssue, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, secretWarnings, toRenderConfig, validate } from './config'
 import { eventsHandler } from './core/events'
 import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
 import { DriftError } from './core/db'
@@ -98,7 +98,7 @@ app.post('/api/plan', async (c) => {
   const r = await check(b.yaml)
   if ('issues' in r) return c.json({ rev, ok: false, issues: r.issues })
   const plan = computePlan(toRenderConfig(r.graph), loadPositions()), todo = missing(plan)
-  return c.json({ rev, ok: true, diff: diffGraphs(await validate(latestYaml()), r.graph), render: todo.tiles.length ? { jobs: todo.jobs.length, tiles: todo.tiles.length, ms: estimateMs(todo.jobs, todo.tiles.length) } : { jobs: 0, tiles: 0, ms: 0 }, planId: planId(rev, b.yaml), release: plan.id })
+  return c.json({ rev, ok: true, warnings: secretWarnings(r.graph), diff: diffGraphs(await validate(latestYaml()), r.graph), render: todo.tiles.length ? { jobs: todo.jobs.length, tiles: todo.tiles.length, ms: estimateMs(todo.jobs, todo.tiles.length) } : { jobs: 0, tiles: 0, ms: 0 }, planId: planId(rev, b.yaml), release: plan.id })
 })
 
 app.get('/api/state', (c) => c.json({ rev: db.latestRev(), yaml: latestYaml(), renderer: RENDERER, positions: loadPositions() }, 200, { 'Cache-Control': 'no-store' }))
@@ -170,7 +170,7 @@ async function runApply() {
   } finally { running = false }
 }
 // A good reload re-plans the checks (plugins were reloaded first) and re-renders.
-const reloaded = () => graph.reload().then((ok) => { if (ok) { scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
+const reloaded = () => graph.reload().then((ok) => { if (ok) { secretWarnings(graph.get()!).forEach((w) => console.warn(`[secrets] ${w.message}`)); scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
 
 export function start(port: number) {
   bootstrap()

@@ -5,6 +5,7 @@ import type { Config, ConfigEstate, Positions } from '../src/gen/types'
 import { jsonSchema, parseGraph, type Graph, type Issue } from './core/graph'
 import { openDb } from './core/db'
 import { createBus } from './core/events'
+import { createSecrets } from './core/secrets'
 import { createHost } from './core/plugins'
 import { DATA, writeAtomic } from './store'
 
@@ -14,6 +15,9 @@ const POSITIONS = path.join(DATA, 'positions.json') // layout results live apart
 // One db per process: the event bus and every plugin's store share it.
 export const db = openDb(path.join(DATA, 'sitegarden.db'))
 export const bus = createBus(db)
+export const secrets = createSecrets()
+// Declared secrets that have no value: not an error, `sg plan` and the log say so.
+export const secretWarnings = (g: Graph) => secrets.missing(Object.keys(g.secrets))
 export const host = createHost({ baseDir: path.dirname(CONFIG_FILE), db, emit: bus.emit })
 let loaded = ''
 const pluginList = (text: string) => {

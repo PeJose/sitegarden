@@ -55,6 +55,14 @@ test('an unchanged config plans to nothing', async () => {
   assert.deepEqual(p.diff, [])
 })
 
+test('plan warns about a declared secret with no value, and an undeclared reference is a line error', async () => {
+  const yaml = base.replace('groups:', 'secrets:\n  SG_TEST_UNSET: {}\ngroups:')
+  const [, p] = await json(post('/api/plan', { yaml, baseRev: 1 }))
+  assert.deepEqual(p.warnings, [{ secret: 'SG_TEST_UNSET', message: 'secret SG_TEST_UNSET is not set' }])
+  const [, q] = await json(post('/api/plan', { yaml: base.replace('type: repo,', 'type: repo, name: "${secret:SG_NOPE}",'), baseRev: 1 }))
+  assert.deepEqual([q.ok, q.issues[0].line, q.issues[0].message], [false, 6, 'secret SG_NOPE is not declared under secrets:'])
+})
+
 const { engine } = await import('./app')
 engine.apply = async () => ({ rendered: {}, tiles: 0, ms: 0, first: 0, aborted: false }) // no rendering in these tests
 const apply = async (yaml: string, o: Record<string, unknown> = {}) => {

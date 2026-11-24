@@ -21,6 +21,7 @@ export function buildSchema(types: NodeTypes) {
     world: z.strictObject({ seed: z.string() }),
     plugins: z.array(z.string()).default([]),
     auth: z.strictObject({ enabled: z.boolean().default(false) }).default({ enabled: false }).describe('Real auth lands in M1 item 5; until then `enabled: true` locks config changes'),
+    secrets: z.record(z.string().regex(/^[A-Z][A-Z0-9_]*$/), z.strictObject({ expires: z.string().optional() })).default({}).describe('Secret names; values come from the server environment, never from here. Reference as ${secret:NAME}'),
     groups: z.array(z.strictObject({ id: z.string().min(1), label: z.string() })).default([]),
     nodes: z.array(nodes.length ? z.discriminatedUnion('type', nodes as [(typeof nodes)[number]]) : z.never()).default([]),
     edges: z.array(z.strictObject({ from: z.string(), to: z.string(), type: z.string(), label: z.string().optional() })).default([]),
@@ -60,6 +61,11 @@ export function parseGraph(text: string, file: string, types: NodeTypes): Graph 
     return { line: lineAt(path), path: path.join('.'), message: unknownType ? `unknown node type "${doc.getIn(path)}", known: ${Object.keys(types).join(', ') || 'none'}` : i.message }
   }))
   const g = r.data!, bad: Issue[] = []
+  const refs = (v: unknown, path: (string | number)[]): void => {
+    if (typeof v === 'string') { for (const [, name] of v.matchAll(/\$\{secret:([^}]*)\}/g)) if (!(name in g.secrets)) bad.push({ line: lineAt(path), path: path.join('.'), message: `secret ${name} is not declared under secrets:` }) }
+    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => refs(x, [...path, Array.isArray(v) ? Number(k) : k]))
+  }
+  refs(g, [])
   const dup = (kind: string, items: { id: string }[], key: string) => items.forEach((x, i) => { if (items.findIndex((y) => y.id === x.id) < i) bad.push({ line: lineAt([key, i, 'id']), path: `${key}.${i}.id`, message: `duplicate ${kind} id "${x.id}"` }) })
   dup('group', g.groups, 'groups'); dup('node', g.nodes, 'nodes')
   const groups = new Set(g.groups.map((x) => x.id)), nodes = new Set(g.nodes.map((x) => x.id))
