@@ -5,6 +5,7 @@ import fs from 'node:fs'
 import http from 'node:http'
 import type { AddressInfo } from 'node:net'
 import os from 'node:os'
+import { z } from 'zod'
 import { openDb } from './db'
 import { createHttp } from './http'
 import { createSecrets } from './secrets'
@@ -71,6 +72,12 @@ test('a registration disposer removes just that registration', async () => {
   const h = createHost({ baseDir, importModule: async () => ({ default: { id: 'base', register: (ctx) => { ctx.registerNodeType('a'); ctx.registerNodeType('b')(); } } }) })
   await h.load(['./base'])
   assert.deepEqual(Object.keys(h.nodeTypes()), ['a'])
+})
+
+test('a shorthand adds its field to the node type, and its disposer removes field and links', async () => {
+  const h = createHost({ baseDir, importModule: async () => ({ default: { id: 'base', register: (ctx) => { ctx.registerNodeType('a'); ctx.registerShorthand({ nodeType: 'a', field: 'f', schema: z.string(), links: () => [] })(); ctx.registerShorthand({ nodeType: 'a', field: 'g', schema: z.string(), links: () => [] }) } } }) })
+  await h.load(['./base'])
+  assert.deepEqual([Object.keys(h.nodeTypes().a), h.shorthands().map((s) => s.field)], [['g'], ['g']])
 })
 
 test('a plugin ctx.emit lands in the events table', async () => {

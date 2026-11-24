@@ -10,6 +10,10 @@ export interface CheckResult { status: Status; detail?: string }
 // Runs once per node of the listed types (every node when `nodeTypes` is left out).
 export interface CheckDef { id: string; every: string; nodeTypes?: string[]; run(node: CheckNode): CheckResult | Promise<CheckResult> }
 
+export interface Link { label: string; url: string }
+// A short config field on a node type that expands into links when the config loads.
+export interface ShorthandDef { nodeType: string; field: string; schema: z.ZodType; links(value: any, node: CheckNode): Link[] }
+
 export interface PluginContext {
   id: string
   // A new node type with its extra config fields.
@@ -17,6 +21,8 @@ export interface PluginContext {
   // More config fields on a node type some plugin already registered.
   registerSchema(nodeType: string, fields: z.ZodRawShape): Disposer
   registerCheck(check: CheckDef): Disposer
+  // Also accepts `field` on the node type; its links come before the node's explicit ones.
+  registerShorthand(def: ShorthandDef): Disposer
   store: { kv: { get(key: string): unknown; set(key: string, value: unknown): void; delete(key: string): void }; cache: { get(key: string): { value: unknown; fetched_at: number } | undefined; set(key: string, value: unknown): void } }
   emit(type: string, data: unknown): void
   // The only way out to the network: limited to the manifest's permissions.network, `${secret:NAME}` in the URL and headers only for permissions.secrets, internal addresses blocked.

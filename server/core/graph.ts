@@ -1,5 +1,7 @@
 import YAML from 'yaml'
 import { z } from 'zod'
+import { log } from './log'
+import type { ShorthandDef } from './sdk'
 
 const STATUS = z.enum(['ok', 'degraded', 'down', 'working', 'paused', 'unknown'])
 // The fields every node has. Mock-only fields stay under `mock:` until real checks replace them.
@@ -41,7 +43,7 @@ export class ConfigError extends Error {
 }
 
 // Parses and validates one config text. Every problem carries the line of the offending YAML node, or of its nearest parent.
-export function parseGraph(text: string, file: string, types: NodeTypes): Graph {
+export function parseGraph(text: string, file: string, types: NodeTypes, shorthands: ShorthandDef[] = []): Graph {
   const lc = new YAML.LineCounter(), doc = YAML.parseDocument(text, { lineCounter: lc })
   const lineAt = (path: (string | number)[]) => {
     for (let p = path; ; p = p.slice(0, -1)) {
@@ -75,7 +77,22 @@ export function parseGraph(text: string, file: string, types: NodeTypes): Graph 
   const home = new Map(g.nodes.map((n) => [n.id, n.group]))
   g.edges.forEach((e, i) => { if (nodes.has(e.from) && nodes.has(e.to) && home.get(e.from) !== home.get(e.to)) bad.push({ line: lineAt(['edges', i, 'to']), path: `edges.${i}.to`, message: `edge from "${e.from}" (group "${home.get(e.from)}") to "${e.to}" (group "${home.get(e.to)}") crosses groups, which is not supported yet` }) })
   if (bad.length) fail(...bad)
-  return g
+  return expandLinks(g, shorthands)
+}
+
+// Generated links first (a later shorthand wins a label), then the explicit ones, which replace generated links with the same label.
+export function expandLinks(g: Graph, shorthands: ShorthandDef[]): Graph {
+  return { ...g, nodes: g.nodes.map((n) => {
+    const gen = new Map<string, string>()
+    for (const s of shorthands) {
+      const v = (n as Record<string, unknown>)[s.field]
+      if (s.nodeType !== n.type || v === undefined) continue
+      for (const l of s.links(v, n)) { if (gen.get(l.label) !== undefined && gen.get(l.label) !== l.url) log.warn(`[config] node ${n.id}: shorthand "${s.field}" overrides the "${l.label}" link`); gen.set(l.label, l.url) }
+    }
+    if (!gen.size) return n
+    const own = n.links ?? []
+    return { ...n, links: [...[...gen].filter(([label]) => !own.some((l) => l.label === label)).map(([label, url]) => ({ label, url })), ...own] }
+  }) }
 }
 
 export interface Change { kind: 'group' | 'node' | 'edge' | 'extension'; op: '+' | '~' | '-'; id: string }

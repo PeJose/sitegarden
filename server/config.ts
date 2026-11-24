@@ -34,15 +34,15 @@ export async function loadPlugins(text = fs.readFileSync(CONFIG_FILE, 'utf8')) {
 }
 export async function loadGraph(text: string): Promise<Graph> {
   await loadPlugins(text)
-  return parseGraph(text, CONFIG_FILE, host.nodeTypes())
+  return parseGraph(text, CONFIG_FILE, host.nodeTypes(), host.shorthands())
 }
 
 // Parses a candidate config with the server's plugins. A candidate that changes `plugins:` is checked in a throwaway host, so nothing it registers stays.
 export async function validate(text: string): Promise<Graph> {
   const list = pluginList(text)
-  if (JSON.stringify(list) === loaded) return parseGraph(text, CONFIG_FILE, host.nodeTypes())
+  if (JSON.stringify(list) === loaded) return parseGraph(text, CONFIG_FILE, host.nodeTypes(), host.shorthands())
   const tmp = createHost({ baseDir: path.dirname(CONFIG_FILE), db, http })
-  try { await tmp.load(list); return parseGraph(text, CONFIG_FILE, tmp.nodeTypes()) } finally { await tmp.unloadAll() }
+  try { await tmp.load(list); return parseGraph(text, CONFIG_FILE, tmp.nodeTypes(), tmp.shorthands()) } finally { await tmp.unloadAll() }
 }
 
 // The server's config state is the latest revision in the store; the file is only read once, to bootstrap rev 1.

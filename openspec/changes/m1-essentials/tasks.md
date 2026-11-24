@@ -2,7 +2,7 @@
 
 ## 1. Shorthands
 
-- [ ] 1.1 `ctx.registerShorthand` and `expandLinks` after validation (D1). Verify: tests for generated links, explicit override by label, disposer removes the field and its links, field error on its line.
+- [x] 1.1 `ctx.registerShorthand` and `expandLinks` after validation (D1). Verify: tests for generated links, explicit override by label, disposer removes the field and its links, field error on its line.
 - [ ] 1.2 Essentials `repo`, `sanity`, `studio`, `url` (D2); sample config uses them where the links are identical (D6). Verify: test comparing the old explicit links with the expanded ones for every converted node; `pnpm sg plan` (or `/api/plan` against a scratch server) shows nothing to render and no graph link changes.
 
 ## 2. Checks

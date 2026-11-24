@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { z } from 'zod'
 import { ConfigError, diffGraphs, parseGraph, type NodeTypes } from './graph'
+import type { ShorthandDef } from './sdk'
 
 const types: NodeTypes = { repo: {}, site: { url: z.url().optional() } }
 const ok = `world: { seed: s }
@@ -88,4 +89,24 @@ test('a diff lists added, changed and removed items by kind', () => {
     { kind: 'node', op: '~', id: 'b' }, { kind: 'node', op: '+', id: 'c' },
     { kind: 'edge', op: '+', id: 'a>b:sync' }, { kind: 'edge', op: '-', id: 'a>b:deploy' },
   ])
+})
+
+const gh: ShorthandDef = { nodeType: 'repo', field: 'repo', schema: z.string().regex(/^[\w.-]+\/[\w.-]+$/, 'must be owner/name'), links: (v) => ['Actions', 'Issues'].map((label) => ({ label, url: `https://github.com/${v}/${label.toLowerCase()}` })) }
+const repoTypes: NodeTypes = { repo: { repo: gh.schema.optional() } }
+const withRepo = (extra: string) => `world: { seed: s }\ngroups:\n  - { id: g, label: G }\nnodes:\n  - { id: a, type: repo, group: g, ${extra} }\n`
+
+test('a shorthand adds its links before the explicit ones; an explicit link with the same label replaces the generated one', () => {
+  const links = (extra: string) => parseGraph(withRepo(extra), 'x.yaml', repoTypes, [gh]).nodes[0].links
+  assert.deepEqual(links('repo: acme/fern'), [{ label: 'Actions', url: 'https://github.com/acme/fern/actions' }, { label: 'Issues', url: 'https://github.com/acme/fern/issues' }])
+  assert.deepEqual(links('repo: acme/fern, links: [{ label: Issues, url: "https://x.example/i" }, { label: Docs, url: "https://x.example/d" }]'), [
+    { label: 'Actions', url: 'https://github.com/acme/fern/actions' }, { label: 'Issues', url: 'https://x.example/i' }, { label: 'Docs', url: 'https://x.example/d' },
+  ])
+  assert.equal(parseGraph(withRepo('name: n'), 'x.yaml', repoTypes, [gh]).nodes[0].links, undefined)
+})
+
+test('a bad shorthand value is an error on its line with the field schema message', () => {
+  try { parseGraph(withRepo('repo: fernhill'), 'x.yaml', repoTypes, [gh]); assert.fail('parsed') } catch (e) {
+    const [i] = (e as ConfigError).issues
+    assert.deepEqual([i.line, i.path, i.message], [5, 'nodes.0.repo', 'must be owner/name'])
+  }
 })
