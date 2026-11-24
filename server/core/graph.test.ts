@@ -59,3 +59,9 @@ test('a missing field falls back to the parent line', () => {
 test('the old estates shape gets the migration message', () => {
   assert.match(lines('accountSeed: a\nestates: []\n')[0].message, /old `estates:` shape, see CHANGELOG 0.2.0/)
 })
+
+test('an edge across groups is rejected at its line', () => {
+  const [i] = lines(ok.replace('{ id: g, label: G }', '{ id: g, label: G }\n  - { id: h, label: H }').replace('{ id: b, type: site, group: g }', '{ id: b, type: site, group: h }'))
+  assert.equal(i.line, 9)
+  assert.match(i.message, /crosses groups/)
+})

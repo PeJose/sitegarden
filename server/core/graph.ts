@@ -65,6 +65,9 @@ export function parseGraph(text: string, file: string, types: NodeTypes): Graph 
   const groups = new Set(g.groups.map((x) => x.id)), nodes = new Set(g.nodes.map((x) => x.id))
   g.nodes.forEach((n, i) => { if (!groups.has(n.group)) bad.push({ line: lineAt(['nodes', i, 'group']), path: `nodes.${i}.group`, message: `node "${n.id}" is in group "${n.group}", which does not exist` }) })
   g.edges.forEach((e, i) => (['from', 'to'] as const).forEach((end) => { if (!nodes.has(e[end])) bad.push({ line: lineAt(['edges', i, end]), path: `edges.${i}.${end}`, message: `edge ${end} "${e[end]}": no node with that id` }) }))
+  // shortcut: the renderer draws edges per group, so an edge must stay inside one group; lift when the map supports cross-group roads.
+  const home = new Map(g.nodes.map((n) => [n.id, n.group]))
+  g.edges.forEach((e, i) => { if (nodes.has(e.from) && nodes.has(e.to) && home.get(e.from) !== home.get(e.to)) bad.push({ line: lineAt(['edges', i, 'to']), path: `edges.${i}.to`, message: `edge from "${e.from}" (group "${home.get(e.from)}") to "${e.to}" (group "${home.get(e.to)}") crosses groups, which is not supported yet` }) })
   if (bad.length) fail(...bad)
   return g
 }
