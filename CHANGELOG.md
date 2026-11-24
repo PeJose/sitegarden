@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-11-24
+
+### Added
+- Config revisions: the server stores every applied config as a numbered revision (source `cli`, `gui` or `bootstrap`) and runs on the latest one.
+- `POST /api/plan` (validation errors with lines, graph diff, render estimate), `POST /api/apply`, `GET /api/state`, and `config.applied` and `apply.progress` events.
+- `sg plan`, `sg apply` and `sg pull` work against a server (`--server`, `SITEGARDEN_SERVER`), with a drift guard on plan and apply (exit code 3), confirmation (`--yes`) and `--no-wait`; local state in `.sitegarden/state.json`.
+- `sg apply --local-render` renders the missing tiles on the local machine and uploads them (`POST /api/artifacts/missing`, `PUT /a/:name`).
+- `auth.enabled` in the config: until real auth exists, `true` locks config changes (apply, GUI edits, uploads).
+
+### Changed
+- **BREAKING:** the server no longer watches `sitegarden.yaml`. It imports the file once as rev 1 on first start with an empty store and ignores it afterwards; change the config with `pnpm sg apply`.
+- **BREAKING:** `pnpm sg plan` and `pnpm sg apply` need a running server instead of working on the data directory directly.
+- Planting and removing an estate in the GUI make revisions with source `gui`.
+
 ## [0.2.0] - 2026-11-24
 
 ### Added

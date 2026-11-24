@@ -62,9 +62,9 @@ Alternatives considered: PixiJS (would mean rebuilding cards, keyboard access an
 
 The map is infrastructure-as-code output, like Terraform: the config is the input, the server renders, the browser only downloads finished files.
 
-1. **`plan`:** parse `sitegarden.yaml`, generate the world, hash every layer of every tile, and diff against the current release. Output: "+1 estate, 14 tiles to render (~8 s), 0 removed".
-2. **`apply`:** render only the missing hashes, then write a new release manifest and swap it in atomically. The old release keeps being served until the new one is complete, so nobody sees half-drawn tiles.
-3. **Triggers:** the CLI, a file watch on the config, or a push webhook from the config repo. The GUI never renders; "plant a project" there produces a YAML change (later a commit/PR), and that change is applied like any other.
+1. **`plan`:** the CLI sends its local `sitegarden.yaml` to the server, which validates it with its own plugins, diffs it against the latest config revision (groups, nodes, edges, extensions) and hashes every layer of every tile against the current release. Output: "+ node x, 14 tiles to render (~8 s)". Nothing changes.
+2. **`apply`:** the server stores the plan as the next config revision and renders only the missing hashes (or the CLI renders them locally with `--local-render` and uploads them), then write a new release manifest and swap it in atomically. The old release keeps being served until the new one is complete, so nobody sees half-drawn tiles.
+3. **Triggers:** the CLI (`sg apply`) or a GUI edit; both go through the same validate-and-store path and make a revision (source `cli` or `gui`). The server's latest revision is the config state; the file on its disk is only imported once as rev 1. Plan and apply refuse when the CLI's base revision is behind the server's (`sg pull` brings GUI edits home). A push webhook from the config repo is not built yet.
 
 Storage, content-addressed:
 

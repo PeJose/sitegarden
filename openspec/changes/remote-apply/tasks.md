@@ -21,4 +21,4 @@
 
 ## 5. Close-out
 
-- [ ] 5.1 Rewrite docs/plan.md "Render pipeline" triggers paragraph and the README dev section for the new flow; CHANGELOG 0.3.0 (**BREAKING**: server ignores config file edits after bootstrap); `package.json` 0.3.0. Verify: `pnpm test`, `pnpm lint`, `pnpm build` pass; README commands run as written against `pnpm dev`.
+- [x] 5.1 Rewrite docs/plan.md "Render pipeline" triggers paragraph and the README dev section for the new flow; CHANGELOG 0.3.0 (**BREAKING**: server ignores config file edits after bootstrap); `package.json` 0.3.0. Verify: `pnpm test`, `pnpm lint`, `pnpm build` pass; README commands run as written against `pnpm dev`.

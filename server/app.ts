@@ -97,7 +97,7 @@ app.post('/api/plan', async (c) => {
   const r = await check(b.yaml)
   if ('issues' in r) return c.json({ rev, ok: false, issues: r.issues })
   const plan = computePlan(toRenderConfig(r.graph), loadPositions()), todo = missing(plan)
-  return c.json({ rev, ok: true, diff: diffGraphs(await validate(latestYaml()), r.graph), render: { jobs: todo.jobs.length, tiles: todo.tiles.length, ms: estimateMs(todo.jobs, todo.tiles.length) }, planId: planId(rev, b.yaml), release: plan.id })
+  return c.json({ rev, ok: true, diff: diffGraphs(await validate(latestYaml()), r.graph), render: todo.tiles.length ? { jobs: todo.jobs.length, tiles: todo.tiles.length, ms: estimateMs(todo.jobs, todo.tiles.length) } : { jobs: 0, tiles: 0, ms: 0 }, planId: planId(rev, b.yaml), release: plan.id })
 })
 
 app.get('/api/state', (c) => c.json({ rev: db.latestRev(), yaml: latestYaml(), renderer: RENDERER, positions: loadPositions() }, 200, { 'Cache-Control': 'no-store' }))

@@ -49,14 +49,14 @@ async function plan() {
 async function release(id: string, ctl: AbortController) {
   const done = async () => { const r = (await (await fetch(`${server}/api/release`)).json().catch(() => null)) as { id?: string; complete?: boolean } | null; return r?.id === id && !!r.complete }
   const res = await fetch(`${server}/api/events`, { signal: ctl.signal })
-  return { done, wait: async () => {
+  return { done, wait: async (rev: number) => { // the stream replays stored events first, so progress is filtered by rev
     let buf = ''
     for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
       buf += Buffer.from(chunk).toString()
       for (let i = buf.indexOf('\n\n'); i >= 0; i = buf.indexOf('\n\n')) {
         const frame = buf.slice(0, i); buf = buf.slice(i + 2)
         const ev = /^event: (.*)$/m.exec(frame)?.[1], data = /^data: (.*)$/m.exec(frame)?.[1]
-        if (ev === 'apply.progress') { const p = JSON.parse(data!); console.log(`[apply] ${p.done}/${p.total} tiles`) }
+        if (ev === 'apply.progress') { const p = JSON.parse(data!); if (p.rev === rev) console.log(`[apply] ${p.done}/${p.total} tiles`) }
         if (ev === 'release' && await done()) return
       }
     }
@@ -100,7 +100,7 @@ if (cmd === 'plan') {
   else {
     remember(r.rev, yaml)
     console.log(`applied as rev ${r.rev}`)
-    if (rel && !(await rel.done())) await rel.wait()
+    if (rel && !(await rel.done())) await rel.wait(r.rev)
     console.log(rel ? 'release published' : 'rendering on the server')
   }
   ctl.abort()
