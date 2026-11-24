@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import type { HttpInit, HttpResponse } from './http'
 
-export const SDK_VERSION = '1.1.0'
+export const SDK_VERSION = '1.2.0'
 
 export type Disposer = () => void
 export type Status = 'ok' | 'degraded' | 'down' | 'working' | 'paused' | 'unknown'

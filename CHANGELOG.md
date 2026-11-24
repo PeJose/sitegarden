@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-11-24
+
+### Added
+- Shorthand fields: a plugin registers a field on a node type that expands into links when the config loads (`ctx.registerShorthand`); explicit `links:` with the same label win. `essentials` provides `repo: owner/name`, `sanity: <projectId>` with `studio: <name>`, and `url:` on `site` nodes.
+- Config-driven checks: nodes take `checks:` entries whose `type` a plugin registered with its own schema (`ctx.registerCheckType`), each run on its own `every`. `essentials` provides the `http` check (`url`, `expect_status`, `expect_text`, `timeout`, `alert_after`, `allow_private`); results are `ok`, `degraded` until `alert_after` failures in a row, then `down`.
+- A plan, apply or GUI edit rejected as invalid emits a `config.invalid` event.
+- Plugin API 1.2.0 (additive).
+
+### Changed
+- The sample config uses `repo:` and `url:` where they expand to the same links; the rendered map is unchanged.
+
 ## [0.4.0] - 2026-11-24
 
 ### Added
