@@ -15,5 +15,5 @@
 
 ## 4. Measure and close
 
-- [ ] 4.1 "After" numbers interleaved with "before" (D6), screenshot diff, bundle size; append the comparison to `perf/results.md`. Verify: pan ≥ 55 fps, pan-4x ≥ 50 fps, no new long tasks, idle GPU not higher than before beyond noise, screenshot diff passes, main chunk smaller.
-- [ ] 4.2 CHANGELOG entry and version bump; archive the change (`openspec archive own-viewport -y`). Verify: `pnpm test`, `pnpm build`, `npx oxlint` no new errors; version check passes against main.
+- [x] 4.1 "After" numbers interleaved with "before" (D6), screenshot diff, bundle size; append the comparison to `perf/results.md`. Verify: pan ≥ 55 fps, pan-4x ≥ 50 fps, no new long tasks, idle GPU not higher than before beyond noise, screenshot diff passes, main chunk smaller.
+- [x] 4.2 CHANGELOG entry and version bump; archive the change (`openspec archive own-viewport -y`). Verify: `pnpm test`, `pnpm build`, `npx oxlint` no new errors; version check passes against main.

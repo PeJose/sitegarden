@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-11-24
+
+### Added
+- A plugin that throws while rendering shows a small "plugin X failed" card in its place; every other plugin and the map keep working.
+
+### Changed
+- The map's pan, zoom, pinch and animated moves are our own code and React Flow is gone, with the same wheel step, easing and pan extent, so the map looks and feels the same. The main chunk drops from 181 KB to 99 KB gzip.
+
 ## [0.5.0] - 2026-11-24
 
 ### Added
