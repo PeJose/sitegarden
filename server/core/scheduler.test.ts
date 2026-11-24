@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
 import { openDb } from './db'
-import { createScheduler, parseEvery } from './scheduler'
+import { createScheduler, parseEvery, type Planned } from './scheduler'
 import type { CheckDef, CheckResult } from './sdk'
 
 // Virtual time: timers fire in order as `advance` moves the clock, with a tick between them so awaited check runs settle.
@@ -26,10 +26,10 @@ function clock() {
     },
   }
 }
-const setup = (random = () => 0.5, limit?: number) => {
+const setup = (random = () => 0.5, limit?: number, redact?: (s: string) => string) => {
   const c = clock(), events: { type: string; data: any }[] = []
   const db = openDb(path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sg-sch-')), 'sg.db'), c.now)
-  const s = createScheduler({ db, emit: (type, data) => events.push({ type, data }), limit, random, timers: c.timers })
+  const s = createScheduler({ db, emit: (type, data) => events.push({ type, data }), limit, redact, random, timers: c.timers })
   return { c, events, db, s }
 }
 const node = (id: string) => ({ id, type: 'site' })
@@ -38,6 +38,15 @@ const MIN = 60_000
 test('intervals parse', () => {
   assert.deepEqual(['30s', '5m', '1h', '1d'].map(parseEvery), [30_000, 300_000, 3_600_000, 86_400_000])
   assert.throws(() => parseEvery('5 minutes'))
+})
+
+test('a check detail with a secret value is stored and emitted as [secret:NAME]', async () => {
+  const { c, s, db, events } = setup(undefined, undefined, (t) => t.replaceAll('tok-abcdef', '[secret:T]'))
+  s.set([node('n')], [{ id: 'c', every: '1m', run: () => ({ status: 'down', detail: 'HTTP 401 for tok-abcdef' }) }, { id: 'd', every: '1m', run: () => { throw new Error('tok-abcdef') } }])
+  await c.advance(MIN)
+  assert.deepEqual(db.snapshots().map((x) => x.detail), ['HTTP 401 for [secret:T]', '[secret:T]'])
+  assert.ok(events.filter((e) => e.type === 'check.result').every((e) => !JSON.stringify(e).includes('tok-abcdef')))
+  s.stop()
 })
 
 test('first runs spread over the first interval, later ones within 10 % of it', async () => {
@@ -122,4 +131,21 @@ test('nodeTypes limits which nodes a check runs for', async () => {
   s.set([node('a'), { id: 'r', type: 'repo' }], [{ id: 'c', every: '5m', nodeTypes: ['repo'], run: (n) => { ran.push(n.id); return { status: 'ok' } } }])
   await c.advance(1)
   assert.deepEqual(ran, ['r'])
+})
+
+test('configured checks run on their own interval; an unchanged entry keeps its timer and backoff across set(), a changed one restarts', async () => {
+  const { c, s } = setup(() => 0.5)
+  const at: number[] = []
+  const entry = (cfg: string, every: string): Planned => ({ node: node('a'), cfg, check: { id: 'http#0', every, run: () => { at.push(c.now()); return { status: 'down' } } } })
+  s.set([node('a')], [], [entry('x', '1m')])
+  await c.advance(30_000)
+  assert.deepEqual(at, [30_000]) // first run lands at every * random
+  await c.advance(MIN) // next run after 2 min of backoff is still ahead
+  s.set([node('a')], [], [entry('x', '1m')]) // an apply that did not touch the check
+  await c.advance(MIN)
+  assert.deepEqual(at.map((x) => x / MIN), [0.5, 2.5]) // timer kept: backoff 2^1 x 1 min
+  s.set([node('a')], [], [entry('y', '10m')])
+  await c.advance(5 * MIN)
+  assert.equal(at.length, 3) // restarted: first run at 10m * 0.5
+  s.stop()
 })

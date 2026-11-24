@@ -2,8 +2,13 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { test } from 'node:test'
 import fs from 'node:fs'
+import http from 'node:http'
+import type { AddressInfo } from 'node:net'
 import os from 'node:os'
+import { z } from 'zod'
 import { openDb } from './db'
+import { createHttp } from './http'
+import { createSecrets } from './secrets'
 import { createBus } from './events'
 import { createHost, satisfies } from './plugins'
 
@@ -27,7 +32,7 @@ test('plugins load in dependsOn order, whatever the list order; registrations ar
 test('a plugin for a newer apiVersion is refused with both versions, others load', async () => {
   const h = createHost({ baseDir })
   await h.load(['./newer-api', './base'])
-  assert.match(status(h)['newer-api']!, /\^2.*1\.0\.0/)
+  assert.match(status(h)['newer-api']!, /\^2.*1\.2\.0/)
   assert.equal(status(h).base, 'loaded')
 })
 
@@ -69,6 +74,12 @@ test('a registration disposer removes just that registration', async () => {
   assert.deepEqual(Object.keys(h.nodeTypes()), ['a'])
 })
 
+test('a shorthand adds its field to the node type, and its disposer removes field and links', async () => {
+  const h = createHost({ baseDir, importModule: async () => ({ default: { id: 'base', register: (ctx) => { ctx.registerNodeType('a'); ctx.registerShorthand({ nodeType: 'a', field: 'f', schema: z.string(), links: () => [] })(); ctx.registerShorthand({ nodeType: 'a', field: 'g', schema: z.string(), links: () => [] }) } } }) })
+  await h.load(['./base'])
+  assert.deepEqual([Object.keys(h.nodeTypes().a), h.shorthands().map((s) => s.field)], [['g'], ['g']])
+})
+
 test('a plugin ctx.emit lands in the events table', async () => {
   const db = openDb(path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sg-pl-')), 'sg.db'))
   const h = createHost({ baseDir, emit: createBus(db).emit, importModule: async () => ({ default: { id: 'base', register: (ctx) => void ctx.emit('hello', { n: 1 }) } }) })
@@ -81,4 +92,34 @@ test('a check with a bad interval fails its plugin with a clear message', async 
   await h.load(['./base'])
   assert.match(status(h).base!, /bad interval "5 minutes"/)
   assert.deepEqual(h.checks(), [])
+})
+
+test('ctx.http reaches only what the manifest permits, and substitutes only the secrets it lists', async () => {
+  const server = http.createServer((req, res) => res.end(String(req.headers.authorization)))
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`
+  try {
+    const client = createHttp({ secrets: createSecrets({ FX_TOKEN: 'tok-123456' }) })
+    process.env.FX_URL = url
+    const h = createHost({ baseDir, http: client })
+    await h.load(['./fetcher'])
+    assert.deepEqual(await h.checks()[0].run({ id: 'n', type: 't' }), { status: 'ok', detail: 'Bearer tok-123456' })
+    // the same call from a plugin whose manifest has no permissions
+    const bare = createHost({ baseDir, http: client, importModule: async () => ({ default: { id: 'base', register: (ctx) => void ctx.registerCheck({ id: 'x', every: '1m', run: async () => ({ status: 'ok', detail: await (await ctx.http(url, { allowPrivate: true })).text() }) }) } }) })
+    await bare.load(['./base'])
+    await assert.rejects(Promise.resolve(bare.checks()[0].run({ id: 'n', type: 't' })), /plugin base may not call 127\.0\.0\.1/)
+  } finally { server.close() }
+})
+
+test('a check type is listed, builds scheduler entries from node config and is removed with its plugin', async () => {
+  const seen: unknown[] = []
+  const h = createHost({ baseDir, importModule: async () => ({ default: { id: 'base', register: (ctx) => { ctx.registerCheckType({ type: 'ping', schema: {}, run: (cfg, n, c) => { seen.push([cfg.type, n.id, c.id, c.index]); return { status: 'ok' } } }) } } }) })
+  await h.load(['./base'])
+  const nodes = [{ id: 'n', type: 'site', checks: [{ type: 'ping', every: '1m' }, { type: 'gone', every: '1m' }, { type: 'ping', every: '2m' }] }]
+  const [a, b] = h.configured(nodes)
+  assert.deepEqual([h.checkTypes().map((c) => c.type), a.check.id, a.check.every, b.check.id, b.check.every], [['ping'], 'ping#0', '1m', 'ping#2', '2m'])
+  await b.check.run(nodes[0])
+  assert.deepEqual(seen, [['ping', 'n', 'base', 2]])
+  await h.unloadAll()
+  assert.deepEqual([h.checkTypes(), h.configured(nodes)], [[], []])
 })

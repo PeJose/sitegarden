@@ -42,3 +42,14 @@ test('the last estate cannot be removed', async () => {
   for (let r = removeLastEstate(text); r; r = removeLastEstate(text)) text = r.yaml
   assert.equal((await loadGraph(text)).groups.length, 1)
 })
+
+test('the sample config expands its shorthands into the links it used to spell out', async () => {
+  const g = await loadGraph(latestYaml()), links = (id: string) => g.nodes.find((n) => n.id === id)!.links
+  const repo = (o: string) => [['Actions', 'actions'], ['Settings', 'settings'], ['Secrets', 'settings/secrets/actions'], ['Pull requests', 'pulls'], ['Issues', 'issues']].map(([label, p]) => ({ label, url: `https://github.com/${o}/${p}` }))
+  assert.deepEqual(links('fernhill-repo'), repo('acme/fernhill'))
+  assert.deepEqual(links('copperleaf-repo'), repo('acme/copperleaf'))
+  assert.deepEqual(links('fernhill-site'), [{ label: 'fernhill.example', url: 'https://fernhill.example' }, { label: 'host.example panel', url: 'https://panel.host.example' }])
+  assert.deepEqual(links('sedum-site2')?.map((l) => l.label), ['sedum.example', 'Hosting panel'])
+  const cfg = await loadConfig(), node = cfg.estates[0].nodes.find((n) => n.id === 'fernhill-repo')!
+  assert.ok(!('repo' in node) && node.links) // the render config carries the links, not the field
+})

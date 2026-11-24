@@ -5,13 +5,15 @@ import type { Db, StoredEvent } from './db'
 export const KEEP_DAYS = 30
 
 // Every event is stored first, then pushed to live listeners with its row ID, so a reconnecting client can catch up from the store.
-export function createBus(db: Db) {
+// `redact` runs over every string in an event before it is stored or pushed.
+export function createBus(db: Db, redact = (s: string) => s) {
+  const scrub = (v: unknown): unknown => typeof v === 'string' ? redact(v) : Array.isArray(v) ? v.map(scrub) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, scrub(x)])) : v
   const listeners = new Set<(e: StoredEvent) => void>()
   db.pruneEvents(Date.now() - KEEP_DAYS * 86_400_000)
   return {
     db,
     emit(type: string, data: unknown) {
-      const e = db.append(type, data)
+      const e = db.append(type, scrub(data))
       listeners.forEach((f) => f(e))
       return e
     },

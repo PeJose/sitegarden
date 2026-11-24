@@ -18,6 +18,7 @@ nodes:
 edges:
   - { from: a, to: b, type: deploy }
 `
+process.env.SG_TEST_TOKEN = 'tok-abcdef123'
 fs.writeFileSync(process.env.SITEGARDEN_CONFIG, base)
 const { app } = await import('./app')
 const { auth, bootstrap, db } = await import('./config')
@@ -55,6 +56,14 @@ test('an unchanged config plans to nothing', async () => {
   assert.deepEqual(p.diff, [])
 })
 
+test('plan warns about a declared secret with no value, and an undeclared reference is a line error', async () => {
+  const yaml = base.replace('groups:', 'secrets:\n  SG_TEST_UNSET: {}\ngroups:')
+  const [, p] = await json(post('/api/plan', { yaml, baseRev: 1 }))
+  assert.deepEqual(p.warnings, [{ secret: 'SG_TEST_UNSET', message: 'secret SG_TEST_UNSET is not set' }])
+  const [, q] = await json(post('/api/plan', { yaml: base.replace('type: repo,', 'type: repo, name: "${secret:SG_NOPE}",'), baseRev: 1 }))
+  assert.deepEqual([q.ok, q.issues[0].line, q.issues[0].message], [false, 6, 'secret SG_NOPE is not declared under secrets:'])
+})
+
 const { engine } = await import('./app')
 engine.apply = async () => ({ rendered: {}, tiles: 0, ms: 0, first: 0, aborted: false }) // no rendering in these tests
 const apply = async (yaml: string, o: Record<string, unknown> = {}) => {
@@ -83,6 +92,20 @@ test('an invalid config is rejected with its issues and stores nothing', async (
   const [s, r] = await apply(withNode('c').replace('to: b', 'to: nope'))
   assert.equal(s, 422)
   assert.equal(r.issues[0].line, 10)
+  assert.equal(db.latestRev(), 2)
+})
+
+test('a rejected apply, plan or GUI edit emits config.invalid with the issues', async () => {
+  const seen = () => db.eventsAfter(0).filter((e) => e.type === 'config.invalid') as { data: { message: string; issues: { line: number }[] } }[]
+  const n = seen().length
+  await apply(withNode('c').replace('to: b', 'to: nope'))
+  assert.equal(seen().length, n + 1)
+  assert.deepEqual([seen()[n].data.issues[0].line, /nope/.test(seen()[n].data.message)], [10, true])
+  await json(post('/api/plan', { yaml: withNode('c').replace('type: site', 'type: spaceship'), baseRev: db.latestRev() }))
+  assert.match(seen()[n + 1].data.message, /unknown node type "spaceship"/)
+  const [s] = await json(post('/api/estates', { id: 'bad', label: 'bad', nodes: [{ id: 'z', type: 'spaceship' }], edges: [] }))
+  assert.equal(s, 422)
+  assert.equal(seen().length, n + 3)
   assert.equal(db.latestRev(), 2)
 })
 
@@ -137,6 +160,18 @@ test('enabling auth is a 422 on the auth.enabled line while no auth provider exi
   const [s, r] = await apply(yaml)
   assert.deepEqual([s, r.issues], [422, [{ line: yaml.split('\n').length - 1, path: 'auth.enabled', message: 'auth is not available yet (M1 item 5)' }]])
   assert.equal(db.latestRev(), rev)
+})
+
+test('an apply error that echoes a secret is stored and logged as [secret:NAME]', async () => {
+  const real = engine.apply, lines: string[] = [], err = console.error
+  engine.apply = async () => { throw new Error('upstream said: bad token tok-abcdef123') }
+  console.error = (m: string) => void lines.push(m)
+  try {
+    assert.equal((await apply(db.getRev(db.latestRev())!.yaml + 'secrets:\n  SG_TEST_TOKEN: {}\n'))[0], 200)
+    await new Promise((r) => setTimeout(r, 50))
+  } finally { engine.apply = real; console.error = err }
+  assert.deepEqual(db.eventsAfter(0).filter((e) => e.type === 'apply.failed').map((e: any) => e.data.message), ['upstream said: bad token [secret:SG_TEST_TOKEN]'])
+  assert.ok(lines.some((l) => l.includes('[secret:SG_TEST_TOKEN]')) && !lines.some((l) => l.includes('tok-abcdef123')))
 })
 
 test('with auth enabled, apply and GUI edits are refused and no rev is made', async () => {

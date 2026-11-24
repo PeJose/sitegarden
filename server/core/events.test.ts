@@ -31,6 +31,13 @@ async function read(res: Response, n: number) {
   return out
 }
 
+test('a secret value in an event is stored as [secret:NAME], at any depth', () => {
+  const bus = createBus(openDb(path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sg-ev-')), 'sg.db')), (s) => s.replaceAll('tok-abcdef', '[secret:T]'))
+  const e = bus.emit('x', { a: 'got tok-abcdef', b: [{ c: 'tok-abcdef' }], n: 1 })
+  assert.deepEqual(e.data, { a: 'got [secret:T]', b: [{ c: '[secret:T]' }], n: 1 })
+  assert.deepEqual(bus.db.eventsAfter(0)[0].data, e.data)
+})
+
 test('reconnect with Last-Event-ID gets the missed events, then live ones, with no gap or duplicate', async () => {
   const { bus, app } = setup()
   for (let i = 1; i <= 5; i++) bus.emit('check.result', { i })

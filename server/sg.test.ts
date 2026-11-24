@@ -104,3 +104,8 @@ test('when the server render fails, apply prints the message and exits 1 instead
   assert.match(r.out, /apply failed on the server: boom/)
   assert.deepEqual(db.eventsAfter(0).filter((e) => e.type === 'apply.failed').map((e) => e.data), [{ rev: 5, message: 'boom' }])
 })
+
+test('sg plan prints a warning for a declared secret that has no value', async () => {
+  fs.writeFileSync(file, db.getRev(db.latestRev())!.yaml.replace('groups:', 'secrets:\n  SG_TEST_UNSET: {}\ngroups:'))
+  assert.match((await sg('plan')).out, /warning: secret SG_TEST_UNSET is not set\n/)
+})

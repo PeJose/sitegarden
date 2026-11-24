@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-11-24
+
+### Added
+- Shorthand fields: a plugin registers a field on a node type that expands into links when the config loads (`ctx.registerShorthand`); explicit `links:` with the same label win. `essentials` provides `repo: owner/name`, `sanity: <projectId>` with `studio: <name>`, and `url:` on `site` nodes.
+- Config-driven checks: nodes take `checks:` entries whose `type` a plugin registered with its own schema (`ctx.registerCheckType`), each run on its own `every`. `essentials` provides the `http` check (`url`, `expect_status`, `expect_text`, `timeout`, `alert_after`, `allow_private`); results are `ok`, `degraded` until `alert_after` failures in a row, then `down`.
+- A plan, apply or GUI edit rejected as invalid emits a `config.invalid` event.
+- Plugin API 1.2.0 (additive).
+
+### Changed
+- The sample config uses `repo:` and `url:` where they expand to the same links; the rendered map is unchanged.
+
+## [0.4.0] - 2026-11-24
+
+### Added
+- `secrets:` in the config declares secret names (optional `expires`); values come from the env var `NAME` or the file in `NAME_FILE`. `${secret:NAME}` references to undeclared names are config errors with their line; declared secrets without a value are warned about in `sg plan` (`warnings` in `POST /api/plan`) and the server log.
+- Plugin API 1.1.0: `ctx.http(url, init)`, the only outbound client. It enforces the manifest's `permissions.network` and `permissions.secrets`, substitutes `${secret:NAME}` in the URL and headers, refuses loopback, private, link-local, CGNAT, ULA and metadata addresses on the connection itself (`allowPrivate: true` opts in per request), follows at most 5 re-checked redirects, and applies a timeout (10 s) and a body cap (5 MB).
+- Secret values are redacted to `[secret:NAME]` in events, check details, logs and config issues.
+
+### Changed
+- Server logging goes through `server/core/log.ts`.
+
 ## [0.3.0] - 2026-11-24
 
 ### Added

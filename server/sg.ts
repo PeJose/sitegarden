@@ -38,6 +38,7 @@ async function call(p: string, body?: unknown) {
 async function plan() {
   const yaml = fs.readFileSync(CONFIG_FILE, 'utf8'), p = await call('/api/plan', { yaml, baseRev: state().rev })
   console.log(`server ${server} at rev ${p.rev}`)
+  for (const w of p.warnings ?? []) console.log(`warning: ${w.message}`)
   for (const d of p.diff) console.log(`${d.op} ${d.kind} ${d.id}`)
   if (!p.diff.length) console.log('no changes')
   const { jobs, tiles, ms } = p.render

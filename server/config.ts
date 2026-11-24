@@ -5,6 +5,9 @@ import type { Config, ConfigEstate, Positions } from '../src/gen/types'
 import { jsonSchema, parseGraph, type Graph, type Issue } from './core/graph'
 import { openDb } from './core/db'
 import { createBus } from './core/events'
+import { createHttp } from './core/http'
+import { log, sink } from './core/log'
+import { createSecrets } from './core/secrets'
 import { createHost } from './core/plugins'
 import { DATA, writeAtomic } from './store'
 
@@ -13,8 +16,13 @@ const POSITIONS = path.join(DATA, 'positions.json') // layout results live apart
 
 // One db per process: the event bus and every plugin's store share it.
 export const db = openDb(path.join(DATA, 'sitegarden.db'))
-export const bus = createBus(db)
-export const host = createHost({ baseDir: path.dirname(CONFIG_FILE), db, emit: bus.emit })
+export const secrets = createSecrets()
+sink.redact = secrets.redact
+export const bus = createBus(db, secrets.redact)
+// Declared secrets that have no value: not an error, `sg plan` and the log say so.
+export const secretWarnings = (g: Graph) => secrets.missing(Object.keys(g.secrets))
+const http = createHttp({ secrets })
+export const host = createHost({ baseDir: path.dirname(CONFIG_FILE), db, http, emit: bus.emit })
 let loaded = ''
 const pluginList = (text: string) => {
   try { const l = (YAML.parse(text) as { plugins?: unknown } | null)?.plugins; return Array.isArray(l) ? l.filter((x): x is string => typeof x === 'string') : [] } catch { return [] } // a syntax error is reported by parseGraph
@@ -26,15 +34,15 @@ export async function loadPlugins(text = fs.readFileSync(CONFIG_FILE, 'utf8')) {
 }
 export async function loadGraph(text: string): Promise<Graph> {
   await loadPlugins(text)
-  return parseGraph(text, CONFIG_FILE, host.nodeTypes())
+  return parseGraph(text, CONFIG_FILE, host.nodeTypes(), host.shorthands(), host.checkTypes())
 }
 
 // Parses a candidate config with the server's plugins. A candidate that changes `plugins:` is checked in a throwaway host, so nothing it registers stays.
 export async function validate(text: string): Promise<Graph> {
   const list = pluginList(text)
-  if (JSON.stringify(list) === loaded) return parseGraph(text, CONFIG_FILE, host.nodeTypes())
-  const tmp = createHost({ baseDir: path.dirname(CONFIG_FILE), db })
-  try { await tmp.load(list); return parseGraph(text, CONFIG_FILE, tmp.nodeTypes()) } finally { await tmp.unloadAll() }
+  if (JSON.stringify(list) === loaded) return parseGraph(text, CONFIG_FILE, host.nodeTypes(), host.shorthands(), host.checkTypes())
+  const tmp = createHost({ baseDir: path.dirname(CONFIG_FILE), db, http })
+  try { await tmp.load(list); return parseGraph(text, CONFIG_FILE, tmp.nodeTypes(), tmp.shorthands(), tmp.checkTypes()) } finally { await tmp.unloadAll() }
 }
 
 // The server's config state is the latest revision in the store; the file is only read once, to bootstrap rev 1.
@@ -51,19 +59,20 @@ export function authIssue(text: string, g: Graph): Issue | null {
 export function bootstrap() {
   if (!fs.existsSync(CONFIG_FILE)) return
   const rev = db.latestRev()
-  if (rev) console.log(`[config] config file ignored, server is at rev ${rev}: use sg apply`)
-  else { db.storeRev(0, fs.readFileSync(CONFIG_FILE, 'utf8'), 'bootstrap'); console.log(`[config] imported ${CONFIG_FILE} as rev 1`) }
+  if (rev) log.info(`[config] config file ignored, server is at rev ${rev}: use sg apply`)
+  else { db.storeRev(0, fs.readFileSync(CONFIG_FILE, 'utf8'), 'bootstrap'); log.info(`[config] imported ${CONFIG_FILE} as rev 1`) }
 }
-export const schemaJson = async (text?: string) => { await loadPlugins(text); return jsonSchema(host.nodeTypes()) }
+export const schemaJson = async (text?: string) => { await loadPlugins(text); return jsonSchema(host.nodeTypes(), host.checkTypes()) }
 
 // What the render pipeline and the mock UI read: nodes and edges nested per group, mock fields flattened back onto the node.
 export function toRenderConfig(g: Graph): Config {
+  const drop = new Set(['checks', ...host.shorthands().map((s) => s.field)]) // the UI wants the final links and mock.checks, not the config that produced them
   const home = new Map(g.nodes.map((n) => [n.id, n.group]))
   return {
     accountSeed: g.world.seed,
     estates: g.groups.map((x) => ({
       id: x.id, label: x.label,
-      nodes: g.nodes.filter((n) => n.group === x.id).map(({ group: _group, mock, ...n }) => ({ ...n, ...mock })),
+      nodes: g.nodes.filter((n) => n.group === x.id).map(({ group: _group, mock, ...n }) => { drop.forEach((k) => delete (n as Record<string, unknown>)[k]); return { ...n, ...mock } }),
       edges: g.edges.filter((e) => home.get(e.from) === x.id),
     })),
   }

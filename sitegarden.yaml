@@ -40,17 +40,7 @@ nodes:
     group: fernhill
     name: acme/fernhill
     host: GitHub
-    links:
-      - label: Actions
-        url: https://github.com/acme/fernhill/actions
-      - label: Settings
-        url: https://github.com/acme/fernhill/settings
-      - label: Secrets
-        url: https://github.com/acme/fernhill/settings/secrets/actions
-      - label: Pull requests
-        url: https://github.com/acme/fernhill/pulls
-      - label: Issues
-        url: https://github.com/acme/fernhill/issues
+    repo: acme/fernhill
     notes: "Astro site. Deploy workflow: deploy.yml on main, uploads over FTPS."
     mock:
       checks: []
@@ -61,9 +51,8 @@ nodes:
     group: fernhill
     name: fernhill.example
     host: host.example
+    url: https://fernhill.example
     links:
-      - label: fernhill.example
-        url: https://fernhill.example
       - label: host.example panel
         url: https://panel.host.example
     notes: "Runbook: if down, check host.example panel first, then re-run the last green deploy."
@@ -96,17 +85,7 @@ nodes:
     group: copperleaf
     name: acme/copperleaf
     host: GitHub
-    links:
-      - label: Actions
-        url: https://github.com/acme/copperleaf/actions
-      - label: Settings
-        url: https://github.com/acme/copperleaf/settings
-      - label: Secrets
-        url: https://github.com/acme/copperleaf/settings/secrets/actions
-      - label: Pull requests
-        url: https://github.com/acme/copperleaf/pulls
-      - label: Issues
-        url: https://github.com/acme/copperleaf/issues
+    repo: acme/copperleaf
     notes: Storefront. Workflow deploy.yml on main.
     mock:
       checks: []
@@ -117,9 +96,8 @@ nodes:
     group: copperleaf
     name: copperleaf.example
     host: FTPS
+    url: https://copperleaf.example
     links:
-      - label: copperleaf.example
-        url: https://copperleaf.example
       - label: Hosting panel
         url: https://panel.example-host.com
     notes: Slow since the image migration. Look at the origin cache before blaming the code.
@@ -195,9 +173,8 @@ nodes:
     group: notes
     name: notes.example.dev
     host: Vercel
+    url: https://notes.example.dev
     links:
-      - label: notes.example.dev
-        url: https://notes.example.dev
       - label: Vercel
         url: https://vercel.com/dashboard
     notes: Public blog, checked every 5 minutes.
@@ -225,9 +202,8 @@ nodes:
     group: sedum
     name: sedum-site
     host: FTPS
+    url: https://sedum.example
     links:
-      - label: sedum.example
-        url: https://sedum.example
       - label: Hosting panel
         url: https://panel.example-host.com
     notes: Public site, checked every 5 minutes.
@@ -242,9 +218,8 @@ nodes:
     group: sedum
     name: sedum-site2
     host: FTPS
+    url: https://sedum.example
     links:
-      - label: sedum.example
-        url: https://sedum.example
       - label: Hosting panel
         url: https://panel.example-host.com
     notes: Public site, checked every 5 minutes.
