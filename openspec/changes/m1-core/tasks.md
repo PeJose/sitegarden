@@ -27,4 +27,4 @@
 
 ## 6. Close-out
 
-- [ ] 6.1 `pnpm test`, `pnpm lint`, `pnpm build` pass; README dev section mentions the new config shape and `pnpm sg schema`; CHANGELOG 0.2.0 entry; `package.json` 0.2.0. Verify: commands pass, version check script passes against main.
+- [x] 6.1 `pnpm test`, `pnpm lint`, `pnpm build` pass; README dev section mentions the new config shape and `pnpm sg schema`; CHANGELOG 0.2.0 entry; `package.json` 0.2.0. Verify: commands pass, version check script passes against main.

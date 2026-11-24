@@ -30,28 +30,38 @@ Open http://localhost:5173. The API runs on port 8787 and renders the map on fir
 
 ## Configuration
 
-Projects live in `sitegarden.yaml` (override with `SITEGARDEN_CONFIG`). One estate per project, one node per repo, studio or site:
+Projects live in `sitegarden.yaml` (override with `SITEGARDEN_CONFIG`). The file is a graph: groups (one per project), nodes (one per repo, studio or site) and edges between nodes of the same group. Plugins add node types and fields; `essentials` ships the five basic types.
 
 ```yaml
-accountSeed: garden-58
-estates:
+# yaml-language-server: $schema=./schema.json
+world:
+  seed: garden-58
+plugins:
+  - ./plugins/essentials
+groups:
   - id: fernhill
     label: fernhill
-    nodes:
-      - id: fernhill-repo
-        type: repo            # repo | cms | site | job | db
-        name: acme/fernhill
-        host: GitHub
-        links:
-          - label: Actions
-            url: https://github.com/acme/fernhill/actions
+nodes:
+  - id: fernhill-repo
+    type: repo            # repo | cms | site | job | db
+    group: fernhill
+    name: acme/fernhill
+    host: GitHub
+    links:
+      - label: Actions
+        url: https://github.com/acme/fernhill/actions
+edges: []
+extensions: {}            # e.g. layer:garden:labels: { disabled: true }
 ```
+
+A mistake (unknown field, missing node, bad type) is reported with its line number; on a live reload the last good config stays in use. The old `estates:` shape is no longer read, see the [changelog](CHANGELOG.md).
 
 Render from the command line:
 
 ```sh
 pnpm sg plan    # what would be added, changed or removed, and how long it takes
 pnpm sg apply   # render the missing tiles and publish a new release atomically
+pnpm sg schema  # write schema.json (git-ignored) for editor completion and validation
 ```
 
 While `pnpm dev` runs, saving `sitegarden.yaml` triggers `apply` automatically and open browsers pick up the new map.
@@ -60,6 +70,7 @@ While `pnpm dev` runs, saving `sitegarden.yaml` triggers `apply` automatically a
 |---|---|---|
 | `SITEGARDEN_CONFIG` | `sitegarden.yaml` | config file |
 | `SITEGARDEN_DATA` | `.data` | rendered artifacts and releases |
+| `PORT` | `8787` | API port |
 | `SG_RENDER_WORKERS` | CPU cores − 2 | parallel render workers |
 
 ## Development
@@ -68,6 +79,7 @@ While `pnpm dev` runs, saving `sitegarden.yaml` triggers `apply` automatically a
 pnpm test       # unit tests
 pnpm lint       # oxlint
 pnpm build      # type-check and production build
+pnpm sg schema  # regenerate schema.json after adding a plugin
 pnpm perf       # performance measurements, see perf/README.md
 ```
 
