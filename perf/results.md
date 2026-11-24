@@ -676,3 +676,26 @@ commit c9abd34 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless ·
 ### own-viewport before (the three blocks above, same release, same machine)
 
 Build of c9abd34 (React Flow). Main chunk 570590 B raw / 181152 B gzip, css 30105 B / 6731 B gzip. Ranges over the 3 runs: light 6.8-7.1 % GPU; pan 13.4-14.3 % GPU, 60 fps, 0 long tasks, script 61-66 ms; pan-4x 7.6 %, 60 fps, 0 long tasks; zoom 17.7-18.0 % GPU, 59.4-59.6 fps, 1 long task (60 ms) in every run; zoom-4x 14.6-14.8 %, 59.4-59.6 fps. Screenshot reference for the diff: the light-still and night-still frames of this build.
+
+## 2026-11-24 own-viewport after (interleaved A/B, battery, relative only)
+
+Machine on battery (17-18 %, "Battery Power"): every run is capped at 30 fps, A and B alike, so the absolute budgets (pan >= 55, pan-4x >= 50 fps) cannot be judged here; an AC re-run is still needed. A = build of c9abd34 (React Flow), B = this change, run A1 B1 A2 B2 A3 B3 against the same server, `--only light,pan,pan-4x,zoom,zoom-4x`, same Chrome 159, headless Metal. Ranges over 3 runs.
+
+| scenario | build | GPU % | fps | long tasks | style ms | layout ms | script ms |
+|---|---|---|---|---|---|---|---|
+| light | A | 5.8-6.7 | 30 | 0 | 57-76 | 0-1 | 21-25 |
+| light | B | 5.9-6.5 | 30 | 0 | 59-87 | 0 | 19-29 |
+| pan | A | 8.8-10.4 | 30.1-30.2 | 0 | 24-30 | 1-2 | 63-72 |
+| pan | B | 10.6-10.9 | 29.9-30.2 | 0 | 25-29 | 2 | 71-80 |
+| pan-4x | A | 5.4-6.1 | 29.9-30.2 | 0 | 40-43 | 3-4 | 102-132 |
+| pan-4x | B | 5.6-6.0 | 30-30.2 | 0 | 36-40 | 3-4 | 109-123 |
+| zoom | A | 15.1-15.7 | 30-30.1 | 0 | 50-54 | 35-38 | 69-75 |
+| zoom | B | 15.3-16.7 | 29.8-30.1 | 0 | 53-54 | 34-39 | 44-51 |
+| zoom-4x | A | 11.4-12.1 | 29.8-30 | 1 run with 1 (51 ms) | 144-145 | 114-122 | 183-198 |
+| zoom-4x | B | 11.2-12.8 | 29.9-30.1 | 0 | 127-153 | 115-123 | 103-118 |
+
+Idle (light) GPU is equal within noise. Pan GPU B is about 1 point above A (10.6-10.9 vs 8.8-10.4, 3 runs each), pan script +10 ms; the earlier 60 fps baseline blocks above show 13-14 % for pan on this build, so this is within the spread between power states. Zoom script drops by a third (wheel no longer renders React Flow's store per event). Zoom requests 58 vs 42 tiles in B (tileReqs) (not investigated). No long tasks in B; the 60 ms long task of the 60 fps baseline zoom runs is gone.
+
+Screenshot diff against the A build's light-still / night-still: light-still mean 0.002 %, over-threshold 0.011 %; night-still 0.014 % / 0.016 %; both pass.
+
+Main chunk: 570590 B raw / 181152 B gzip before, 327562 B raw / 99320 B gzip after (-43 % raw, -45 % gzip); css 30105 / 6731 B before, 19067 / 4964 B after.
