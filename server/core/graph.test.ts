@@ -65,3 +65,9 @@ test('an edge across groups is rejected at its line', () => {
   assert.equal(i.line, 9)
   assert.match(i.message, /crosses groups/)
 })
+
+test('an unknown node field is rejected at its node line', () => {
+  const [i] = lines(ok.replace('{ id: b, type: site, group: g }', '{ id: b, type: site, group: g, urll: x }'))
+  assert.equal(i.line, 6)
+  assert.match(i.message, /urll/)
+})

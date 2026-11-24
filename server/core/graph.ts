@@ -15,15 +15,14 @@ const nodeBase = {
 }
 export type NodeTypes = Record<string, z.ZodRawShape> // node type -> extra fields a plugin adds to it
 
-// shortcut: nodes and edges allow unknown fields (a typo passes silently); strict once plugins declare all their fields.
 export function buildSchema(types: NodeTypes) {
-  const nodes = Object.entries(types).map(([t, shape]) => z.looseObject({ ...nodeBase, ...shape, type: z.literal(t) }))
+  const nodes = Object.entries(types).map(([t, shape]) => z.strictObject({ ...nodeBase, ...shape, type: z.literal(t) }))
   return z.strictObject({
     world: z.strictObject({ seed: z.string() }),
     plugins: z.array(z.string()).default([]),
     groups: z.array(z.strictObject({ id: z.string().min(1), label: z.string() })).default([]),
     nodes: z.array(nodes.length ? z.discriminatedUnion('type', nodes as [(typeof nodes)[number]]) : z.never()).default([]),
-    edges: z.array(z.looseObject({ from: z.string(), to: z.string(), type: z.string(), label: z.string().optional() })).default([]),
+    edges: z.array(z.strictObject({ from: z.string(), to: z.string(), type: z.string(), label: z.string().optional() })).default([]),
     extensions: z.record(z.string(), z.strictObject({ disabled: z.boolean().optional(), config: z.unknown().optional() })).default({}),
   })
 }
