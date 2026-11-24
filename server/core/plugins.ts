@@ -4,7 +4,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { z } from 'zod'
 import type { Db } from './db'
 import type { NodeTypes } from './graph'
+import { createHttp } from './http'
 import { parseEvery } from './scheduler'
+import { createSecrets } from './secrets'
 import { SDK_VERSION, type CheckDef, type Disposer, type Plugin, type PluginContext } from './sdk'
 
 const list = z.array(z.string()).optional()
@@ -14,7 +16,7 @@ export const Manifest = z.object({
   dependsOn: z.record(z.string(), z.string()).optional(),
   server: z.string().optional(),
   contributes: z.looseObject({ themes: list, buildingPacks: list, edgeTypes: list, nodeTypes: z.array(z.object({ id: z.string(), extends: z.string().optional() })).optional() }).default({}),
-  permissions: z.object({ network: z.array(z.string()).default([]), secrets: z.array(z.string()).default([]), actions: z.array(z.string()).default([]) }).default({ network: [], secrets: [], actions: [] }), // stored, not enforced yet
+  permissions: z.object({ network: z.array(z.string()).default([]), secrets: z.array(z.string()).default([]), actions: z.array(z.string()).default([]) }).default({ network: [], secrets: [], actions: [] }), // network and secrets are enforced by ctx.http; actions are stored only
   tier: z.literal('trusted').default('trusted'),
 })
 export type Manifest = z.output<typeof Manifest>
@@ -32,13 +34,14 @@ export function satisfies(version: string, range: string): boolean {
 
 export interface PluginRecord { id: string; dir: string; version: string; manifest?: Manifest; status: 'loaded' | 'failed'; error?: string }
 interface Entry extends PluginRecord { manifest: Manifest }
-export interface HostOptions { baseDir: string; db?: Db; emit?: (type: string, data: unknown) => void; importModule?: (file: string) => Promise<{ default?: Plugin }> }
+export interface HostOptions { baseDir: string; db?: Db; http?: ReturnType<typeof createHttp>; emit?: (type: string, data: unknown) => void; importModule?: (file: string) => Promise<{ default?: Plugin }> }
 
-export function createHost({ baseDir, db, emit = () => {}, importModule = (f) => import(pathToFileURL(f).href) }: HostOptions) {
+export function createHost({ baseDir, db, http = createHttp({ secrets: createSecrets() }), emit = () => {}, importModule = (f) => import(pathToFileURL(f).href) }: HostOptions) {
   const records: PluginRecord[] = [], disposers = new Map<string, Disposer[]>()
   const types = new Map<string, { plugin: string; shape: z.ZodRawShape }>(), fragments: { plugin: string; type: string; shape: z.ZodRawShape }[] = [], checks = new Map<string, { plugin: string; def: CheckDef }>()
 
-  function context(id: string, own: Disposer[]): PluginContext {
+  function context(manifest: Manifest, own: Disposer[]): PluginContext {
+    const id = manifest.id
     const reg = (undo: Disposer) => { let done = false; const d = () => { if (!done) { done = true; undo() } }; own.push(d); return d }
     return {
       id,
@@ -64,6 +67,7 @@ export function createHost({ baseDir, db, emit = () => {}, importModule = (f) =>
         cache: { get: (k) => db?.cacheGet(`${id}:${k}`), set: (k, v) => db?.cacheSet(`${id}:${k}`, v) },
       },
       emit,
+      http: http.forPlugin(manifest),
     }
   }
 
@@ -116,7 +120,7 @@ export function createHost({ baseDir, db, emit = () => {}, importModule = (f) =>
           const plugin = (await importModule(path.resolve(p.dir, server))).default
           if (!plugin || typeof plugin.register !== 'function') throw new Error(`${server} has no default definePlugin export`)
           if (plugin.id !== p.id) throw new Error(`${server} is plugin "${plugin.id}", manifest says "${p.id}"`)
-          await plugin.register(context(p.id, own))
+          await plugin.register(context(p.manifest, own))
         }
         records.push(p)
       } catch (err) {

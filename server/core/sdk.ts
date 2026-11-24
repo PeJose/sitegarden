@@ -1,6 +1,7 @@
 import type { z } from 'zod'
+import type { HttpInit, HttpResponse } from './http'
 
-export const SDK_VERSION = '1.0.0'
+export const SDK_VERSION = '1.1.0'
 
 export type Disposer = () => void
 export type Status = 'ok' | 'degraded' | 'down' | 'working' | 'paused' | 'unknown'
@@ -18,6 +19,8 @@ export interface PluginContext {
   registerCheck(check: CheckDef): Disposer
   store: { kv: { get(key: string): unknown; set(key: string, value: unknown): void; delete(key: string): void }; cache: { get(key: string): { value: unknown; fetched_at: number } | undefined; set(key: string, value: unknown): void } }
   emit(type: string, data: unknown): void
+  // The only way out to the network: limited to the manifest's permissions.network, `${secret:NAME}` in the URL and headers only for permissions.secrets, internal addresses blocked.
+  http(url: string, init?: HttpInit): Promise<HttpResponse>
 }
 export interface Plugin { id: string; register(ctx: PluginContext): void | Promise<void> }
 export const definePlugin = (p: Plugin) => p

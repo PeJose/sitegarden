@@ -5,6 +5,7 @@ import type { Config, ConfigEstate, Positions } from '../src/gen/types'
 import { jsonSchema, parseGraph, type Graph, type Issue } from './core/graph'
 import { openDb } from './core/db'
 import { createBus } from './core/events'
+import { createHttp } from './core/http'
 import { createSecrets } from './core/secrets'
 import { createHost } from './core/plugins'
 import { DATA, writeAtomic } from './store'
@@ -18,7 +19,8 @@ export const bus = createBus(db)
 export const secrets = createSecrets()
 // Declared secrets that have no value: not an error, `sg plan` and the log say so.
 export const secretWarnings = (g: Graph) => secrets.missing(Object.keys(g.secrets))
-export const host = createHost({ baseDir: path.dirname(CONFIG_FILE), db, emit: bus.emit })
+const http = createHttp({ secrets })
+export const host = createHost({ baseDir: path.dirname(CONFIG_FILE), db, http, emit: bus.emit })
 let loaded = ''
 const pluginList = (text: string) => {
   try { const l = (YAML.parse(text) as { plugins?: unknown } | null)?.plugins; return Array.isArray(l) ? l.filter((x): x is string => typeof x === 'string') : [] } catch { return [] } // a syntax error is reported by parseGraph
@@ -37,7 +39,7 @@ export async function loadGraph(text: string): Promise<Graph> {
 export async function validate(text: string): Promise<Graph> {
   const list = pluginList(text)
   if (JSON.stringify(list) === loaded) return parseGraph(text, CONFIG_FILE, host.nodeTypes())
-  const tmp = createHost({ baseDir: path.dirname(CONFIG_FILE), db })
+  const tmp = createHost({ baseDir: path.dirname(CONFIG_FILE), db, http })
   try { await tmp.load(list); return parseGraph(text, CONFIG_FILE, tmp.nodeTypes()) } finally { await tmp.unloadAll() }
 }
 

@@ -1,0 +1,1 @@
+{ "name": "fx-fetcher", "version": "1.0.0", "sitegarden": { "id": "fetcher", "apiVersion": "^1", "server": "./server.ts", "permissions": { "network": ["127.0.0.1"], "secrets": ["FX_TOKEN"] } } }

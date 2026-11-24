@@ -2,8 +2,12 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { test } from 'node:test'
 import fs from 'node:fs'
+import http from 'node:http'
+import type { AddressInfo } from 'node:net'
 import os from 'node:os'
 import { openDb } from './db'
+import { createHttp } from './http'
+import { createSecrets } from './secrets'
 import { createBus } from './events'
 import { createHost, satisfies } from './plugins'
 
@@ -27,7 +31,7 @@ test('plugins load in dependsOn order, whatever the list order; registrations ar
 test('a plugin for a newer apiVersion is refused with both versions, others load', async () => {
   const h = createHost({ baseDir })
   await h.load(['./newer-api', './base'])
-  assert.match(status(h)['newer-api']!, /\^2.*1\.0\.0/)
+  assert.match(status(h)['newer-api']!, /\^2.*1\.1\.0/)
   assert.equal(status(h).base, 'loaded')
 })
 
@@ -81,4 +85,21 @@ test('a check with a bad interval fails its plugin with a clear message', async 
   await h.load(['./base'])
   assert.match(status(h).base!, /bad interval "5 minutes"/)
   assert.deepEqual(h.checks(), [])
+})
+
+test('ctx.http reaches only what the manifest permits, and substitutes only the secrets it lists', async () => {
+  const server = http.createServer((req, res) => res.end(String(req.headers.authorization)))
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`
+  try {
+    const client = createHttp({ secrets: createSecrets({ FX_TOKEN: 'tok-123456' }) })
+    process.env.FX_URL = url
+    const h = createHost({ baseDir, http: client })
+    await h.load(['./fetcher'])
+    assert.deepEqual(await h.checks()[0].run({ id: 'n', type: 't' }), { status: 'ok', detail: 'Bearer tok-123456' })
+    // the same call from a plugin whose manifest has no permissions
+    const bare = createHost({ baseDir, http: client, importModule: async () => ({ default: { id: 'base', register: (ctx) => void ctx.registerCheck({ id: 'x', every: '1m', run: async () => ({ status: 'ok', detail: await (await ctx.http(url, { allowPrivate: true })).text() }) }) } }) })
+    await bare.load(['./base'])
+    await assert.rejects(Promise.resolve(bare.checks()[0].run({ id: 'n', type: 't' })), /plugin base may not call 127\.0\.0\.1/)
+  } finally { server.close() }
 })
