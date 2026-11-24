@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.2",
   "type": "module",
+  "engines": { "node": ">=22.13" },
   "scripts": {
     "dev": "concurrently -k -n server,web -c blue,green \"pnpm dev:server\" \"pnpm dev:web\"",
     "build": "tsc -b && vite build",
@@ -11,7 +12,7 @@
     "perf": "tsx scripts/perf.ts",
     "dev:server": "UV_THREADPOOL_SIZE=16 tsx watch server/index.ts",
     "dev:web": "vite",
-    "test": "tsx --test src/gen/gen.test.ts src/lib/view.test.ts server/plan.test.ts",
+    "test": "tsx --test src/gen/gen.test.ts src/lib/view.test.ts server/plan.test.ts server/core/db.test.ts",
     "sg": "UV_THREADPOOL_SIZE=16 tsx server/sg.ts"
   },
   "dependencies": {

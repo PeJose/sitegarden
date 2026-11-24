@@ -2,7 +2,7 @@
 
 ## 1. Store and events
 
-- [ ] 1.1 `server/core/db.ts` on `node:sqlite` with the D5 tables, WAL and `user_version`; `engines.node >= 22.13`. Verify: `server/core/db.test.ts` covers append-only growing event IDs, `events after id`, cache `fetched_at`, KV namespacing, data survives reopening the file.
+- [x] 1.1 `server/core/db.ts` on `node:sqlite` with the D5 tables, WAL and `user_version`; `engines.node >= 22.13`. Verify: `server/core/db.test.ts` covers append-only growing event IDs, `events after id`, cache `fetched_at`, KV namespacing, data survives reopening the file.
 - [ ] 1.2 `server/core/events.ts` bus and `/api/events` with `Last-Event-ID` catch-up and keep-alive (D7); move the `release` event onto it. Verify: test connects with `Last-Event-ID` and gets the missed events then live ones with no gap or duplicate; web app still refreshes tiles on a new release (`pnpm dev`, run `pnpm sg apply` after a config edit).
 
 ## 2. Config and graph
