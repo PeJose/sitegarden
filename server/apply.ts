@@ -62,6 +62,11 @@ async function quad(texture: string, qx: number, qy: number, z: number): Promise
   return quads.get(k)!
 }
 
+const renderTile = async (p: Plan, t: TileSpec, prio: number) => {
+  await Promise.all([t.texture, t.terrain, ...t.pieces.map((x) => x.name)].filter((x): x is string => !!x).map((x) => ensure(p, x, prio)))
+  await cpu(prio, () => flatten(t))
+}
+
 async function flatten(t: TileSpec) {
   const base = await quad(t.texture, ...t.quad, t.z)
   const layers: OverlayOptions[] = t.terrain ? [{ input: art(t.terrain), left: 0, top: 0 }] : []
@@ -88,6 +93,14 @@ function manifest(p: Plan, complete: boolean): Manifest {
   return { id: p.id, rev, complete, world: p.worldName, config: p.configName, estates: p.estates, tiles: { size: T, x0, y0, cols, rows, names }, previews: Object.fromEntries(THEMES.filter((t) => has(p.previews[t])).map((t) => [t, p.previews[t]])), textures: Object.fromEntries(THEMES.map((th) => [th, SCALE.map((_, z) => p.tiles.find((t) => t.theme === th && t.z === z)!.texture)])) as Manifest['textures'] }
 }
 
+// Renders just these tiles, and the layers they stand on, into DATA: what a client does before it uploads them.
+export async function renderTiles(plan: Plan, tiles: TileSpec[], progress: (done: number, total: number) => void = () => {}) {
+  started.clear(); quads.clear()
+  const todo = [...tiles]
+  let done = 0
+  await Promise.all(Array.from({ length: cores * 2 }, async () => { for (let t = todo.shift(); t; t = todo.shift()) { await renderTile(plan, t, 0); progress(++done, tiles.length) } }))
+}
+
 export interface Summary { rendered: Record<string, number>; tiles: number; ms: number; first: number | null; aborted: boolean }
 
 // Tiles a client is waiting for ("theme/z/x/y"): they jump the queue of the apply that is running.
@@ -98,7 +111,7 @@ const keyOf = (t: TileSpec) => `${t.theme}/${t.z}/${t.x}/${t.y}`
 // Renders what is missing tile by tile in `order` (the preview, the initial view, its neighbours, the rest), `cores` renders at a time,
 // and publishes a release whenever tiles have appeared so the map fills in as soon as the first ones are done. Tiles a client asked for
 // come first. Stops early when `stale` says the config changed again.
-export async function apply(log: (m: string) => void = () => {}, stale: () => boolean = () => false): Promise<Summary> {
+export async function apply(log: (m: string) => void = () => {}, stale: () => boolean = () => false, progress: (done: number, total: number) => void = () => {}): Promise<Summary> {
   const t0 = Date.now()
   const plan = computePlan(await loadConfig(), loadPositions())
   savePositions(plan.world.positions)
@@ -118,6 +131,8 @@ export async function apply(log: (m: string) => void = () => {}, stale: () => bo
     while (queue.length) { const t = queue.shift()!; if (pending.delete(keyOf(t))) return [t, 0] }
     return null
   }
+  let done = 0
+  const total = queue.length
   const first = new Set(firstWave(plan).filter((t) => pending.has(keyOf(t))).map(keyOf))
   for (const theme of THEMES) if (!left0[theme] && !has(plan.previews[theme])) await preview(plan, theme)
   let lastPublish = 0, timer: ReturnType<typeof setTimeout> | undefined
@@ -128,8 +143,8 @@ export async function apply(log: (m: string) => void = () => {}, stale: () => bo
   const worker = async () => {
     for (let n = next(); n && !stale(); n = next()) {
       const [t, prio] = n
-      await Promise.all([t.texture, t.terrain, ...t.pieces.map((x) => x.name)].filter((x): x is string => !!x).map((x) => ensure(plan, x, prio)))
-      await cpu(prio, () => flatten(t))
+      await renderTile(plan, t, prio)
+      progress(++done, total)
       if (t.z === 0 && !--left0[t.theme]) await preview(plan, t.theme)
       if (first.delete(keyOf(t)) && !first.size) { sum.first = Date.now() - t0; log(`first wave (preview + initial view) rendered after ${sum.first} ms`) }
       kick()

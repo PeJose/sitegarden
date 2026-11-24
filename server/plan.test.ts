@@ -6,7 +6,8 @@ import { test } from 'node:test'
 import { rngFor } from '../src/gen/rng'
 
 process.env.SITEGARDEN_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-test-')) // before store.ts loads
-const { loadConfig } = await import('./config')
+const { bootstrap, loadConfig } = await import('./config')
+bootstrap()
 const { computePlan, firstWave, initialView, missing, order, T, SCALE, THEMES } = await import('./plan')
 const { levelFor, minZoom, panExtent, tiledBox } = await import('../src/lib/view')
 const { makeEstate } = await import('./mock')

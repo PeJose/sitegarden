@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
-import { openDb } from './db'
+import { DriftError, openDb } from './db'
 
 const tmp = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sg-db-')), 'sitegarden.db')
 
@@ -51,4 +51,18 @@ test('data survives reopening the file, ids keep growing', () => {
   assert.deepEqual(b.snapshots().map((s) => [s.node, s.check_id, s.status, s.detail]), [['n', 'http', 'down', 'timeout']])
   assert.equal(b.kv('p').get('k'), 'v')
   b.close()
+})
+
+test('revisions grow, a stale base is rejected and only one of two racing stores wins', () => {
+  const f = tmp(), a = openDb(f), b = openDb(f)
+  assert.equal(a.latestRev(), 0)
+  assert.equal(a.storeRev(0, 'one', 'bootstrap'), 1)
+  assert.equal(a.storeRev(1, 'two', 'cli'), 2)
+  assert.deepEqual([a.getRev(2)?.yaml, a.getRev(2)?.source, a.getRev(9)], ['two', 'cli', undefined])
+  assert.throws(() => a.storeRev(1, 'late', 'cli'), (e) => e instanceof DriftError && e.latest === 2)
+  const results = [a, b].map((d) => { try { return d.storeRev(2, 'x', 'gui') } catch (e) { return e } })
+  assert.equal(results.filter((r) => r === 3).length, 1)
+  assert.ok(results.some((r) => r instanceof DriftError))
+  assert.equal(b.latestRev(), 3)
+  a.close(); b.close()
 })

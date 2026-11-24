@@ -20,6 +20,7 @@ export function buildSchema(types: NodeTypes) {
   return z.strictObject({
     world: z.strictObject({ seed: z.string() }),
     plugins: z.array(z.string()).default([]),
+    auth: z.strictObject({ enabled: z.boolean().default(false) }).default({ enabled: false }).describe('Real auth lands in M1 item 5; until then `enabled: true` locks config changes'),
     groups: z.array(z.strictObject({ id: z.string().min(1), label: z.string() })).default([]),
     nodes: z.array(nodes.length ? z.discriminatedUnion('type', nodes as [(typeof nodes)[number]]) : z.never()).default([]),
     edges: z.array(z.strictObject({ from: z.string(), to: z.string(), type: z.string(), label: z.string().optional() })).default([]),
@@ -69,4 +70,21 @@ export function parseGraph(text: string, file: string, types: NodeTypes): Graph 
   g.edges.forEach((e, i) => { if (nodes.has(e.from) && nodes.has(e.to) && home.get(e.from) !== home.get(e.to)) bad.push({ line: lineAt(['edges', i, 'to']), path: `edges.${i}.to`, message: `edge from "${e.from}" (group "${home.get(e.from)}") to "${e.to}" (group "${home.get(e.to)}") crosses groups, which is not supported yet` }) })
   if (bad.length) fail(...bad)
   return g
+}
+
+export interface Change { kind: 'group' | 'node' | 'edge' | 'extension'; op: '+' | '~' | '-'; id: string }
+export const canon = (v: unknown) => JSON.stringify(v, (_, x) => x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : x)
+// What a config change adds, changes and removes, by kind. `~` when the item's canonical JSON differs.
+export function diffGraphs(a: Graph, b: Graph): Change[] {
+  const kinds = (g: Graph): Record<Change['kind'], [string, unknown][]> => ({
+    group: g.groups.map((x) => [x.id, x]), node: g.nodes.map((x) => [x.id, x]), edge: g.edges.map((e) => [`${e.from}>${e.to}:${e.type}`, e]), extension: Object.entries(g.extensions),
+  })
+  const [x, y] = [kinds(a), kinds(b)]
+  return (Object.keys(x) as Change['kind'][]).flatMap((kind) => {
+    const old = new Map(x[kind].map(([id, v]) => [id, canon(v)])), now = new Map(y[kind].map(([id, v]) => [id, canon(v)]))
+    return [
+      ...[...now].flatMap(([id, v]): Change[] => (!old.has(id) ? [{ kind, op: '+', id }] : old.get(id) !== v ? [{ kind, op: '~', id }] : [])),
+      ...[...old.keys()].filter((id) => !now.has(id)).map((id): Change => ({ kind, op: '-', id })),
+    ]
+  })
 }

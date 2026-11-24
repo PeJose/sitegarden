@@ -1,6 +1,12 @@
 import { DatabaseSync } from 'node:sqlite'
 
 export interface StoredEvent { id: number; at: number; type: string; data: unknown }
+export interface Rev { rev: number; at: number; source: string; yaml: string }
+// Thrown when a revision is stored on top of a base that is no longer the latest.
+export class DriftError extends Error {
+  latest: number
+  constructor(latest: number) { super(`server is at rev ${latest}`); this.latest = latest }
+}
 export interface Snapshot { node: string; check_id: string; status: string; at: number; detail: string | null }
 
 // Everything the server remembers besides render artifacts. One writer, WAL; `user_version` is for later migrations.
@@ -16,12 +22,19 @@ export function openDb(file: string, now = Date.now) {
       CREATE TABLE IF NOT EXISTS kv(plugin TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(plugin, key));
       PRAGMA user_version=1`)
   }
+  if ((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version < 2) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS config_revs(rev INTEGER PRIMARY KEY, at INTEGER NOT NULL, source TEXT NOT NULL, yaml TEXT NOT NULL);
+      PRAGMA user_version=2`)
+  }
   const q = <T>(sql: string) => { const s = db.prepare(sql); return { all: (...a: any[]) => s.all(...a) as T[], get: (...a: any[]) => s.get(...a) as T | undefined, run: (...a: any[]) => s.run(...a) } }
   const insEvent = q('INSERT INTO events(at, type, data) VALUES(?, ?, ?)'), after = q<{ id: number; at: number; type: string; data: string }>('SELECT * FROM events WHERE id > ? ORDER BY id')
   const upsert = q('INSERT INTO snapshots(node, check_id, status, at, detail) VALUES(?, ?, ?, ?, ?) ON CONFLICT(node, check_id) DO UPDATE SET status=excluded.status, at=excluded.at, detail=excluded.detail')
   const hist = q('INSERT INTO snapshot_history(node, check_id, status, at, detail) VALUES(?, ?, ?, ?, ?)')
   const getCache = q<{ value: string; fetched_at: number }>('SELECT value, fetched_at FROM cache WHERE key = ?'), putCache = q('INSERT OR REPLACE INTO cache(key, value, fetched_at) VALUES(?, ?, ?)')
   const getKv = q<{ value: string }>('SELECT value FROM kv WHERE plugin = ? AND key = ?'), putKv = q('INSERT OR REPLACE INTO kv(plugin, key, value) VALUES(?, ?, ?)'), delKv = q('DELETE FROM kv WHERE plugin = ? AND key = ?')
+  const latest = () => q<{ m: number | null }>('SELECT MAX(rev) AS m FROM config_revs').get()!.m ?? 0
+  const insRev = q('INSERT INTO config_revs(rev, at, source, yaml) VALUES(?, ?, ?, ?)'), getRev = q<Rev>('SELECT * FROM config_revs WHERE rev = ?')
   return {
     append(type: string, data: unknown): StoredEvent {
       const at = now(), r = insEvent.run(at, type, JSON.stringify(data))
@@ -43,6 +56,19 @@ export function openDb(file: string, now = Date.now) {
       set: (key: string, value: unknown) => void putKv.run(plugin, key, JSON.stringify(value)),
       delete: (key: string) => void delKv.run(plugin, key),
     }),
+    latestRev: latest,
+    getRev: (rev: number) => getRev.get(rev),
+    // Compare-and-set: the new rev is only written when `baseRev` is still the latest, so two racing writers cannot both win.
+    storeRev(baseRev: number, yaml: string, source: string): number {
+      db.exec('BEGIN IMMEDIATE')
+      try {
+        const l = latest()
+        if (l !== baseRev) throw new DriftError(l)
+        insRev.run(l + 1, now(), source, yaml)
+        db.exec('COMMIT')
+        return l + 1
+      } catch (e) { db.exec('ROLLBACK'); throw e }
+    },
     close: () => db.close(),
   }
 }

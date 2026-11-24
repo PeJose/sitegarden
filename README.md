@@ -13,7 +13,7 @@ Homelab mappers think in servers and racks, link dashboards are tiles, and uptim
 - **Garden map.** Projects are laid out as plots with streets, buildings and paths, generated from a seed so the layout is stable. Light and night themes, plus a plain list view ("Boring") with the same data.
 - **Status at a glance.** Every status has a colour, a shape and a label; nothing relies on colour alone.
 - **Rendered on the server.** The map is rendered once into content-addressed image tiles; the browser only downloads them. Unchanged config renders nothing.
-- **Config in git.** One `sitegarden.yaml` describes your projects. `plan` shows what would change, `apply` renders it.
+- **Config in git.** One `sitegarden.yaml` describes your projects. `plan` shows what would change on the server, `apply` stores it as the next revision and renders it.
 
 ## Quick start
 
@@ -54,17 +54,19 @@ edges: []
 extensions: {}            # e.g. layer:garden:labels: { disabled: true }
 ```
 
-A mistake (unknown field, missing node, bad type) is reported with its line number; on a live reload the last good config stays in use. The old `estates:` shape is no longer read, see the [changelog](CHANGELOG.md).
+A mistake (unknown field, missing node, bad type) is reported with its line number, and the server keeps its last good config. The old `estates:` shape is no longer read, see the [changelog](CHANGELOG.md).
 
-Render from the command line:
+The server's applied config is the state, stored as numbered revisions. The file is only imported once, as rev 1, when the server starts with an empty store; after that the server ignores it. Change the config through the CLI (or the GUI, which makes revisions too):
 
 ```sh
-pnpm sg plan    # what would be added, changed or removed, and how long it takes
-pnpm sg apply   # render the missing tiles and publish a new release atomically
+pnpm sg pull    # first time: record the server's rev (and write its config to the file)
+pnpm sg plan    # validate the local file on the server: errors with lines, or what changes and what renders
+pnpm sg apply   # the same plan, asks for confirmation (--yes skips), stores the next rev and waits for the release
+pnpm sg pull    # bring server-side (GUI) edits home
 pnpm sg schema  # write schema.json (git-ignored) for editor completion and validation
 ```
 
-While `pnpm dev` runs, saving `sitegarden.yaml` triggers `apply` automatically and open browsers pick up the new map.
+`--server URL` (or `SITEGARDEN_SERVER`, default `http://localhost:8787`) picks the server. `plan` and `apply` refuse when the server has a newer rev than the one you last pulled or applied (exit code 3); `pull` refuses to overwrite local edits that were never applied unless `--force`. `apply --local-render` renders the missing tiles on your machine and uploads them, so the server renders nothing (both need the same renderer version). `--no-wait` returns once the rev is stored. The last pulled or applied rev is kept in `.sitegarden/state.json` next to the config (git-ignored). `auth.enabled: true` is rejected until real auth exists, so the config cannot lock itself.
 
 | Variable | Default | Purpose |
 |---|---|---|
