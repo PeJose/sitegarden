@@ -6,7 +6,7 @@ import { compress } from 'hono/compress'
 import type { ConfigEstate } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
-import { addEstate, CONFIG_FILE, loadGraph, removeLastEstate } from './config'
+import { addEstate, CONFIG_FILE, loadGraph, removeLastEstate, schemaJson } from './config'
 import { openDb } from './core/db'
 import { createBus, eventsHandler } from './core/events'
 import { createHolder } from './core/holder'
@@ -15,6 +15,8 @@ import { ART, DATA, currentRelease } from './store'
 
 const app = new Hono()
 app.use(compress())
+
+app.get('/schema.json', async (c) => c.json(await schemaJson()))
 
 app.get('/api/release', (c) => {
   const r = currentRelease()
@@ -75,11 +77,11 @@ async function runApply() {
     } while (again)
   } catch (e) { console.error('[apply] failed, still serving the previous release:', (e as Error).message) } finally { running = false }
 }
-const reapply = debounce(100, () => { if (graph.reload()) void runApply() })
+const reapply = debounce(100, () => void graph.reload().then((ok) => { if (ok) void runApply() }))
 fs.watch(path.dirname(CONFIG_FILE), (_, f) => { if (f === path.basename(CONFIG_FILE)) reapply() })
 
 const port = 8787
 serve({ fetch: app.fetch, port }, () => {
   console.log(`[server] http://localhost:${port}`)
-  if (graph.reload()) void runApply()
+  void graph.reload().then((ok) => { if (ok) void runApply() })
 })

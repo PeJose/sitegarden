@@ -8,7 +8,7 @@ import { rngFor } from './rng'
 import { generateWorld } from './world'
 import type { Config, ConfigEstate, Pt, World } from './types'
 
-const full = loadConfig()
+const full = await loadConfig()
 const cfg: Config = { ...full, estates: full.estates.slice(0, 2) } // the two original estates; the planted ones are not part of the test base
 
 test('same seed and config give an identical World', () => {

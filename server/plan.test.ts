@@ -12,7 +12,7 @@ const { levelFor, minZoom, panExtent, tiledBox } = await import('../src/lib/view
 const { makeEstate } = await import('./mock')
 const { art } = await import('./store')
 
-const cfg = loadConfig()
+const cfg = await loadConfig()
 const names = (p: Awaited<ReturnType<typeof computePlan>>) => new Set([...p.jobs.map((j) => j.name), ...p.tiles.map((t) => t.name)])
 
 test('the same config gives identical artifact hashes and release id', () => {

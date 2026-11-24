@@ -1,13 +1,13 @@
 import { ConfigError, type Graph } from './graph'
 
 // The graph the server runs on. A reload that fails validation keeps the last good one and says why.
-export function createHolder(load: () => Graph, emit: (type: string, data: unknown) => void) {
+export function createHolder(load: () => Graph | Promise<Graph>, emit: (type: string, data: unknown) => void) {
   let graph: Graph | null = null
   return {
     get: () => graph,
-    reload(): boolean {
+    async reload(): Promise<boolean> {
       try {
-        graph = load()
+        graph = await load()
         emit('config.loaded', { groups: graph.groups.length, nodes: graph.nodes.length, edges: graph.edges.length })
         return true
       } catch (e) {

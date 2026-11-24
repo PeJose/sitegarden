@@ -27,6 +27,7 @@ export function buildSchema(types: NodeTypes) {
     extensions: z.record(z.string(), z.strictObject({ disabled: z.boolean().optional(), config: z.unknown().optional() })).default({}),
   })
 }
+export const jsonSchema = (types: NodeTypes) => z.toJSONSchema(buildSchema(types), { target: 'draft-2020-12', io: 'input', unrepresentable: 'any' })
 export type Graph = z.output<ReturnType<typeof buildSchema>>
 
 export interface Issue { line: number; path: string; message: string }

@@ -1,7 +1,9 @@
+# yaml-language-server: $schema=./schema.json
 # Sitegarden config: groups, nodes and edges. `pnpm sg plan` shows what would render, `pnpm sg apply` renders it.
 world:
   seed: garden-58
-plugins: []
+plugins:
+  - ./plugins/essentials
 groups:
   - id: fernhill
     label: fernhill

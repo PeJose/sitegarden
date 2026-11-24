@@ -2,15 +2,26 @@ import fs from 'node:fs'
 import path from 'node:path'
 import YAML from 'yaml'
 import type { Config, ConfigEstate, Positions } from '../src/gen/types'
-import { parseGraph, type Graph, type NodeTypes } from './core/graph'
+import { jsonSchema, parseGraph, type Graph } from './core/graph'
+import { createHost } from './core/plugins'
 import { DATA, writeAtomic } from './store'
 
 export const CONFIG_FILE = path.resolve(process.env.SITEGARDEN_CONFIG ?? path.join(import.meta.dirname, '../sitegarden.yaml'))
 const POSITIONS = path.join(DATA, 'positions.json') // layout results live apart from the YAML so it stays human
 
-// shortcut: the five built-in types until the essentials plugin registers them (task 3.2).
-const TYPES: NodeTypes = Object.fromEntries(['repo', 'cms', 'site', 'job', 'db'].map((t) => [t, {}]))
-export const loadGraph = (): Graph => parseGraph(fs.readFileSync(CONFIG_FILE, 'utf8'), CONFIG_FILE, TYPES)
+export const host = createHost({ baseDir: path.dirname(CONFIG_FILE) })
+let loaded = ''
+// The plugin list lives in the config itself, so it is read first; the set is reloaded only when the list changes.
+export async function loadPlugins(text = fs.readFileSync(CONFIG_FILE, 'utf8')) {
+  const l = (YAML.parse(text) as { plugins?: unknown } | null)?.plugins, list = Array.isArray(l) ? l.filter((x): x is string => typeof x === 'string') : []
+  if (JSON.stringify(list) !== loaded) { loaded = JSON.stringify(list); await host.load(list) }
+}
+export async function loadGraph(): Promise<Graph> {
+  const text = fs.readFileSync(CONFIG_FILE, 'utf8')
+  await loadPlugins(text)
+  return parseGraph(text, CONFIG_FILE, host.nodeTypes())
+}
+export const schemaJson = async () => { await loadPlugins(); return jsonSchema(host.nodeTypes()) }
 
 // What the render pipeline and the mock UI read: nodes and edges nested per group, mock fields flattened back onto the node.
 export function toRenderConfig(g: Graph): Config {
@@ -24,7 +35,7 @@ export function toRenderConfig(g: Graph): Config {
     })),
   }
 }
-export const loadConfig = () => toRenderConfig(loadGraph())
+export const loadConfig = async () => toRenderConfig(await loadGraph())
 export function loadPositions(): Positions {
   try { return JSON.parse(fs.readFileSync(POSITIONS, 'utf8')) } catch { return {} }
 }

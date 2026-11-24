@@ -100,7 +100,7 @@ const keyOf = (t: TileSpec) => `${t.theme}/${t.z}/${t.x}/${t.y}`
 // come first. Stops early when `stale` says the config changed again.
 export async function apply(log: (m: string) => void = () => {}, stale: () => boolean = () => false): Promise<Summary> {
   const t0 = Date.now()
-  const plan = computePlan(loadConfig(), loadPositions())
+  const plan = computePlan(await loadConfig(), loadPositions())
   savePositions(plan.world.positions)
   for (const [n, d] of [[plan.worldName, plan.worldJson], [plan.configName, plan.configJson]]) if (!has(n)) writeAtomic(art(n), d)
   const todo = missing(plan)
