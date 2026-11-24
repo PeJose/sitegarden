@@ -3,7 +3,7 @@ import dns from 'node:dns'
 import http from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { after, test } from 'node:test'
-import { blocked, checkedLookup, createHttp, type HttpInit } from './http'
+import { blocked, checkedLookup, isMetadata, createHttp, type HttpInit } from './http'
 import { createSecrets } from './secrets'
 
 let conns = 0, seenHost = ''
@@ -124,4 +124,15 @@ test('a secret placeholder in the scheme, userinfo, host or port is refused, in 
   assert.equal(conns, 0)
   assert.equal(await (await ask(c, '/echo?k=${secret:TOK}')).text().then((t) => JSON.parse(t).host), `a.test:${port}`)
   assert.equal((await ask(c, '/a/${secret:TOK}/b')).status, 200)
+})
+
+test('cloud metadata stays blocked with allowPrivate, as a literal, mapped, by name and in a lookup answer; other private ranges do not', async () => {
+  conns = 0
+  const open = { allowPrivate: true }
+  for (const u of ['http://169.254.169.254/latest', 'http://[fd00:ec2::254]/', 'http://[::ffff:a9fe:a9fe]/', 'http://metadata.google.internal/']) await assert.rejects(client('127.0.0.1')(u, open), /blocked/, u)
+  await assert.rejects(client('169.254.169.254')(`http://x.test:${port}/`, open), /blocked address 169\.254\.169\.254/)
+  await assert.rejects(client('93.184.216.34', '::ffff:a9fe:a9fe')(`http://x.test:${port}/`, open), /blocked address/)
+  assert.ok(isMetadata('169.254.169.254') && !isMetadata('169.254.1.1'))
+  assert.equal(conns, 0)
+  assert.equal(await (await client('127.0.0.1')(`http://x.test:${port}/`, open)).text(), 'hello')
 })

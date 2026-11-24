@@ -11,12 +11,15 @@ const deny = new net.BlockList()
 for (const [a, n] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.168.0.0', 16], ['224.0.0.0', 4]] as const) deny.addSubnet(a, n, 'ipv4')
 for (const [a, n] of [['::', 128], ['::1', 128], ['fc00::', 7], ['fe80::', 10], ['ff00::', 8]] as const) deny.addSubnet(a, n, 'ipv6') // fc00::/7 covers fd00:ec2::254
 const METADATA = 'metadata.google.internal'
+const meta = new net.BlockList() // cloud metadata: refused even with allowPrivate, it hands out credentials
+meta.addAddress('169.254.169.254', 'ipv4'); meta.addAddress('fd00:ec2::254', 'ipv6')
 
 // `::ffff:a.b.c.d` and `::ffff:7f00:1` are the same host as the IPv4 address, so they are checked as it.
 const unmap = (a: string) => {
   const m = /^::ffff:(?:(\d+\.\d+\.\d+\.\d+)|([0-9a-f]{1,4}):([0-9a-f]{1,4}))$/i.exec(a)
   return !m ? a : m[1] ?? [m[2], m[3]].flatMap((h) => [parseInt(h, 16) >> 8, parseInt(h, 16) & 255]).join('.')
 }
+export const isMetadata = (addr: string) => { const a = unmap(addr); return meta.check(a, net.isIPv6(a) ? 'ipv6' : 'ipv4') }
 export const blocked = (addr: string) => { const a = unmap(addr); return deny.check(a, net.isIPv6(a) ? 'ipv6' : 'ipv4') }
 
 type Lookup = typeof dns.lookup
@@ -35,7 +38,7 @@ export interface HttpResponse { status: number; headers: Headers; text(): Promis
 
 // `isBlocked` is only replaced in tests: there is no public address a local test server could listen on.
 export function createHttp({ secrets, lookup = dns.lookup, isBlocked = blocked }: { secrets: Secrets; lookup?: Lookup; isBlocked?: (addr: string) => boolean }) {
-  const agents = { guarded: new Agent({ connect: { lookup: checkedLookup(lookup, isBlocked) } }), open: new Agent({ connect: { lookup } }) }
+  const agents = { guarded: new Agent({ connect: { lookup: checkedLookup(lookup, isBlocked) } }), open: new Agent({ connect: { lookup: checkedLookup(lookup, isMetadata) } }) }
   return {
     forPlugin: (m: Pick<Manifest, 'id' | 'permissions'>) => async (url: string, init: HttpInit = {}): Promise<HttpResponse> => {
       const { timeoutMs = 10_000, maxBytes = 5 * MB } = init
@@ -58,7 +61,7 @@ export function createHttp({ secrets, lookup = dns.lookup, isBlocked = blocked }
           if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new HttpError(`unsupported scheme ${u.protocol}`)
           if (!allowed(host)) throw new HttpError(`plugin ${m.id} may not call ${host} (permissions.network)`)
           if (host === METADATA) throw new HttpError(`blocked host ${host}`)
-          if (!init.allowPrivate && net.isIP(host) && isBlocked(host)) throw new HttpError(`blocked address ${host}`)
+          if (net.isIP(host) && (isMetadata(host) || (!init.allowPrivate && isBlocked(host)))) throw new HttpError(`blocked address ${host}`)
           const res = await fetch(u, { method, headers, body, redirect: 'manual', signal, dispatcher: init.allowPrivate ? agents.open : agents.guarded })
           const to = res.headers.get('location')
           if (res.status >= 300 && res.status < 400 && to) {
