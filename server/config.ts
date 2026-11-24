@@ -3,13 +3,16 @@ import path from 'node:path'
 import YAML from 'yaml'
 import type { Config, ConfigEstate, Positions } from '../src/gen/types'
 import { jsonSchema, parseGraph, type Graph } from './core/graph'
+import { openDb } from './core/db'
 import { createHost } from './core/plugins'
 import { DATA, writeAtomic } from './store'
 
 export const CONFIG_FILE = path.resolve(process.env.SITEGARDEN_CONFIG ?? path.join(import.meta.dirname, '../sitegarden.yaml'))
 const POSITIONS = path.join(DATA, 'positions.json') // layout results live apart from the YAML so it stays human
 
-export const host = createHost({ baseDir: path.dirname(CONFIG_FILE) })
+// One db per process: the event bus and every plugin's store share it.
+export const db = openDb(path.join(DATA, 'sitegarden.db'))
+export const host = createHost({ baseDir: path.dirname(CONFIG_FILE), db })
 let loaded = ''
 // The plugin list lives in the config itself, so it is read first; the set is reloaded only when the list changes.
 export async function loadPlugins(text = fs.readFileSync(CONFIG_FILE, 'utf8')) {
