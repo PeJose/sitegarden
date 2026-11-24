@@ -99,7 +99,7 @@ if (cmd === 'plan') {
   if (r.unchanged) console.log(`no changes, server stays at rev ${r.rev}`)
   else {
     remember(r.rev, yaml)
-    console.log(`applied as rev ${r.rev}`)
+    console.log(p.diff.length ? `applied as rev ${r.rev}` : `no graph changes, text changed: stored as rev ${r.rev}`)
     if (rel && !(await rel.done())) await rel.wait(r.rev)
     console.log(rel ? 'release published' : 'rendering on the server')
   }

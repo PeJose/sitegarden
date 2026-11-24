@@ -84,3 +84,11 @@ test('a GUI edit makes plan and apply refuse until sg pull, which refuses over u
   assert.equal(fs.readFileSync(file, 'utf8'), db.getRev(3)!.yaml)
   assert.match((await sg('plan')).out, /no changes/)
 })
+
+test('a comment-only apply stores a new rev, and sg pull then needs no --force', async () => {
+  fs.appendFileSync(file, '# note\n')
+  const r = await sg('apply', '--yes')
+  assert.deepEqual([r.code, db.latestRev()], [0, 4])
+  assert.match(r.out, /no graph changes, text changed: stored as rev 4/)
+  assert.equal((await sg('pull')).code, 0)
+})

@@ -86,23 +86,23 @@ test('an invalid config is rejected with its issues and stores nothing', async (
   assert.equal(db.latestRev(), 2)
 })
 
-test('the same config again is "unchanged", comments included or not', async () => {
+test('the same text again is "unchanged"; a comment-only edit is a new rev', async () => {
   assert.deepEqual(await apply(withNode('c')), [200, { unchanged: true, rev: 2 }])
-  assert.deepEqual(await apply(withNode('c').replace('world: { seed: t }', 'world:\n  seed: t')), [200, { unchanged: true, rev: 2 }])
-  assert.equal(db.latestRev(), 2)
+  assert.deepEqual(await apply(withNode('c') + '\n'), [200, { unchanged: true, rev: 2 }])
+  assert.deepEqual(await apply(withNode('c') + '# note\n'), [200, { rev: 3 }])
 })
 
 test('two applies on the same base: one becomes the next rev, the other is a drift 409', async () => {
   const baseRev = db.latestRev(), send = (id: string) => json(post('/api/apply', { yaml: withNode(id), baseRev, planId: hash(`${baseRev}:${withNode(id)}`), render: 'server' }))
   const res = await Promise.all([send('e'), send('f')])
   assert.deepEqual(res.map((r) => r[0]).sort(), [200, 409])
-  assert.deepEqual(res.find((r) => r[0] === 409)![1], { error: 'drift', rev: 3 })
-  assert.equal(db.latestRev(), 3)
+  assert.deepEqual(res.find((r) => r[0] === 409)![1], { error: 'drift', rev: 4 })
+  assert.equal(db.latestRev(), 4)
 })
 
 test('a stale base on apply is a drift 409', async () => {
   const [s, r] = await apply(withNode('g'), { baseRev: 1 })
-  assert.deepEqual([s, r], [409, { error: 'drift', rev: 3 }])
+  assert.deepEqual([s, r], [409, { error: 'drift', rev: 4 }])
 })
 
 const estate = { id: 'zeta', label: 'zeta', nodes: [{ id: 'zeta-repo', type: 'repo' }], edges: [] }

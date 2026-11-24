@@ -9,7 +9,7 @@ import { apply, want } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
 import { addEstate, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, toRenderConfig, validate } from './config'
 import { eventsHandler } from './core/events'
-import { canon, ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
+import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
 import { DriftError } from './core/db'
 import { createHolder } from './core/holder'
 import { createScheduler } from './core/scheduler'
@@ -111,7 +111,8 @@ app.post('/api/apply', async (c) => {
   if (b.planId !== planId(base, b.yaml)) return c.json({ error: 'plan id does not match the yaml and base rev' }, 400)
   const r = await check(b.yaml)
   if ('issues' in r) return c.json({ error: 'invalid config', issues: r.issues }, 422)
-  if (b.yaml.trim() === latestYaml().trim() || canon(r.graph) === canon(await validate(latestYaml()))) return c.json({ unchanged: true, rev })
+  // Comments are config content: only identical text is unchanged; a comment-only edit is stored as a new rev.
+  if (b.yaml.trim() === latestYaml().trim()) return c.json({ unchanged: true, rev })
   return c.json({ rev: await commit(b.yaml, 'cli', base, b.render === 'client' && b.positions && typeof b.positions === 'object' ? (b.positions as Positions) : undefined) })
 })
 
