@@ -7,6 +7,11 @@
     "id": "essentials",
     "apiVersion": "^1",
     "server": "./server.ts",
-    "contributes": { "nodeTypes": [{ "id": "repo" }, { "id": "cms" }, { "id": "site" }, { "id": "job" }, { "id": "db" }] }
+    "permissions": { "network": ["*"] },
+    "contributes": {
+      "nodeTypes": [{ "id": "repo" }, { "id": "cms" }, { "id": "site" }, { "id": "job" }, { "id": "db" }],
+      "shorthands": ["repo", "sanity", "studio", "url"],
+      "checkTypes": ["http"]
+    }
   }
 }
