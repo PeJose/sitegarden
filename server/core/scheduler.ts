@@ -14,12 +14,12 @@ const worst = (s: Iterable<Status>) => [...s].sort((a, b) => WORST.indexOf(a) - 
 
 export interface Timers { set(f: () => void, ms: number): () => void }
 const realTimers: Timers = { set: (f, ms) => { const t = setTimeout(f, ms); t.unref(); return () => clearTimeout(t) } }
-export interface SchedulerOptions { db: Db; emit: (type: string, data: unknown) => void; limit?: number; now?: () => number; random?: () => number; timers?: Timers }
+export interface SchedulerOptions { db: Db; emit: (type: string, data: unknown) => void; limit?: number; redact?: (s: string) => string; now?: () => number; random?: () => number; timers?: Timers }
 
 interface Inst { key: string; check: CheckDef; node: CheckNode; every: number; fails: number; cancel?: () => void; queued: boolean }
 
 // One timer per (check, node). First run lands anywhere in the first interval, later ones every ±10 %; a `down` result backs off 2^n up to 4x.
-export function createScheduler({ db, emit, limit = 4, random = Math.random, timers = realTimers }: SchedulerOptions) {
+export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random = Math.random, timers = realTimers }: SchedulerOptions) {
   const insts = new Map<string, Inst>(), queue: Inst[] = [], status = new Map<string, Status>() // status: instance key -> last result
   let active = 0, stopped = false
   for (const s of db.snapshots()) status.set(`${s.check_id}@${s.node}`, s.status as Status)
@@ -44,6 +44,7 @@ export function createScheduler({ db, emit, limit = 4, random = Math.random, tim
   async function run(i: Inst) {
     let res: { status: Status; detail?: string }
     try { res = await i.check.run(i.node) } catch (e) { res = { status: 'down', detail: (e as Error).message } }
+    res.detail = res.detail && redact(res.detail)
     i.queued = false
     if (stopped || insts.get(i.key) !== i) return
     i.fails = res.status === 'down' ? i.fails + 1 : 0

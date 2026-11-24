@@ -5,6 +5,7 @@ import { z } from 'zod'
 import type { Db } from './db'
 import type { NodeTypes } from './graph'
 import { createHttp } from './http'
+import { log } from './log'
 import { parseEvery } from './scheduler'
 import { createSecrets } from './secrets'
 import { SDK_VERSION, type CheckDef, type Disposer, type Plugin, type PluginContext } from './sdk'
@@ -82,7 +83,7 @@ export function createHost({ baseDir, db, http = createHttp({ secrets: createSec
   async function load(entries: string[]): Promise<PluginRecord[]> {
     await unloadAll()
     const ok: Entry[] = []
-    const fail = (r: Partial<PluginRecord> & { dir: string }, error: string) => { records.push({ id: r.id ?? path.basename(r.dir), version: '0.0.0', ...r, status: 'failed', error }); console.error(`[plugins] ${r.id ?? r.dir} refused: ${error}`) }
+    const fail = (r: Partial<PluginRecord> & { dir: string }, error: string) => { records.push({ id: r.id ?? path.basename(r.dir), version: '0.0.0', ...r, status: 'failed', error }); log.error(`[plugins] ${r.id ?? r.dir} refused: ${error}`) }
     for (const e of entries) {
       let r: ReturnType<typeof resolve>
       try { r = resolve(e) } catch (err) { fail({ dir: e }, (err as Error).message); continue }

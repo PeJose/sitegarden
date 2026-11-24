@@ -6,6 +6,7 @@ import { jsonSchema, parseGraph, type Graph, type Issue } from './core/graph'
 import { openDb } from './core/db'
 import { createBus } from './core/events'
 import { createHttp } from './core/http'
+import { log, sink } from './core/log'
 import { createSecrets } from './core/secrets'
 import { createHost } from './core/plugins'
 import { DATA, writeAtomic } from './store'
@@ -15,8 +16,9 @@ const POSITIONS = path.join(DATA, 'positions.json') // layout results live apart
 
 // One db per process: the event bus and every plugin's store share it.
 export const db = openDb(path.join(DATA, 'sitegarden.db'))
-export const bus = createBus(db)
 export const secrets = createSecrets()
+sink.redact = secrets.redact
+export const bus = createBus(db, secrets.redact)
 // Declared secrets that have no value: not an error, `sg plan` and the log say so.
 export const secretWarnings = (g: Graph) => secrets.missing(Object.keys(g.secrets))
 const http = createHttp({ secrets })
@@ -57,8 +59,8 @@ export function authIssue(text: string, g: Graph): Issue | null {
 export function bootstrap() {
   if (!fs.existsSync(CONFIG_FILE)) return
   const rev = db.latestRev()
-  if (rev) console.log(`[config] config file ignored, server is at rev ${rev}: use sg apply`)
-  else { db.storeRev(0, fs.readFileSync(CONFIG_FILE, 'utf8'), 'bootstrap'); console.log(`[config] imported ${CONFIG_FILE} as rev 1`) }
+  if (rev) log.info(`[config] config file ignored, server is at rev ${rev}: use sg apply`)
+  else { db.storeRev(0, fs.readFileSync(CONFIG_FILE, 'utf8'), 'bootstrap'); log.info(`[config] imported ${CONFIG_FILE} as rev 1`) }
 }
 export const schemaJson = async (text?: string) => { await loadPlugins(text); return jsonSchema(host.nodeTypes()) }
 

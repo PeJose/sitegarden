@@ -18,6 +18,7 @@ nodes:
 edges:
   - { from: a, to: b, type: deploy }
 `
+process.env.SG_TEST_TOKEN = 'tok-abcdef123'
 fs.writeFileSync(process.env.SITEGARDEN_CONFIG, base)
 const { app } = await import('./app')
 const { auth, bootstrap, db } = await import('./config')
@@ -145,6 +146,18 @@ test('enabling auth is a 422 on the auth.enabled line while no auth provider exi
   const [s, r] = await apply(yaml)
   assert.deepEqual([s, r.issues], [422, [{ line: yaml.split('\n').length - 1, path: 'auth.enabled', message: 'auth is not available yet (M1 item 5)' }]])
   assert.equal(db.latestRev(), rev)
+})
+
+test('an apply error that echoes a secret is stored and logged as [secret:NAME]', async () => {
+  const real = engine.apply, lines: string[] = [], err = console.error
+  engine.apply = async () => { throw new Error('upstream said: bad token tok-abcdef123') }
+  console.error = (m: string) => void lines.push(m)
+  try {
+    assert.equal((await apply(db.getRev(db.latestRev())!.yaml + 'secrets:\n  SG_TEST_TOKEN: {}\n'))[0], 200)
+    await new Promise((r) => setTimeout(r, 50))
+  } finally { engine.apply = real; console.error = err }
+  assert.deepEqual(db.eventsAfter(0).filter((e) => e.type === 'apply.failed').map((e: any) => e.data.message), ['upstream said: bad token [secret:SG_TEST_TOKEN]'])
+  assert.ok(lines.some((l) => l.includes('[secret:SG_TEST_TOKEN]')) && !lines.some((l) => l.includes('tok-abcdef123')))
 })
 
 test('with auth enabled, apply and GUI edits are refused and no rev is made', async () => {

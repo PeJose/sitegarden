@@ -13,7 +13,7 @@
 ## 3. Wiring
 
 - [x] 3.1 `ctx.http` in `PluginContext`, permissions enforced, `SDK_VERSION` 1.1.0 (D4). Verify: plugin-host test with a fixture plugin calling a local server through `ctx.http`; a plugin without the network permission is refused.
-- [ ] 3.2 Redaction at every D5 point via `server/core/log.ts`. Verify: tests that an event, a check detail and an apply error containing a secret value come out as `[secret:NAME]`; `rg "console\.(log|warn|error)" server/` only matches `log.ts` and the CLI output in `sg.ts`.
+- [x] 3.2 Redaction at every D5 point via `server/core/log.ts`. Verify: tests that an event, a check detail and an apply error containing a secret value come out as `[secret:NAME]`; `rg "console\.(log|warn|error)" server/` only matches `log.ts` and the CLI output in `sg.ts`.
 
 ## 4. Close-out
 

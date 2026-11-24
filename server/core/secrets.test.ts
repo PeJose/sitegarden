@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { log, sink } from './log'
 import { createSecrets } from './secrets'
 
 const files: Record<string, string> = { '/run/s/gh': 'ghp_filetoken\n' }
@@ -33,4 +34,13 @@ test('redact replaces plain and base64 forms, longest first, and leaves short va
   const b64 = Buffer.from('tok-abcdef').toString('base64')
   assert.equal(s.redact('bad tok-abcdef and tok-abc, abc'), 'bad [secret:LONG] and [secret:PAIR], abc')
   assert.equal(s.redact(`Authorization: Basic ${b64}`), 'Authorization: Basic [secret:LONG]')
+})
+
+test('log redacts secret values from whatever it prints', () => {
+  const s = createSecrets({ T: 'tok-abcdef' }), lines: string[] = [], was = console.warn
+  s.missing(['T'])
+  sink.redact = s.redact
+  console.warn = (m: string) => void lines.push(m)
+  try { log.warn('failed:', new Error('401 tok-abcdef'), { t: 'tok-abcdef' }) } finally { console.warn = was; sink.redact = (x) => x }
+  assert.ok(lines[0].includes('[secret:T]') && !lines[0].includes('tok-abcdef'))
 })

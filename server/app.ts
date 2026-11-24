@@ -8,8 +8,9 @@ import type { ConfigEstate, Positions } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
-import { addEstate, authIssue, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, secretWarnings, toRenderConfig, validate } from './config'
+import { addEstate, authIssue, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, secretWarnings, secrets, toRenderConfig, validate } from './config'
 import { eventsHandler } from './core/events'
+import { log } from './core/log'
 import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
 import { DriftError } from './core/db'
 import { createHolder } from './core/holder'
@@ -75,14 +76,15 @@ async function commit(yaml: string, source: string, base = db.latestRev(), posit
   await reloaded()
   return rev
 }
-app.onError((e, c) => e instanceof DriftError ? c.json({ error: 'drift', rev: e.latest }, 409) : e instanceof ConfigError ? c.json({ error: 'invalid config', issues: e.issues }, 422) : (console.error(e), c.text('internal error', 500)))
+app.onError((e, c) => e instanceof DriftError ? c.json({ error: 'drift', rev: e.latest }, 409) : e instanceof ConfigError ? c.json({ error: 'invalid config', issues: clean(e.issues) }, 422) : (log.error(e), c.text('internal error', 500)))
 
+const clean = (issues: Issue[]) => issues.map((i) => ({ ...i, message: secrets.redact(i.message) }))
 // Validation result for a candidate config: the graph, or every issue with its line.
 async function check(yaml: string): Promise<{ graph: Graph } | { issues: Issue[] }> {
   try {
     const graph = await validate(yaml), bad = authIssue(yaml, graph)
     return bad ? { issues: [bad] } : { graph }
-  } catch (e) { if (e instanceof ConfigError) return { issues: e.issues }; throw e }
+  } catch (e) { if (e instanceof ConfigError) return { issues: clean(e.issues) }; throw e }
 }
 const planId = (baseRev: number, yaml: string) => hash(`${baseRev}:${yaml}`)
 const planBody = async (c: Context) => {
@@ -138,7 +140,7 @@ app.delete('/api/estates/last', async (c) => {
 const key = (r: ReturnType<typeof currentRelease>) => r && `${r.id}:${r.rev}`
 app.get('/api/events', eventsHandler(bus, () => key(currentRelease())))
 const graph = createHolder(() => loadGraph(latestYaml()), bus.emit)
-const scheduler = createScheduler({ db, emit: bus.emit })
+const scheduler = createScheduler({ db, emit: bus.emit, redact: secrets.redact })
 app.post('/api/refresh', async (c) => {
   const b = (await c.req.json().catch(() => null)) as { node?: unknown } | null
   if (b?.node !== undefined && typeof b.node !== 'string') return c.json({ error: 'node must be a node id' }, 400)
@@ -161,23 +163,23 @@ async function runApply() {
   try {
     do {
       again = false
-      const s = await engine.apply((m) => console.log(`[apply] ${m}`), () => again, progress)
-      console.log(`[apply] ${s.aborted ? 'superseded' : 'done'} in ${s.ms} ms`, s.rendered)
+      const s = await engine.apply((m) => log.info(`[apply] ${m}`), () => again, progress)
+      log.info(`[apply] ${s.aborted ? 'superseded' : 'done'} in ${s.ms} ms`, s.rendered)
     } while (again)
   } catch (e) {
-    console.error('[apply] failed, still serving the previous release:', (e as Error).message)
+    log.error('[apply] failed, still serving the previous release:', (e as Error).message)
     bus.emit('apply.failed', { rev: db.latestRev(), message: (e as Error).message }) // the CLI is waiting for this rev
   } finally { running = false }
 }
 // A good reload re-plans the checks (plugins were reloaded first) and re-renders.
-const reloaded = () => graph.reload().then((ok) => { if (ok) { secretWarnings(graph.get()!).forEach((w) => console.warn(`[secrets] ${w.message}`)); scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
+const reloaded = () => graph.reload().then((ok) => { if (ok) { secretWarnings(graph.get()!).forEach((w) => log.warn(`[secrets] ${w.message}`)); scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
 
 export function start(port: number) {
   bootstrap()
   const watcher = fs.watch(DATA, debounce(30, () => { const k = key(currentRelease()); if (k && k !== last) { last = k; bus.emit('release', k) } }))
   return new Promise<{ port: number; close(): void }>((resolve) => {
     const server = serve({ fetch: app.fetch, port }, (i) => {
-      console.log(`[server] http://localhost:${i.port}`)
+      log.info(`[server] http://localhost:${i.port}`)
       void reloaded()
       resolve({ port: i.port, close: () => { watcher.close(); scheduler.stop(); server.close() } })
     })
