@@ -79,7 +79,7 @@ async function runApply() {
 const reapply = debounce(100, () => void graph.reload().then((ok) => { if (ok) void runApply() }))
 fs.watch(path.dirname(CONFIG_FILE), (_, f) => { if (f === path.basename(CONFIG_FILE)) reapply() })
 
-const port = 8787
+const port = Number(process.env.PORT) || 8787
 serve({ fetch: app.fetch, port }, () => {
   console.log(`[server] http://localhost:${port}`)
   void graph.reload().then((ok) => { if (ok) void runApply() })
