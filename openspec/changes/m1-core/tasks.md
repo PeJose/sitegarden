@@ -8,7 +8,7 @@
 ## 2. Config and graph
 
 - [x] 2.1 Zod v4 core schema, graph model and referential checks with file/line errors (D2). Verify: tests for duplicate ID, edge to missing node, unknown type, bad field, each asserting the reported line.
-- [ ] 2.2 Convert `sitegarden.yaml` to the D1 shape and add `toRenderConfig`; switch `plan.ts`/`apply.ts`/`sg.ts`/`index.ts` callers to it; keep `/api/estates` routes working on the new shape. Verify: `pnpm sg plan` reports nothing to do against the release built before the change; `plan.test.ts` passes; plant/remove estate via the GUI still works.
+- [x] 2.2 Convert `sitegarden.yaml` to the D1 shape and add `toRenderConfig`; switch `plan.ts`/`apply.ts`/`sg.ts`/`index.ts` callers to it; keep `/api/estates` routes working on the new shape. Verify: `pnpm sg plan` reports nothing to do against the release built before the change; `plan.test.ts` passes; plant/remove estate via the GUI still works.
 - [ ] 2.3 Keep the last good graph on an invalid reload and emit `config.invalid` / `config.loaded`; old `estates:` shape gives the migration message. Verify: test saves a broken file, graph unchanged, event emitted.
 
 ## 3. Plugin host

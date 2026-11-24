@@ -1,406 +1,444 @@
-# Sitegarden config: one estate per project. `pnpm sg plan` shows what would render, `pnpm sg apply` renders it.
-accountSeed: garden-58
-estates:
+# Sitegarden config: groups, nodes and edges. `pnpm sg plan` shows what would render, `pnpm sg apply` renders it.
+world:
+  seed: garden-58
+plugins: []
+groups:
   - id: fernhill
     label: fernhill
-    nodes:
-      - id: fernhill-cms
-        type: cms
-        name: fernhill-cms
-        host: Sanity
-        links:
-          - label: Sanity manage
-            url: https://www.sanity.io/manage/project/fh4abc12
-          - label: Studio
-            url: https://fernhill.sanity.studio
-          - label: Webhooks
-            url: https://www.sanity.io/manage/project/fh4abc12/api#webhooks
-        notes: Content studio for the Fernhill apartment listings. Publishing fires the deploy webhook.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: fernhill-repo
-        type: repo
-        name: acme/fernhill
-        host: GitHub
-        links:
-          - label: Actions
-            url: https://github.com/acme/fernhill/actions
-          - label: Settings
-            url: https://github.com/acme/fernhill/settings
-          - label: Secrets
-            url: https://github.com/acme/fernhill/settings/secrets/actions
-          - label: Pull requests
-            url: https://github.com/acme/fernhill/pulls
-          - label: Issues
-            url: https://github.com/acme/fernhill/issues
-        notes: "Astro site. Deploy workflow: deploy.yml on main, uploads over FTPS."
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: fernhill-site
-        type: site
-        name: fernhill.example
-        host: host.example
-        links:
-          - label: fernhill.example
-            url: https://fernhill.example
-          - label: host.example panel
-            url: https://panel.host.example
-        notes: "Runbook: if down, check host.example panel first, then re-run the last green deploy."
-        checks:
-          - http every 5m, expect 200 + "Fernhill"
-          - ssl warn 14d
-          - domain warn 30d
-        baseMs: 180
-        initialStatus: ok
-    edges:
-      - from: fernhill-cms
-        to: fernhill-repo
-        type: webhook
-        label: WEBHOOK
-      - from: fernhill-repo
-        to: fernhill-site
-        type: deploy
-        label: FTPS
   - id: copperleaf
     label: copperleaf
-    nodes:
-      - id: copperleaf-cms
-        type: cms
-        name: copperleaf-cms
-        host: Sanity
-        links:
-          - label: Sanity manage
-            url: https://www.sanity.io/manage/project/cl4def56
-          - label: Studio
-            url: https://copperleaf.sanity.studio
-          - label: Webhooks
-            url: https://www.sanity.io/manage/project/cl4def56/api#webhooks
-        notes: Content studio for the Copperleaf catalogue.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: copperleaf-repo
-        type: repo
-        name: acme/copperleaf
-        host: GitHub
-        links:
-          - label: Actions
-            url: https://github.com/acme/copperleaf/actions
-          - label: Settings
-            url: https://github.com/acme/copperleaf/settings
-          - label: Secrets
-            url: https://github.com/acme/copperleaf/settings/secrets/actions
-          - label: Pull requests
-            url: https://github.com/acme/copperleaf/pulls
-          - label: Issues
-            url: https://github.com/acme/copperleaf/issues
-        notes: Storefront. Workflow deploy.yml on main.
-        checks: []
-        baseMs: 0
-        initialStatus: working
-      - id: copperleaf-site
-        type: site
-        name: copperleaf.example
-        host: FTPS
-        links:
-          - label: copperleaf.example
-            url: https://copperleaf.example
-          - label: Hosting panel
-            url: https://panel.example-host.com
-        notes: Slow since the image migration. Look at the origin cache before blaming the code.
-        checks:
-          - http every 5m, expect 200 + "Copperleaf"
-          - ssl warn 14d
-          - domain warn 30d
-        baseMs: 380
-        initialStatus: down
-    edges:
-      - from: copperleaf-cms
-        to: copperleaf-repo
-        type: webhook
-        label: WEBHOOK
-      - from: copperleaf-repo
-        to: copperleaf-site
-        type: deploy
-        label: FTPS
   - id: notes
     label: notes
-    nodes:
-      - id: notes-cms
-        type: cms
-        name: notes-cms
-        host: Sanity
-        links:
-          - label: Sanity manage
-            url: https://www.sanity.io/manage/project/nt7ghi89
-          - label: Studio
-            url: https://notes.sanity.studio
-        notes: Blog posts and newsletter drafts.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: notes-repo
-        type: repo
-        name: acme/notes
-        host: GitHub
-        links:
-          - label: Actions
-            url: https://github.com/acme/notes/actions
-          - label: Secrets
-            url: https://github.com/acme/notes/settings/secrets/actions
-          - label: Pull requests
-            url: https://github.com/acme/notes/pulls
-        notes: Next.js blog. deploy.yml on main.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: notes-db
-        type: db
-        name: notes-db
-        host: Postgres
-        links:
-          - label: Dashboard
-            url: https://example.com/notes/db
-        notes: Subscribers and comments.
-        checks:
-          - tcp 5432 every 5m
-        baseMs: 40
-        initialStatus: ok
-      - id: notes-job
-        type: job
-        name: newsletter
-        host: cron
-        links:
-          - label: Logs
-            url: https://example.com/notes/job
-        notes: Sends the weekly newsletter on Mondays, pings a heartbeat.
-        checks:
-          - heartbeat every 7d, grace 2h
-        baseMs: 0
-        initialStatus: ok
-      - id: notes-site
-        type: site
-        name: notes.example.dev
-        host: Vercel
-        links:
-          - label: notes.example.dev
-            url: https://notes.example.dev
-          - label: Vercel
-            url: https://vercel.com/dashboard
-        notes: Public blog, checked every 5 minutes.
-        checks:
-          - http every 5m, expect 200
-          - ssl warn 14d
-        baseMs: 120
-        initialStatus: ok
-    edges:
-      - from: notes-cms
-        to: notes-repo
-        type: webhook
-        label: WEBHOOK
-      - from: notes-repo
-        to: notes-site
-        type: deploy
-        label: VERCEL
-      - from: notes-db
-        to: notes-site
-        type: sync
-        label: SQL
-      - from: notes-job
-        to: notes-db
-        type: sync
-        label: CRON
   - id: sedum
     label: sedum
-    nodes:
-      - id: sedum-job
-        type: job
-        name: sedum-job
-        host: cron
-        links:
-          - label: Dashboard
-            url: https://example.com/sedum/job
-        notes: Nightly job, pings a heartbeat.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: sedum-site
-        type: site
-        name: sedum-site
-        host: FTPS
-        links:
-          - label: sedum.example
-            url: https://sedum.example
-          - label: Hosting panel
-            url: https://panel.example-host.com
-        notes: Public site, checked every 5 minutes.
-        checks:
-          - http every 5m, expect 200
-          - ssl warn 14d
-        baseMs: 335
-        initialStatus: ok
-      - id: sedum-site2
-        type: site
-        name: sedum-site2
-        host: FTPS
-        links:
-          - label: sedum.example
-            url: https://sedum.example
-          - label: Hosting panel
-            url: https://panel.example-host.com
-        notes: Public site, checked every 5 minutes.
-        checks:
-          - http every 5m, expect 200
-          - ssl warn 14d
-        baseMs: 266
-        initialStatus: ok
-    edges:
-      - from: sedum-job
-        to: sedum-site
-        type: deploy
-        label: FTPS
-      - from: sedum-site
-        to: sedum-site2
-        type: deploy
-        label: RSYNC
   - id: juniper
     label: juniper
-    nodes:
-      - id: juniper-cms
-        type: cms
-        name: juniper-cms
-        host: Sanity
-        links:
-          - label: Sanity manage
-            url: https://example.com/juniper/cms
-        notes: Content studio.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: juniper-repo
-        type: repo
-        name: juniper-repo
-        host: GitHub
-        links:
-          - label: Actions
-            url: https://github.com/acme/juniper/actions
-          - label: Secrets
-            url: https://github.com/acme/juniper/settings/secrets/actions
-        notes: Deploy workflow runs on main.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: juniper-db
-        type: db
-        name: juniper-db
-        host: Postgres
-        links:
-          - label: Dashboard
-            url: https://example.com/juniper/db
-        notes: Primary database.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-    edges:
-      - from: juniper-cms
-        to: juniper-repo
-        type: webhook
-        label: WEBHOOK
-      - from: juniper-repo
-        to: juniper-db
-        type: deploy
-        label: RSYNC
   - id: heather
     label: heather
-    nodes:
-      - id: heather-cms
-        type: cms
-        name: heather-cms
-        host: Sanity
-        links:
-          - label: Sanity manage
-            url: https://example.com/heather/cms
-        notes: Content studio.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: heather-job
-        type: job
-        name: heather-job
-        host: cron
-        links:
-          - label: Dashboard
-            url: https://example.com/heather/job
-        notes: Nightly job, pings a heartbeat.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: heather-job2
-        type: job
-        name: heather-job2
-        host: cron
-        links:
-          - label: Dashboard
-            url: https://example.com/heather/job
-        notes: Nightly job, pings a heartbeat.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: heather-repo
-        type: repo
-        name: heather-repo
-        host: GitHub
-        links:
-          - label: Actions
-            url: https://github.com/acme/heather/actions
-          - label: Secrets
-            url: https://github.com/acme/heather/settings/secrets/actions
-        notes: Deploy workflow runs on main.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: heather-db
-        type: db
-        name: heather-db
-        host: Postgres
-        links:
-          - label: Dashboard
-            url: https://example.com/heather/db
-        notes: Primary database.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-      - id: heather-db2
-        type: db
-        name: heather-db2
-        host: Postgres
-        links:
-          - label: Dashboard
-            url: https://example.com/heather/db
-        notes: Primary database.
-        checks: []
-        baseMs: 0
-        initialStatus: ok
-    edges:
-      - from: heather-cms
-        to: heather-job
-        type: webhook
-        label: WEBHOOK
-      - from: heather-job
-        to: heather-job2
-        type: deploy
-        label: SSH
-      - from: heather-job2
-        to: heather-repo
-        type: deploy
-        label: SSH
-      - from: heather-repo
-        to: heather-db
-        type: deploy
-        label: RSYNC
-      - from: heather-db
-        to: heather-db2
-        type: sync
-        label: SYNC
+nodes:
+  - id: fernhill-cms
+    type: cms
+    group: fernhill
+    name: fernhill-cms
+    host: Sanity
+    links:
+      - label: Sanity manage
+        url: https://www.sanity.io/manage/project/fh4abc12
+      - label: Studio
+        url: https://fernhill.sanity.studio
+      - label: Webhooks
+        url: https://www.sanity.io/manage/project/fh4abc12/api#webhooks
+    notes: Content studio for the Fernhill apartment listings. Publishing fires the deploy webhook.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: fernhill-repo
+    type: repo
+    group: fernhill
+    name: acme/fernhill
+    host: GitHub
+    links:
+      - label: Actions
+        url: https://github.com/acme/fernhill/actions
+      - label: Settings
+        url: https://github.com/acme/fernhill/settings
+      - label: Secrets
+        url: https://github.com/acme/fernhill/settings/secrets/actions
+      - label: Pull requests
+        url: https://github.com/acme/fernhill/pulls
+      - label: Issues
+        url: https://github.com/acme/fernhill/issues
+    notes: "Astro site. Deploy workflow: deploy.yml on main, uploads over FTPS."
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: fernhill-site
+    type: site
+    group: fernhill
+    name: fernhill.example
+    host: host.example
+    links:
+      - label: fernhill.example
+        url: https://fernhill.example
+      - label: host.example panel
+        url: https://panel.host.example
+    notes: "Runbook: if down, check host.example panel first, then re-run the last green deploy."
+    mock:
+      checks:
+        - http every 5m, expect 200 + "Fernhill"
+        - ssl warn 14d
+        - domain warn 30d
+      baseMs: 180
+      initialStatus: ok
+  - id: copperleaf-cms
+    type: cms
+    group: copperleaf
+    name: copperleaf-cms
+    host: Sanity
+    links:
+      - label: Sanity manage
+        url: https://www.sanity.io/manage/project/cl4def56
+      - label: Studio
+        url: https://copperleaf.sanity.studio
+      - label: Webhooks
+        url: https://www.sanity.io/manage/project/cl4def56/api#webhooks
+    notes: Content studio for the Copperleaf catalogue.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: copperleaf-repo
+    type: repo
+    group: copperleaf
+    name: acme/copperleaf
+    host: GitHub
+    links:
+      - label: Actions
+        url: https://github.com/acme/copperleaf/actions
+      - label: Settings
+        url: https://github.com/acme/copperleaf/settings
+      - label: Secrets
+        url: https://github.com/acme/copperleaf/settings/secrets/actions
+      - label: Pull requests
+        url: https://github.com/acme/copperleaf/pulls
+      - label: Issues
+        url: https://github.com/acme/copperleaf/issues
+    notes: Storefront. Workflow deploy.yml on main.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: working
+  - id: copperleaf-site
+    type: site
+    group: copperleaf
+    name: copperleaf.example
+    host: FTPS
+    links:
+      - label: copperleaf.example
+        url: https://copperleaf.example
+      - label: Hosting panel
+        url: https://panel.example-host.com
+    notes: Slow since the image migration. Look at the origin cache before blaming the code.
+    mock:
+      checks:
+        - http every 5m, expect 200 + "Copperleaf"
+        - ssl warn 14d
+        - domain warn 30d
+      baseMs: 380
+      initialStatus: down
+  - id: notes-cms
+    type: cms
+    group: notes
+    name: notes-cms
+    host: Sanity
+    links:
+      - label: Sanity manage
+        url: https://www.sanity.io/manage/project/nt7ghi89
+      - label: Studio
+        url: https://notes.sanity.studio
+    notes: Blog posts and newsletter drafts.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: notes-repo
+    type: repo
+    group: notes
+    name: acme/notes
+    host: GitHub
+    links:
+      - label: Actions
+        url: https://github.com/acme/notes/actions
+      - label: Secrets
+        url: https://github.com/acme/notes/settings/secrets/actions
+      - label: Pull requests
+        url: https://github.com/acme/notes/pulls
+    notes: Next.js blog. deploy.yml on main.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: notes-db
+    type: db
+    group: notes
+    name: notes-db
+    host: Postgres
+    links:
+      - label: Dashboard
+        url: https://example.com/notes/db
+    notes: Subscribers and comments.
+    mock:
+      checks:
+        - tcp 5432 every 5m
+      baseMs: 40
+      initialStatus: ok
+  - id: notes-job
+    type: job
+    group: notes
+    name: newsletter
+    host: cron
+    links:
+      - label: Logs
+        url: https://example.com/notes/job
+    notes: Sends the weekly newsletter on Mondays, pings a heartbeat.
+    mock:
+      checks:
+        - heartbeat every 7d, grace 2h
+      baseMs: 0
+      initialStatus: ok
+  - id: notes-site
+    type: site
+    group: notes
+    name: notes.example.dev
+    host: Vercel
+    links:
+      - label: notes.example.dev
+        url: https://notes.example.dev
+      - label: Vercel
+        url: https://vercel.com/dashboard
+    notes: Public blog, checked every 5 minutes.
+    mock:
+      checks:
+        - http every 5m, expect 200
+        - ssl warn 14d
+      baseMs: 120
+      initialStatus: ok
+  - id: sedum-job
+    type: job
+    group: sedum
+    name: sedum-job
+    host: cron
+    links:
+      - label: Dashboard
+        url: https://example.com/sedum/job
+    notes: Nightly job, pings a heartbeat.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: sedum-site
+    type: site
+    group: sedum
+    name: sedum-site
+    host: FTPS
+    links:
+      - label: sedum.example
+        url: https://sedum.example
+      - label: Hosting panel
+        url: https://panel.example-host.com
+    notes: Public site, checked every 5 minutes.
+    mock:
+      checks:
+        - http every 5m, expect 200
+        - ssl warn 14d
+      baseMs: 335
+      initialStatus: ok
+  - id: sedum-site2
+    type: site
+    group: sedum
+    name: sedum-site2
+    host: FTPS
+    links:
+      - label: sedum.example
+        url: https://sedum.example
+      - label: Hosting panel
+        url: https://panel.example-host.com
+    notes: Public site, checked every 5 minutes.
+    mock:
+      checks:
+        - http every 5m, expect 200
+        - ssl warn 14d
+      baseMs: 266
+      initialStatus: ok
+  - id: juniper-cms
+    type: cms
+    group: juniper
+    name: juniper-cms
+    host: Sanity
+    links:
+      - label: Sanity manage
+        url: https://example.com/juniper/cms
+    notes: Content studio.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: juniper-repo
+    type: repo
+    group: juniper
+    name: juniper-repo
+    host: GitHub
+    links:
+      - label: Actions
+        url: https://github.com/acme/juniper/actions
+      - label: Secrets
+        url: https://github.com/acme/juniper/settings/secrets/actions
+    notes: Deploy workflow runs on main.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: juniper-db
+    type: db
+    group: juniper
+    name: juniper-db
+    host: Postgres
+    links:
+      - label: Dashboard
+        url: https://example.com/juniper/db
+    notes: Primary database.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: heather-cms
+    type: cms
+    group: heather
+    name: heather-cms
+    host: Sanity
+    links:
+      - label: Sanity manage
+        url: https://example.com/heather/cms
+    notes: Content studio.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: heather-job
+    type: job
+    group: heather
+    name: heather-job
+    host: cron
+    links:
+      - label: Dashboard
+        url: https://example.com/heather/job
+    notes: Nightly job, pings a heartbeat.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: heather-job2
+    type: job
+    group: heather
+    name: heather-job2
+    host: cron
+    links:
+      - label: Dashboard
+        url: https://example.com/heather/job
+    notes: Nightly job, pings a heartbeat.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: heather-repo
+    type: repo
+    group: heather
+    name: heather-repo
+    host: GitHub
+    links:
+      - label: Actions
+        url: https://github.com/acme/heather/actions
+      - label: Secrets
+        url: https://github.com/acme/heather/settings/secrets/actions
+    notes: Deploy workflow runs on main.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: heather-db
+    type: db
+    group: heather
+    name: heather-db
+    host: Postgres
+    links:
+      - label: Dashboard
+        url: https://example.com/heather/db
+    notes: Primary database.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+  - id: heather-db2
+    type: db
+    group: heather
+    name: heather-db2
+    host: Postgres
+    links:
+      - label: Dashboard
+        url: https://example.com/heather/db
+    notes: Primary database.
+    mock:
+      checks: []
+      baseMs: 0
+      initialStatus: ok
+edges:
+  - from: fernhill-cms
+    to: fernhill-repo
+    type: webhook
+    label: WEBHOOK
+  - from: fernhill-repo
+    to: fernhill-site
+    type: deploy
+    label: FTPS
+  - from: copperleaf-cms
+    to: copperleaf-repo
+    type: webhook
+    label: WEBHOOK
+  - from: copperleaf-repo
+    to: copperleaf-site
+    type: deploy
+    label: FTPS
+  - from: notes-cms
+    to: notes-repo
+    type: webhook
+    label: WEBHOOK
+  - from: notes-repo
+    to: notes-site
+    type: deploy
+    label: VERCEL
+  - from: notes-db
+    to: notes-site
+    type: sync
+    label: SQL
+  - from: notes-job
+    to: notes-db
+    type: sync
+    label: CRON
+  - from: sedum-job
+    to: sedum-site
+    type: deploy
+    label: FTPS
+  - from: sedum-site
+    to: sedum-site2
+    type: deploy
+    label: RSYNC
+  - from: juniper-cms
+    to: juniper-repo
+    type: webhook
+    label: WEBHOOK
+  - from: juniper-repo
+    to: juniper-db
+    type: deploy
+    label: RSYNC
+  - from: heather-cms
+    to: heather-job
+    type: webhook
+    label: WEBHOOK
+  - from: heather-job
+    to: heather-job2
+    type: deploy
+    label: SSH
+  - from: heather-job2
+    to: heather-repo
+    type: deploy
+    label: SSH
+  - from: heather-repo
+    to: heather-db
+    type: deploy
+    label: RSYNC
+  - from: heather-db
+    to: heather-db2
+    type: sync
+    label: SYNC
