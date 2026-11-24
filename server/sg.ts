@@ -1,12 +1,14 @@
-import { loadConfig, loadPositions } from './config'
+import fs from 'node:fs'
+import path from 'node:path'
+import { CONFIG_FILE, loadConfig, loadPositions, schemaJson } from './config'
 import { apply } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
 import { currentRelease } from './store'
 
-// pnpm sg plan | apply
+// pnpm sg plan | apply | schema
 const cmd = process.argv[2]
 if (cmd === 'plan') {
-  const plan = computePlan(loadConfig(), loadPositions())
+  const plan = computePlan(await loadConfig(), loadPositions())
   const cur = currentRelease()
   const old = cur?.estates ?? {}
   const added = Object.keys(plan.estates).filter((id) => !(id in old)), removed = Object.keys(old).filter((id) => !(id in plan.estates))
@@ -20,7 +22,11 @@ if (cmd === 'plan') {
 } else if (cmd === 'apply') {
   const s = await apply((m) => console.log(`[apply] ${m}`))
   console.log(`[apply] done in ${s.ms} ms, first release after ${s.first} ms, rendered`, s.rendered, `+ ${s.tiles} tiles`)
+} else if (cmd === 'schema') {
+  const file = path.join(path.dirname(CONFIG_FILE), 'schema.json')
+  fs.writeFileSync(file, `${JSON.stringify(await schemaJson(), null, 2)}\n`)
+  console.log(`wrote ${file}`)
 } else {
-  console.error('usage: pnpm sg plan | apply')
+  console.error('usage: pnpm sg plan | apply | schema')
   process.exit(2)
 }

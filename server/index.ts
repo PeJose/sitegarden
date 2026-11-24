@@ -3,16 +3,23 @@ import path from 'node:path'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { compress } from 'hono/compress'
-import { streamSSE } from 'hono/streaming'
 import type { ConfigEstate } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
-import { addEstate, CONFIG_FILE, loadConfig, removeLastEstate } from './config'
+import { addEstate, bus, CONFIG_FILE, db, host, loadGraph, removeLastEstate, schemaJson } from './config'
+import { eventsHandler } from './core/events'
+import { createHolder } from './core/holder'
+import { createScheduler } from './core/scheduler'
 import { makeEstate } from './mock'
 import { ART, DATA, currentRelease } from './store'
 
 const app = new Hono()
 app.use(compress())
+
+app.get('/schema.json', async (c) => c.json(await schemaJson()))
+
+// What the browser needs to arrange its extensions; nothing secret.
+app.get('/api/config', (c) => c.json({ extensions: graph.get()?.extensions ?? {} }, 200, { 'Cache-Control': 'no-cache' }))
 
 app.get('/api/release', (c) => {
   const r = currentRelease()
@@ -40,7 +47,7 @@ app.post('/api/want', async (c) => {
 app.post('/api/estates', async (c) => {
   // An explicit estate in the body is planted as given; an empty body plants a random one.
   const body = (await c.req.json().catch(() => null)) as ConfigEstate | null
-  const taken = loadConfig().estates.map((x) => x.id)
+  const taken = (graph.get()?.groups ?? []).map((x) => x.id)
   if (body && (typeof body.id !== 'string' || !Array.isArray(body.nodes) || taken.includes(body.id))) return c.json({ error: 'need a new id and nodes' }, 400)
   const e = body ?? makeEstate(rngFor('plant', Date.now(), Math.random()), taken)
   addEstate(e)
@@ -51,19 +58,19 @@ app.delete('/api/estates/last', (c) => {
   return id ? c.json({ id }) : c.json({ error: 'only one estate left' }, 409)
 })
 
-// Server-sent events: one `release` event whenever `current` moves (this process, or `pnpm sg apply` in another).
-const listeners = new Set<(id: string) => void>()
-app.get('/api/events', (c) => streamSSE(c, async (s) => {
-  const send = (key: string) => void s.writeSSE({ event: 'release', data: key })
-  listeners.add(send)
-  s.onAbort(() => void listeners.delete(send))
-  const r = currentRelease()
-  if (r) send(`${r.id}:${r.rev}`)
-  while (!s.aborted) await s.sleep(25_000).then(() => s.writeSSE({ event: 'ping', data: '' })) // keeps proxies from closing an idle stream
-}))
-let last = ((r) => r && `${r.id}:${r.rev}`)(currentRelease())
+// Typed events with stored IDs (see core/events.ts). `release` is emitted whenever `current` moves (this process, or `pnpm sg apply` in another).
+const key = (r: ReturnType<typeof currentRelease>) => r && `${r.id}:${r.rev}`
+app.get('/api/events', eventsHandler(bus, () => key(currentRelease())))
+const graph = createHolder(loadGraph, bus.emit)
+const scheduler = createScheduler({ db, emit: bus.emit })
+app.post('/api/refresh', async (c) => {
+  const b = (await c.req.json().catch(() => null)) as { node?: unknown } | null
+  if (b?.node !== undefined && typeof b.node !== 'string') return c.json({ error: 'node must be a node id' }, 400)
+  return c.json({ ok: true, queued: scheduler.refresh(b?.node as string | undefined) })
+})
+let last = key(currentRelease())
 const debounce = (ms: number, f: () => void) => { let t: ReturnType<typeof setTimeout>; return () => { clearTimeout(t); t = setTimeout(f, ms) } }
-fs.watch(DATA, debounce(30, () => { const r = currentRelease(); const k = r && `${r.id}:${r.rev}`; if (r && k !== last) { last = k; listeners.forEach((f) => f(k!)) } }))
+fs.watch(DATA, debounce(30, () => { const k = key(currentRelease()); if (k && k !== last) { last = k; bus.emit('release', k) } }))
 
 // Apply on startup (a no-op when the current release already matches) and whenever the config file changes.
 let running = false, again = false
@@ -78,11 +85,13 @@ async function runApply() {
     } while (again)
   } catch (e) { console.error('[apply] failed, still serving the previous release:', (e as Error).message) } finally { running = false }
 }
-const reapply = debounce(100, () => void runApply())
+// A good reload re-plans the checks (plugins were reloaded first) and re-renders.
+const reloaded = () => graph.reload().then((ok) => { if (ok) { scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
+const reapply = debounce(100, () => void reloaded())
 fs.watch(path.dirname(CONFIG_FILE), (_, f) => { if (f === path.basename(CONFIG_FILE)) reapply() })
 
-const port = 8787
+const port = Number(process.env.PORT) || 8787
 serve({ fetch: app.fetch, port }, () => {
   console.log(`[server] http://localhost:${port}`)
-  void runApply()
+  void reloaded()
 })

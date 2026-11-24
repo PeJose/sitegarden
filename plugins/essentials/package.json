@@ -1,0 +1,12 @@
+{
+  "name": "@sitegarden/essentials",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "sitegarden": {
+    "id": "essentials",
+    "apiVersion": "^1",
+    "server": "./server.ts",
+    "contributes": { "nodeTypes": [{ "id": "repo" }, { "id": "cms" }, { "id": "site" }, { "id": "job" }, { "id": "db" }] }
+  }
+}

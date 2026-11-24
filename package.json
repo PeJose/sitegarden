@@ -1,8 +1,11 @@
 {
   "name": "sitegarden",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.2.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "dev": "concurrently -k -n server,web -c blue,green \"pnpm dev:server\" \"pnpm dev:web\"",
     "build": "tsc -b && vite build",
@@ -11,7 +14,7 @@
     "perf": "tsx scripts/perf.ts",
     "dev:server": "UV_THREADPOOL_SIZE=16 tsx watch server/index.ts",
     "dev:web": "vite",
-    "test": "tsx --test src/gen/gen.test.ts src/lib/view.test.ts server/plan.test.ts",
+    "test": "tsx --test src/gen/gen.test.ts src/lib/view.test.ts server/plan.test.ts server/config.test.ts server/core/db.test.ts server/core/events.test.ts server/core/graph.test.ts server/core/holder.test.ts server/core/plugins.test.ts server/core/scheduler.test.ts src/ext/tree.test.ts server/schema.test.ts",
     "sg": "UV_THREADPOOL_SIZE=16 tsx server/sg.ts"
   },
   "dependencies": {
@@ -23,7 +26,8 @@
     "react-dom": "^19.3.1",
     "roughjs": "^4.6.6",
     "sharp": "^0.35.5",
-    "yaml": "^2.9.1"
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",

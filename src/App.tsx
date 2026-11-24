@@ -12,7 +12,7 @@ import { StatusStrip } from './ui/StatusStrip'
 import { CommandBar } from './ui/CommandBar'
 import { Controls } from './ui/Controls'
 import { Popover } from './ui/Popover'
-import { Panel } from './ui/Panels'
+import { extConfig, registry } from './ext/registry'
 import { Debug } from './ui/Debug'
 import { Boring } from './Boring'
 
@@ -89,7 +89,7 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
         {size && <MapView world={world} scheme={scheme} size={size} collapsed={collapsed} onSelect={(id) => { setSelected(id); setPanel(null) }} />}
         <StatusStrip onPick={pickFromPanel} />
         {selected && nodeById(selected) && <Anchored key={selected} id={selected} boxW={size?.w ?? 1440} />}
-        {panel && <Panel kind={panel} onClose={() => setPanel(null)} onPick={pickFromPanel} />}
+        {panel && registry.resolve('sidepanel', 'tabs', extConfig.extensions).find((t) => t.id === `tab:essentials:${panel}`)?.render({ onClose: () => setPanel(null), onPick: pickFromPanel })}
         {toast && <div className="toast" role="status">{toast}</div>}
         <CommandBar say={say} />
         <Controls scheme={scheme} style={style} toggleScheme={toggleScheme} setStyle={setStyle}  />

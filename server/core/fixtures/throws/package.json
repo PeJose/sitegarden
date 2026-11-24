@@ -1,0 +1,1 @@
+{ "name": "fx-throws", "version": "1.0.0", "sitegarden": { "id": "throws", "apiVersion": "^1", "server": "./server.ts" } }

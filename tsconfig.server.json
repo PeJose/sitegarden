@@ -16,5 +16,5 @@
     "erasableSyntaxOnly": true,
     "strict": true
   },
-  "include": ["server", "src/gen"]
+  "include": ["server", "plugins", "src/gen"]
 }

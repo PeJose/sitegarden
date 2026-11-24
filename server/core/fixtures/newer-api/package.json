@@ -1,0 +1,1 @@
+{ "name": "fx-newer-api", "version": "1.0.0", "sitegarden": { "id": "newer-api", "apiVersion": "^2", "server": "./server.ts" } }
