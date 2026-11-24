@@ -25,3 +25,6 @@ dist-ssr
 .cache
 .data
 perf/out
+
+# local AI tooling
+.claude/
