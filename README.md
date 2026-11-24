@@ -21,7 +21,7 @@ Requirements: Node.js 22+ and pnpm.
 
 ```sh
 git clone https://github.com/PeJose/sitegarden.git
-cd sitegarden/web
+cd sitegarden
 pnpm install
 pnpm dev
 ```
@@ -30,7 +30,7 @@ Open http://localhost:5173. The API runs on port 8787 and renders the map on fir
 
 ## Configuration
 
-Projects live in `web/sitegarden.yaml` (override with `SITEGARDEN_CONFIG`). One estate per project, one node per repo, studio or site:
+Projects live in `sitegarden.yaml` (override with `SITEGARDEN_CONFIG`). One estate per project, one node per repo, studio or site:
 
 ```yaml
 accountSeed: garden-58
@@ -58,8 +58,8 @@ While `pnpm dev` runs, saving `sitegarden.yaml` triggers `apply` automatically a
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `SITEGARDEN_CONFIG` | `web/sitegarden.yaml` | config file |
-| `SITEGARDEN_DATA` | `web/.data` | rendered artifacts and releases |
+| `SITEGARDEN_CONFIG` | `sitegarden.yaml` | config file |
+| `SITEGARDEN_DATA` | `.data` | rendered artifacts and releases |
 | `SG_RENDER_WORKERS` | CPU cores − 2 | parallel render workers |
 
 ## Development
@@ -68,10 +68,10 @@ While `pnpm dev` runs, saving `sitegarden.yaml` triggers `apply` automatically a
 pnpm test       # unit tests
 pnpm lint       # oxlint
 pnpm build      # type-check and production build
-pnpm perf       # performance measurements, see web/perf/README.md
+pnpm perf       # performance measurements, see perf/README.md
 ```
 
-How rendering works is described in [web/README.md](web/README.md).
+How rendering works is described in [docs/rendering.md](docs/rendering.md).
 
 ## Roadmap
 

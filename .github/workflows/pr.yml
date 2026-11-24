@@ -14,19 +14,16 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 12 # no packageManager field in web/package.json
+          version: 12 # no packageManager field in package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test
@@ -41,5 +38,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # Project version lives in web/package.json for now (moves to the monorepo root package.json later).
       - run: node .github/scripts/version-bump.mjs "${{ github.base_ref }}"
