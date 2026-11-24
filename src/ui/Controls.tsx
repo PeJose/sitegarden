@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useReactFlow } from '@xyflow/react'
+import { zoomBy } from '../map/MapView'
 import type { Scheme, Style } from '../prefs'
 
 const sun = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
@@ -18,7 +18,6 @@ export function FunSwitch({ style, setStyle, className = '' }: { style: Style; s
 }
 
 export function Controls({ scheme, style, toggleScheme, setStyle }: { scheme: Scheme; style: Style; toggleScheme: () => void; setStyle: (s: Style) => void }) {
-  const { zoomIn, zoomOut } = useReactFlow()
   const [open, setOpen] = useState(false)
   const [sound, setSound] = useState(false)
   const night = scheme === 'night'
@@ -27,8 +26,8 @@ export function Controls({ scheme, style, toggleScheme, setStyle }: { scheme: Sc
     <div className={`controls ${open ? 'open' : ''}`}>
       <FunSwitch style={style} setStyle={setStyle} />
       <div className="stack">
-        <button aria-label="Zoom in" onClick={() => zoomIn({ duration: 200 })}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-        <button aria-label="Zoom out" onClick={() => zoomOut({ duration: 200 })}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        <button aria-label="Zoom in" onClick={() => zoomBy(1.2)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button aria-label="Zoom out" onClick={() => zoomBy(1 / 1.2)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
         {night && <button className="sound" aria-label={`Night sounds: crickets (${sound ? 'on' : 'off'})`} aria-pressed={sound} onClick={() => setSound(!sound)}>{speaker}</button>}
         <button className="theme" aria-label={`Theme: ${night ? 'dark' : 'light'}. Hover for fun or boring mode`} onClick={() => { toggleScheme(); tapOpen() }}>{night ? moon : sun}</button>
       </div>

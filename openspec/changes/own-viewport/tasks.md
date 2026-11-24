@@ -7,7 +7,7 @@
 ## 2. Viewport
 
 - [x] 2.1 `src/map/viewport.ts` store and transform (D1), input handling (D2), animated moves (D3), with unit tests for anchor-preserving zoom, extent clamping, pinch math, click vs drag, and animation cancel. Verify: `src/map/viewport.test.ts` in `pnpm test`.
-- [ ] 2.2 Replace React Flow in MapView, WorldLayer, PinNode, App, Hero, Controls, Debug (D1, D4); remove `@xyflow/react`. Verify: `pnpm build` passes; `rg "@xyflow" src package.json` finds nothing; headless check that drag, wheel, zoom buttons, sidebar fly-to and pin click work (scripted in the perf browser, screenshots read).
+- [x] 2.2 Replace React Flow in MapView, WorldLayer, PinNode, App, Hero, Controls, Debug (D1, D4); remove `@xyflow/react`. Verify: `pnpm build` passes; `rg "@xyflow" src package.json` finds nothing; headless check that drag, wheel, zoom buttons, sidebar fly-to and pin click work (scripted in the perf browser, screenshots read).
 
 ## 3. Isolation
 

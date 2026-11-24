@@ -14,7 +14,7 @@ export const PULL = 0.3
 const LEFT_REACH = 1024
 // The one pan extent the client allows; the server tiles exactly this area (tiledBox), so no reachable pixel is untiled.
 export const tiledBox = (b: World['bounds']): Box => [b.x - LEFT_REACH, b.y, b.x + b.w, b.y + b.h]
-// Tight enough that the window never exceeds tiledBox (which react-flow would otherwise recentre).
+// Tight enough that the window never exceeds tiledBox (which would otherwise have to be recentred).
 export const minZoom = (w: number, h: number, b: World['bounds']) => Math.max(w / (b.w + LEFT_REACH), h / b.h)
 
 // The pan extent in the current panel state and zoom: the world plus, on its left, just enough room for the open panel to be cleared
@@ -24,7 +24,7 @@ export function panExtent(b: World['bounds'], w: number, zoom: number, collapsed
   return [[b.x - reach, b.y], [b.x + b.w, b.y + b.h]]
 }
 
-// Clamp a viewport to the pan extent the way react-flow does, so animating to it never overshoots and snaps back.
+// Clamp a viewport to the pan extent (what d3-zoom's constrain did), so animating to it never overshoots and snaps back.
 export type Viewport = { x: number; y: number; zoom: number }
 export function clampViewport(v: Viewport, [[x0, y0], [x1, y1]]: [[number, number], [number, number]], w: number, h: number): Viewport {
   const one = (p: number, lo: number, hi: number, size: number) => (hi - lo) * v.zoom < size ? size / 2 - ((lo + hi) / 2) * v.zoom : Math.min(-lo * v.zoom, Math.max(size - hi * v.zoom, p))
@@ -52,12 +52,12 @@ export function initialViewport(w: number, h: number, world: Pick<World, 'estate
     x: clamp(left + availW / 2 - ((bb[0] + bb[2]) / 2) * zoom, w - (x + bw) * zoom, left - x * zoom),
     y: clamp((desktop ? 20 : 0) + (h - (desktop ? 160 : 0)) / 2 - ((bb[1] + bb[3]) / 2) * zoom, h - (y + bh) * zoom, -y * zoom),
   }
-  return clampViewport(v, panExtent(world.bounds, w, zoom, collapsed), w, h) // exactly what react-flow will allow, so the first interaction never moves it
+  return clampViewport(v, panExtent(world.bounds, w, zoom, collapsed), w, h) // exactly what the viewport allows, so the first interaction never moves it
 }
 
 // What TileLayer depends on: the level and the range of tile cells in view (rect is the exact viewport in world units, for the first wave only).
 export interface TileView { level: number; c0: number; c1: number; r0: number; r1: number; rect: number[] }
-export function viewOf([x, y, zoom]: number[], T: number, size: { w: number; h: number }, dpr: number): TileView {
+export function viewOf({ x, y, zoom }: Viewport, T: number, size: { w: number; h: number }, dpr: number): TileView {
   const m = T / 2 // half a tile of margin so panning rarely waits
   const rx0 = -x / zoom - m, ry0 = -y / zoom - m, rx1 = (size.w - x) / zoom + m, ry1 = (size.h - y) / zoom + m
   return { level: levelFor(zoom, dpr), c0: Math.floor(rx0 / T), c1: Math.floor(rx1 / T), r0: Math.floor(ry0 / T), r1: Math.floor(ry1 / T), rect: [rx0, ry0, rx1, ry1] }

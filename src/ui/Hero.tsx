@@ -1,5 +1,5 @@
-import { useReactFlow } from '@xyflow/react'
-import { preloadFly, useFlyTo } from '../map/MapView'
+import { flyTo, preloadFly } from '../map/MapView'
+import { viewport } from '../map/viewport'
 import { engine, useEngine } from '../mock/engine'
 import { summarize } from '../summary'
 import { useNow } from '../lib/time'
@@ -34,9 +34,8 @@ export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (p: 'inve
   const st = useEngine((s) => s)
   const now = useNow(15000)
   const sum = summarize(st, now)
-  const { getZoom } = useReactFlow(), flyTo = useFlyTo()
-  const fly = (id: string) => { const e = estateOf(id); if (e) flyTo(e.cx, e.cy, Math.max(getZoom(), 1.3)) }
-  const warm = (id: string) => { const e = estateOf(id); if (e) preloadFly(e.cx, e.cy, Math.max(getZoom(), 1.3)) } // hover or focus: the tiles are ready when it is clicked
+  const fly = (id: string) => { const e = estateOf(id); if (e) flyTo(e.cx, e.cy, Math.max(viewport.get().zoom, 1.3)) }
+  const warm = (id: string) => { const e = estateOf(id); if (e) preloadFly(e.cx, e.cy, Math.max(viewport.get().zoom, 1.3)) } // hover or focus: the tiles are ready when it is clicked
   useWorld()
   const redeploy = sum.first && edges.find((e) => e.type === 'deploy' && nodeById(e.from)?.group === sum.first!.group)
   return (

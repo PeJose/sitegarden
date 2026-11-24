@@ -25,7 +25,7 @@ export function wantOf(world: WorldData, scheme: Scheme, { level, c0, c1, r0, r1
 const held = new Map<string, HTMLImageElement>() // keeps decoded images alive until they are mounted; dedupes hover and click
 const MAX_HELD = 96
 export function preloadTiles(world: WorldData, scheme: Scheme, vp: Viewport, size: { w: number; h: number }) {
-  const view = viewOf([vp.x, vp.y, vp.zoom], world.tiles.size, size, window.devicePixelRatio)
+  const view = viewOf(vp, world.tiles.size, size, window.devicePixelRatio)
   const tex = world.textures?.[scheme]?.[view.level] // the paper under the tiles changes with the level too
   const srcs = wantOf(world, scheme, view).want.map((t) => t.src)
   if (tex) srcs.push(srcOf(tex))

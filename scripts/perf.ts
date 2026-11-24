@@ -90,7 +90,7 @@ for (const [name, s] of Object.entries(scenarios)) {
   const load = await page.evaluate(() => (window as unknown as { __perf: Record<string, number> }).__perf)
   const sum = (re?: RegExp) => [...sizes].filter(([u]) => !re || re.test(u)).reduce((a, [, b]) => a + b, 0)
   const bytes = { total: sum(), texture: sum(/layer-texture/), tiles: sum(/tile-/), js: sum(/\.js/) }
-  const zoom = await page.evaluate(() => +(/scale\(([\d.]+)\)/.exec(document.querySelector<HTMLElement>('.react-flow__viewport')?.style.transform ?? '')?.[1] ?? 0))
+  const zoom = await page.evaluate(() => +(/scale\(([\d.]+)\)/.exec(document.querySelector<HTMLElement>('.react-flow__viewport, .viewport')?.style.transform ?? '')?.[1] ?? 0))
   if (s.cpu) await cdp.send('Emulation.setCPUThrottlingRate', { rate: s.cpu })
 
   const rows = await page.locator('.estates .estate').count()
