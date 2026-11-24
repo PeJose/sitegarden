@@ -57,6 +57,7 @@ async function release(id: string, ctl: AbortController) {
         const frame = buf.slice(0, i); buf = buf.slice(i + 2)
         const ev = /^event: (.*)$/m.exec(frame)?.[1], data = /^data: (.*)$/m.exec(frame)?.[1]
         if (ev === 'apply.progress') { const p = JSON.parse(data!); if (p.rev === rev) console.log(`[apply] ${p.done}/${p.total} tiles`) }
+        if (ev === 'apply.failed') { const p = JSON.parse(data!); if (p.rev === rev) die(1, `apply failed on the server: ${p.message}`) }
         if (ev === 'release' && await done()) return
       }
     }

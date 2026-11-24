@@ -28,7 +28,9 @@ const { db, loadConfig, loadPositions } = await import('./config')
 const { computePlan } = await import('./plan')
 const { publish } = await import('./store')
 // No rendering here: the stub publishes a complete release for the stored config.
+let boom = false
 engine.apply = async (_log, _stale, progress) => {
+  if (boom) throw new Error('boom')
   const plan = computePlan(await loadConfig(), loadPositions())
   progress?.(1, 1)
   publish({ id: plan.id, rev: 1, complete: true } as Parameters<typeof publish>[0])
@@ -91,4 +93,14 @@ test('a comment-only apply stores a new rev, and sg pull then needs no --force',
   assert.deepEqual([r.code, db.latestRev()], [0, 4])
   assert.match(r.out, /no graph changes, text changed: stored as rev 4/)
   assert.equal((await sg('pull')).code, 0)
+})
+
+test('when the server render fails, apply prints the message and exits 1 instead of waiting', async () => {
+  boom = true
+  fs.writeFileSync(file, withNode('d'))
+  const r = await sg('apply', '--yes')
+  boom = false
+  assert.equal(r.code, 1)
+  assert.match(r.out, /apply failed on the server: boom/)
+  assert.deepEqual(db.eventsAfter(0).filter((e) => e.type === 'apply.failed').map((e) => e.data), [{ rev: 5, message: 'boom' }])
 })

@@ -163,7 +163,10 @@ async function runApply() {
       const s = await engine.apply((m) => console.log(`[apply] ${m}`), () => again, progress)
       console.log(`[apply] ${s.aborted ? 'superseded' : 'done'} in ${s.ms} ms`, s.rendered)
     } while (again)
-  } catch (e) { console.error('[apply] failed, still serving the previous release:', (e as Error).message) } finally { running = false }
+  } catch (e) {
+    console.error('[apply] failed, still serving the previous release:', (e as Error).message)
+    bus.emit('apply.failed', { rev: db.latestRev(), message: (e as Error).message }) // the CLI is waiting for this rev
+  } finally { running = false }
 }
 // A good reload re-plans the checks (plugins were reloaded first) and re-renders.
 const reloaded = () => graph.reload().then((ok) => { if (ok) { scheduler.set(graph.get()!.nodes, host.checks()); void runApply() } })
