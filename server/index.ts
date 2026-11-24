@@ -3,11 +3,12 @@ import path from 'node:path'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { compress } from 'hono/compress'
-import { streamSSE } from 'hono/streaming'
 import type { ConfigEstate } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
 import { addEstate, CONFIG_FILE, loadConfig, removeLastEstate } from './config'
+import { openDb } from './core/db'
+import { createBus, eventsHandler } from './core/events'
 import { makeEstate } from './mock'
 import { ART, DATA, currentRelease } from './store'
 
@@ -51,19 +52,13 @@ app.delete('/api/estates/last', (c) => {
   return id ? c.json({ id }) : c.json({ error: 'only one estate left' }, 409)
 })
 
-// Server-sent events: one `release` event whenever `current` moves (this process, or `pnpm sg apply` in another).
-const listeners = new Set<(id: string) => void>()
-app.get('/api/events', (c) => streamSSE(c, async (s) => {
-  const send = (key: string) => void s.writeSSE({ event: 'release', data: key })
-  listeners.add(send)
-  s.onAbort(() => void listeners.delete(send))
-  const r = currentRelease()
-  if (r) send(`${r.id}:${r.rev}`)
-  while (!s.aborted) await s.sleep(25_000).then(() => s.writeSSE({ event: 'ping', data: '' })) // keeps proxies from closing an idle stream
-}))
-let last = ((r) => r && `${r.id}:${r.rev}`)(currentRelease())
+// Typed events with stored IDs (see core/events.ts). `release` is emitted whenever `current` moves (this process, or `pnpm sg apply` in another).
+const bus = createBus(openDb(path.join(DATA, 'sitegarden.db')))
+const key = (r: ReturnType<typeof currentRelease>) => r && `${r.id}:${r.rev}`
+app.get('/api/events', eventsHandler(bus, () => key(currentRelease())))
+let last = key(currentRelease())
 const debounce = (ms: number, f: () => void) => { let t: ReturnType<typeof setTimeout>; return () => { clearTimeout(t); t = setTimeout(f, ms) } }
-fs.watch(DATA, debounce(30, () => { const r = currentRelease(); const k = r && `${r.id}:${r.rev}`; if (r && k !== last) { last = k; listeners.forEach((f) => f(k!)) } }))
+fs.watch(DATA, debounce(30, () => { const k = key(currentRelease()); if (k && k !== last) { last = k; bus.emit('release', k) } }))
 
 // Apply on startup (a no-op when the current release already matches) and whenever the config file changes.
 let running = false, again = false
