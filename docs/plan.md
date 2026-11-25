@@ -186,17 +186,17 @@ Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend 
 | M7 | Seasons | Jun 2027 | Time scrubber, growing garden, seasons, postcards |
 | M8 | Glasshouse | Jul 2027 | GPU-rendered watercolour (in the browser), instant re-renders, live seasons and weather |
 
-### M1 — Seed (~13.5 days)
+### M1 — Seed (~14 days)
 
 1. Core: graph model, YAML loader + schema merge, plugin host (tiers A/B), extension tree, store, scheduler, SSE (4 d)
 2. Secrets broker with `_FILE`, SSRF guard (1 d)
 3. `essentials`: node types, `repo:` / `sanity:` shorthands, HTTP + keyword checks (1.5 d)
 4. Map v0 (plain theme), side panel, Inventory + Links lists, Refresh (2 d). Done in 0.8.0: `/api/status` + SSE drive the map, Refresh runs server checks, a server-side `mock` plugin replaces the client's fake engine (demo flows stay client-side until M2)
 5. Dockerfile, compose with Tailscale sidecar, `tailscale` + `password` auth, README; first Playwright e2e suite that pins the stable flows (map loads, live statuses, refresh, login) and runs in PR CI (2.5 d) Done in 0.9.0: the server serves the built app, `tailscale` and `password` auth plus an API token for the CLI, Dockerfile and compose with the Tailscale sidecar, 5 Playwright e2e tests and a Docker build in PR CI
-6. One web plugin end to end, built at build time against the host's Preact, to prove the SDK before it freezes (0.5 d)
+6. One web plugin end to end, built at build time against the host's Preact, to prove the SDK before it freezes (0.5 d) Done in 0.10.0: `essentials` ships a Checks tab as a web plugin (Vite plugin generates the imports from the config, `/api/config` gates them at runtime), web SDK 1.0.0 and plugin API v1 frozen in `docs/plugins.md`
 7. Client performance pass, before more UI lands (1.5 d). Observed 2026-11-20: the browser's GPU process sits at ~300% while the POC map is open, even when idle and fully loaded, and pan/zoom animations feel slow. Profile first (Chrome Performance + Layers panels, dev vs production build), then fix what the data shows. Suspects (React Flow, since replaced by the own viewport and Preact, was the first): re-rendering every pin/chip/label per frame, `backdrop-filter` blur on panels over a moving map, many rough.js SVG pins, CSS opacity transitions, idle animations (deploy path, red wash) that never stop. Target: near-zero GPU when idle, 60 fps pan on a mid phone
 8. pre4, smaller and faster client: our own viewport instead of React Flow (0.6.0) and Preact instead of React (0.7.0). Main chunk 181 KB to 40 KB gzip, pan and zoom unchanged (budgets in `perf/results.md`)
-9. Settings page at `/settings`, after item 6 (1 d). Kept plain and simple: it exists to make the app debuggable and to give later work a home. **About:** app, plugin API and renderer versions, config revision with time and source, demo mode. **Plugins:** id, version, loaded or "failed to load" (the reason stays in the server log). **Dev tools:** the debug menu's buttons (deploy now, webhook now, plant / remove estate), which leave the map. Opened from the hero menu. Better design, display prefs, enable / disable and settings forms come in later milestones (M6).
+9. Settings page at `/settings`, after item 6 (1.5 d). Kept plain and simple: it exists to make the app debuggable and to give later work a home. **About:** app, plugin API and renderer versions, config revision with time and source, demo mode. **Plugins:** id, version, loaded or "failed to load" (the reason stays in the server log). **Dev tools:** the debug menu's buttons (deploy now, webhook now, plant / remove estate), which leave the map. **API tokens:** generate a named token (shown once, with a copy button), stored hashed in SQLite with created and last-used times, revoke in one click; the env `SITEGARDEN_API_TOKEN` stays as the bootstrap and recovery token. Opened from the hero menu. Better design, display prefs, enable / disable and settings forms come in later milestones (M6).
 
 Order for the rest of M1: 4 → 5 → 6 → 9.
 

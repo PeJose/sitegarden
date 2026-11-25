@@ -7,6 +7,6 @@ import { registry } from './registry'
 registry.add({ id: 'layer:garden:tiles', slot: 'map', input: 'layers', order: 10, render: ({ world, scheme, view }) => <TileLayer world={world} scheme={scheme} view={view} /> })
 registry.add({ id: 'layer:garden:live', slot: 'map', input: 'layers', order: 20, render: ({ world, scheme }) => <Live world={world} scheme={scheme} /> })
 registry.add({ id: 'layer:garden:labels', slot: 'map', input: 'layers', order: 30, render: ({ world }) => <Labels world={world} /> })
-for (const kind of ['inventory', 'links'] as const) {
-  registry.add({ id: `tab:essentials:${kind}`, slot: 'sidepanel', input: 'tabs', render: ({ onClose, onPick }) => <Panel kind={kind} onClose={onClose} onPick={onPick} /> })
+for (const [kind, title, order] of [['inventory', 'All services', 10], ['links', 'All links', 20]] as const) {
+  registry.add({ id: `tab:essentials:${kind}`, slot: 'sidepanel', input: 'tabs', order, title, render: ({ onClose, onPick }) => <Panel kind={kind} onClose={onClose} onPick={onPick} /> })
 }

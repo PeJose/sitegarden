@@ -239,6 +239,10 @@ test('status: a node with no results is unknown with empty data; every node of t
   assert.equal((await app.request('/api/status')).headers.get('Cache-Control'), 'no-store')
 })
 
+test('/api/config lists the loaded plugins next to the extensions', async () => {
+  assert.deepEqual(await json(app.request('/api/config')), [200, { extensions: {}, plugins: ['essentials'] }])
+})
+
 // The status only counts checks the config runs; these two never fire during the test.
 const runs = () => scheduler.set([{ id: 'a', type: 'repo' }, { id: 'b', type: 'site' }], ['http', 'other'].map((id) => ({ id, every: '1d', run: () => ({ status: 'ok' as const }) })))
 

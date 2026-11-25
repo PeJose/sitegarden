@@ -116,7 +116,7 @@ All actions: confirm, audit log, disabled in read-only mode.
 | Plugin host | Manifest, extension tree, replace / disable by ID, tiers A and B | (in core) | M1 | Backstage, VS Code |
 | End-to-end plugin prototype | One web plugin built into the web app, to de-risk the SDK | 0.5 | M1 | Grafana |
 | Theme plugins | Garden and plain as two theme plugins | (in M3) | M3 | |
-| Settings page | `/settings`, plain: versions, config revision, plugin list (failed ones without the reason), dev tools moved off the map | 1 | M1 | |
+| Settings page | `/settings`, plain: versions, config revision, plugin list (failed ones without the reason), dev tools moved off the map, API tokens (generate once, hashed, revoke) | 1.5 | M1 | |
 | ★ Plugin gallery | Installed plugins, contributions, permissions, enable / disable | 2 | M6 | |
 | Plugin scaffolder | `create-sitegarden-plugin` templates: theme, pack, node type, source | 1 | M6 | |
 | Dev mode with hot reload | `sitegarden dev ./my-plugin` | 2 | M6 | |

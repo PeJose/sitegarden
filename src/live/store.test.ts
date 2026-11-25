@@ -7,7 +7,7 @@ import { deploy } from './demo'
 
 const node = (id: string, type: string) => ({ id, type, name: `${id} name`, checks: [] })
 setConfig({ estates: [{ id: 'fernhill', label: 'fernhill', nodes: [node('fernhill-repo', 'repo'), node('fernhill-site', 'site'), node('fernhill-cms', 'cms')], edges: [{ from: 'fernhill-repo', to: 'fernhill-site', type: 'deploy' }] }] } as unknown as Config)
-const entry = (status: string, o = {}) => ({ status, since: 1000, lastChecked: 2000, responseMs: 120, history: [100, 120], ...o })
+const entry = (status: string, o = {}) => ({ status, since: 1000, lastChecked: 2000, responseMs: 120, history: [100, 120], checks: [{ id: 'http', status, detail: '200 in 120 ms', at: 2000, ms: 120 }], ...o })
 const snap = (o: Partial<Snapshot> = {}): Snapshot => ({ lastEventId: 10, demo: false, nodes: { 'fernhill-repo': entry('ok'), 'fernhill-site': entry('down', { responseMs: null }) } as Snapshot['nodes'], ...o })
 const st = () => live.getState()
 const stubFetch = (queued: number, calls: { url: string; body: string }[] = []) => mock.method(globalThis, 'fetch', async (url: string, init: RequestInit) => (calls.push({ url, body: String(init?.body) }), { ok: true, json: async () => ({ ok: true, queued }) }) as Response)
@@ -41,6 +41,19 @@ test('events: node.status, check.result, old ids ignored, unknown node ignored, 
   for (let i = 0; i < 60; i++) live.apply('check.result', { node: 'fernhill-repo', status: 'ok', ms: i + 1 }, 20 + i)
   assert.equal(st().nodes['fernhill-repo'].history.length, 48)
   assert.equal(st().nodes['fernhill-repo'].history.at(-1), 60)
+})
+
+test('checks: kept from the snapshot, updated in place on check.result, a new check added', () => {
+  live.load(snap())
+  assert.deepEqual(st().nodes['fernhill-repo'].checks, [{ id: 'http', status: 'ok', detail: '200 in 120 ms', at: 2000, ms: 120 }])
+  assert.deepEqual(st().nodes['fernhill-site'].checks.map((c) => c.status), ['down'])
+  assert.deepEqual(st().nodes['elsewhere'] ?? null, null)
+  live.apply('check.result', { node: 'fernhill-repo', check: 'http', status: 'down', detail: 'expected 200, got 503', ms: 90 }, 11)
+  const [c] = st().nodes['fernhill-repo'].checks
+  assert.deepEqual([st().nodes['fernhill-repo'].checks.length, c.status, c.detail, c.ms, c.at > 2000], [1, 'down', 'expected 200, got 503', 90, true])
+  live.apply('check.result', { node: 'fernhill-repo', check: 'tls', status: 'ok' }, 12)
+  assert.deepEqual(st().nodes['fernhill-repo'].checks.map((x) => [x.id, x.detail, x.ms]), [['http', 'expected 200, got 503', 90], ['tls', null, null]])
+  assert.deepEqual(st().nodes['fernhill-cms'].checks, []) // not in the snapshot: unknown, no checks
 })
 
 test('refresh: POST /api/refresh, toast only when nothing is queued', async () => {

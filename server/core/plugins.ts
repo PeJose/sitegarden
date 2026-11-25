@@ -16,6 +16,7 @@ export const Manifest = z.object({
   apiVersion: z.string(),
   dependsOn: z.record(z.string(), z.string()).optional(),
   server: z.string().optional(),
+  web: z.string().optional(), // entry compiled into the web build (vite/sitegarden-plugins.ts)
   contributes: z.looseObject({ themes: list, buildingPacks: list, edgeTypes: list, nodeTypes: z.array(z.object({ id: z.string(), extends: z.string().optional() })).optional() }).default({}),
   permissions: z.object({ network: z.array(z.string()).default([]), secrets: z.array(z.string()).default([]), actions: z.array(z.string()).default([]) }).default({ network: [], secrets: [], actions: [] }), // network and secrets are enforced by ctx.http; actions are stored only
   tier: z.literal('trusted').default('trusted'),

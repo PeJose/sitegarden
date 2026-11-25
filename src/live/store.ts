@@ -24,7 +24,7 @@ class Live {
     this.lastId = snap?.lastEventId ?? 0
     this.server = Object.fromEntries(nodes.map((n) => {
       const s = snap?.nodes[n.id]
-      return [n.id, s ? { ...s, lastChecked: s.lastChecked ?? 0, since: s.since ?? now } : { status: 'unknown', lastChecked: 0, since: now, responseMs: null, history: [] }]
+      return [n.id, s ? { ...s, lastChecked: s.lastChecked ?? 0, since: s.since ?? now } : { status: 'unknown', lastChecked: 0, since: now, responseMs: null, history: [], checks: [] }]
     }))
     const early = this.early
     this.early = null
@@ -35,7 +35,7 @@ class Live {
     try { const r = await fetch('/api/status'); return r.ok ? await r.json() : null } catch { return null }
   }
 
-  apply(type: string, e: { node: string; status: NodeState['status']; ms?: number }, id: number) {
+  apply(type: string, e: { node: string; status: NodeState['status']; ms?: number; check?: string; detail?: string }, id: number) {
     if (this.early) return void this.early.push([type, e, id])
     const cur = this.server[e.node]
     if (still || !cur || id <= this.lastId) return
@@ -45,7 +45,8 @@ class Live {
     if (type === 'node.status') next = { ...cur, status: e.status, since: now }
     else if (type === 'check.result') {
       const ok = e.status === 'ok', hist = ok && e.ms == null ? cur.history : [...cur.history, ok ? e.ms! : 0].slice(-48) // an ok result without a time adds no point
-      next = { ...cur, lastChecked: now, responseMs: ok ? e.ms ?? cur.responseMs : null, history: hist }
+      const c = { id: e.check ?? '', status: e.status, detail: e.detail ?? null, at: now, ms: e.ms ?? null }
+      next = { ...cur, lastChecked: now, responseMs: ok ? e.ms ?? cur.responseMs : null, history: hist, checks: cur.checks.some((x) => x.id === c.id) ? cur.checks.map((x) => (x.id === c.id ? c : x)) : [...cur.checks, c] }
     } else return
     this.server = { ...this.server, [e.node]: next }
     this.set({})

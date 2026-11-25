@@ -17,6 +17,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
     "paths": {
+      "@sitegarden/web-sdk": ["./src/ext/sdk.ts"],
       "react": ["./node_modules/preact/compat/"],
       "react/jsx-runtime": ["./node_modules/preact/jsx-runtime"],
       "react-dom": ["./node_modules/preact/compat/"],
@@ -29,6 +30,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "plugins/*/web.tsx"],
   "exclude": ["src/**/*.test.ts"]
 }

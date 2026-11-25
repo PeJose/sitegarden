@@ -29,3 +29,10 @@ test('a node without a mock block opens its details', async ({ page }) => {
   await page.goto('/?select=fernhill-repo')
   await expect(page.getByRole('complementary', { name: 'acme/fernhill details' })).toBeVisible()
 })
+
+test('the hero menu opens the Checks tab from the essentials web plugin', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('navigation', { name: 'Estates' }).getByRole('button', { name: 'Checks →' }).click()
+  const sheet = page.getByRole('region', { name: 'Checks' })
+  await expect(sheet.getByRole('button', { name: /fernhill\.example mock/ })).toContainText(/ok|degraded|down/, { timeout: 10_000 })
+})
