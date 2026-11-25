@@ -13,7 +13,7 @@
 
 ## 3. Docker
 
-- [ ] 3.1 `Dockerfile`, `.dockerignore`, `docker-compose.yml`, `deploy/serve.json`, `tsx` to dependencies (D6). Verify: `docker build .` and a container run answering `/api/health` and serving the map locally.
+- [x] 3.1 `Dockerfile`, `.dockerignore`, `docker-compose.yml`, `deploy/serve.json`, `tsx` to dependencies (D6). Verify: `docker build .` and a container run answering `/api/health` and serving the map locally.
 
 ## 4. E2E and CI
 
