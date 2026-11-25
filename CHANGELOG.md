@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.11.0] - 2026-11-25
+
+### Added
+- Settings page at `/settings` (hero menu, Esc or × to close): app, plugin API, web SDK and renderer versions, config revision with time and source, demo mode, and every plugin as loaded or failed to load (the failure reason stays in the server log). `GET /api/settings`.
+- Generated API tokens: `GET/POST/DELETE /api/tokens`, shown once, stored as a SHA-256 hash with created and last-used times, revoked in one click; `SITEGARDEN_API_TOKEN` stays as the bootstrap token. Only a signed-in user or the env token manages them; a generated token gets 403. Database schema v6.
+
+### Changed
+- The map's `mock +` debug tab is gone; deploy now, webhook now, plant an estate and remove last estate live under Dev tools in Settings (deploy and webhook only in demo mode).
+
 ## [0.10.0] - 2026-11-25
 
 ### Added
