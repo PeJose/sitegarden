@@ -150,8 +150,9 @@ test('five wrong passwords per client in 15 minutes, then 429 and the password i
 
 test('behind the local proxy the client is the first X-Forwarded-For hop; from elsewhere the header is ignored', async () => {
   reset({ enabled: true, mode: 'password', users: [] }, true)
-  for (let i = 0; i < 5; i++) await login('nope', { 'x-addr': '127.0.0.1', 'x-forwarded-for': '100.64.0.7, 127.0.0.1' })
-  assert.equal((await login(PW, { 'x-addr': '127.0.0.1', 'x-forwarded-for': '100.64.0.7' })).status, 429)
+  // behind the local proxy the last hop counts: client-sent first hops cannot dodge the limit
+  for (let i = 0; i < 5; i++) await login('nope', { 'x-addr': '127.0.0.1', 'x-forwarded-for': `9.9.9.${i}, 100.64.0.7` })
+  assert.equal((await login(PW, { 'x-addr': '127.0.0.1', 'x-forwarded-for': '8.8.8.8, 100.64.0.7' })).status, 429)
   assert.equal((await login(PW, { 'x-addr': '127.0.0.1', 'x-forwarded-for': '100.64.0.8' })).status, 303)
   for (let i = 0; i < 5; i++) await login('nope', { 'x-addr': '10.2.2.2', 'x-forwarded-for': `1.1.1.${i}` })
   assert.equal((await login(PW, { 'x-addr': '10.2.2.2', 'x-forwarded-for': '1.1.1.9' })).status, 429)

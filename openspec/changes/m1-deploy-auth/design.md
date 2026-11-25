@@ -13,7 +13,7 @@
 ### D1. Production serving
 - Hono `serveStatic` from `@hono/node-server/serve-static` serves `dist/` (path from `SITEGARDEN_WEB`, default `<repo>/dist`) after the API routes; unknown non-API GET paths fall back to `dist/index.html`. Hashed assets under `/assets/` get `Cache-Control: public, max-age=31536000, immutable`, `index.html` gets `no-cache`.
 - `GET /api/health` → `{ ok: true, version }` (version from `package.json`), no auth, for Docker `HEALTHCHECK`.
-- `server/index.ts`: `HOST` env (default `127.0.0.1`) passed to `serve({ hostname })`. If `HOST` is not a loopback address and the current config has auth off, log an error and exit 1 unless `SITEGARDEN_INSECURE=1`.
+- `server/index.ts`: `HOST` env (default `127.0.0.1`) passed to `serve({ hostname })`. If `HOST` is not a loopback address and the current config has auth off, or auth is in `tailscale` mode (the header is only trustworthy on loopback behind `tailscale serve`), log an error and exit 1 unless `SITEGARDEN_INSECURE=1`. Rate limiting behind the loopback proxy uses the last `X-Forwarded-For` hop (the one the proxy added).
 
 ### D2. Auth config
 `auth: z.strictObject({ enabled: boolean default false, mode: enum['tailscale','password'] default 'tailscale', users: array(string) default [] })`.

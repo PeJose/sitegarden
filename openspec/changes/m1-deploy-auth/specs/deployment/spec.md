@@ -10,7 +10,7 @@ In production the server SHALL serve the built web app, its assets with long-liv
 - **THEN** the map loads from the server without Vite
 
 ### Requirement: Safe listening
-The server SHALL listen on `HOST` (default loopback) and SHALL refuse to start on a non-loopback address while auth is off, unless `SITEGARDEN_INSECURE=1`.
+The server SHALL listen on `HOST` (default loopback) and SHALL refuse to start on a non-loopback address while auth is off or in `tailscale` mode, unless `SITEGARDEN_INSECURE=1`.
 
 #### Scenario: Exposed by mistake
 - **WHEN** someone starts the container with `HOST=0.0.0.0` and auth off
@@ -22,3 +22,7 @@ The repository SHALL ship a Dockerfile and a compose file that run the app insid
 #### Scenario: First start
 - **WHEN** the owner sets `TS_AUTHKEY` and runs `docker compose up -d --build`
 - **THEN** the map is reachable at `https://sitegarden.<tailnet>.ts.net` from their tailnet devices only
+
+#### Scenario: Forged Tailscale header
+- **WHEN** someone starts the server with `HOST=0.0.0.0` and `tailscale` auth
+- **THEN** it exits with an error, because anyone on that network could send `Tailscale-User-Login`

@@ -43,8 +43,8 @@ export function createAuth({ db, secrets, cfg, now = Date.now, addr = (c) => { t
   // shortcut: failed logins are counted in memory, so a restart or a second process resets them; move to the db when running more than one process
   const fails = new Map<string, number[]>()
   const loop = (a?: string) => !!a && (a === '::1' || a.startsWith('127.') || a.startsWith('::ffff:127.'))
-  // The socket address; the first X-Forwarded-For hop only when the socket is the local proxy (tailscale serve).
-  const ip = (c: Context) => { const a = addr(c); return loop(a) ? c.req.header('x-forwarded-for')?.split(',')[0].trim() || a! : a ?? 'unknown' }
+  // The socket address; behind the local proxy (tailscale serve) the last X-Forwarded-For hop, the one the proxy added (earlier hops are whatever the client sent).
+  const ip = (c: Context) => { const a = addr(c); return loop(a) ? c.req.header('x-forwarded-for')?.split(',').at(-1)?.trim() || a! : a ?? 'unknown' }
 
   const cookie = (c: Context, token: string) => {
     const u = new URL(c.req.url), proto = c.req.header('x-forwarded-proto')?.split(',')[0].trim() ?? u.protocol.slice(0, -1)

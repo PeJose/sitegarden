@@ -214,11 +214,15 @@ const files = web(serveStatic({ root: WEB, onFound: found })), spa = web(serveSt
 app.get('*', files)
 app.get('*', (c, next) => /^\/(api|a|assets)\//.test(c.req.path) || path.extname(c.req.path) ? next() : spa(c, next))
 
-// Auth off on an address other than this machine's would put the app, and every token behind it, in front of the network.
-export const listenIssue = (addr: string, authOn: boolean, insecure: boolean) => authOn || insecure || addr === 'localhost' || addr === '::1' || addr === '[::1]' || /^127\./.test(addr) ? null : `refusing to listen on ${addr} with auth off: turn auth on, or set SITEGARDEN_INSECURE=1 to accept the risk`
+// Off this machine, auth off exposes everything, and tailscale mode trusts a header anyone on the network could send: only `tailscale serve` on loopback may set it.
+export function listenIssue(addr: string, a: { enabled: boolean; mode: string }, insecure: boolean) {
+  if (insecure || addr === 'localhost' || addr === '::1' || addr === '[::1]' || /^127\./.test(addr)) return null
+  if (!a.enabled) return `refusing to listen on ${addr} with auth off: turn auth on, or set SITEGARDEN_INSECURE=1 to accept the risk`
+  return a.mode === 'tailscale' ? `refusing to listen on ${addr} in tailscale auth mode: the Tailscale-User-Login header is only trustworthy on loopback behind tailscale serve; use HOST=127.0.0.1, password mode, or SITEGARDEN_INSECURE=1` : null
+}
 export function start(port: number, addr = '127.0.0.1') {
   bootstrap()
-  const issue = listenIssue(addr, authConfig().enabled, process.env.SITEGARDEN_INSECURE === '1')
+  const issue = listenIssue(addr, authConfig(), process.env.SITEGARDEN_INSECURE === '1')
   if (issue) return Promise.reject(new Error(issue))
   const watcher = fs.watch(DATA, debounce(30, () => { const k = key(currentRelease()); if (k && k !== last) { last = k; bus.emit('release', k) } }))
   return new Promise<{ port: number; close(): void }>((resolve) => {

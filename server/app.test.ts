@@ -218,10 +218,13 @@ test('health answers with the version and no auth', async () => {
 
 test('the server refuses a non-loopback address with auth off unless SITEGARDEN_INSECURE=1', async () => {
   await assert.rejects(start(0, '0.0.0.0'), /refusing to listen on 0\.0\.0\.0 with auth off/)
-  assert.deepEqual(['127.0.0.1', 'localhost', '::1'].map((h) => listenIssue(h, false, false)), [null, null, null])
-  assert.match(listenIssue('0.0.0.0', false, false)!, /SITEGARDEN_INSECURE=1/)
-  assert.equal(listenIssue('0.0.0.0', false, true), null)
-  assert.equal(listenIssue('0.0.0.0', true, false), null)
+  const off = { enabled: false, mode: 'tailscale' }, ts = { enabled: true, mode: 'tailscale' }, pw = { enabled: true, mode: 'password' }
+  assert.deepEqual(['127.0.0.1', 'localhost', '::1'].map((h) => listenIssue(h, off, false)), [null, null, null])
+  assert.match(listenIssue('0.0.0.0', off, false)!, /SITEGARDEN_INSECURE=1/)
+  assert.equal(listenIssue('0.0.0.0', off, true), null)
+  assert.match(listenIssue('0.0.0.0', ts, false)!, /tailscale auth mode/) // the header would be forgeable off loopback
+  assert.equal(listenIssue('127.0.0.1', ts, false), null)
+  assert.equal(listenIssue('0.0.0.0', pw, false), null)
 })
 
 const nap = () => new Promise((r) => setTimeout(r, 5))
