@@ -1,8 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import type { Context } from 'hono'
 import YAML from 'yaml'
 import type { Config, ConfigEstate, Positions } from '../src/gen/types'
-import { jsonSchema, parseGraph, type Graph, type Issue } from './core/graph'
+import { jsonSchema, parseGraph, type Graph } from './core/graph'
 import { openDb } from './core/db'
 import { createBus } from './core/events'
 import { createHttp } from './core/http'
@@ -47,15 +48,21 @@ export async function validate(text: string): Promise<Graph> {
 
 // The server's config state is the latest revision in the store; the file is only read once, to bootstrap rev 1.
 export const latestYaml = () => db.getRev(db.latestRev())!.yaml
-// The one check point for config changes. Until real auth exists (M1 item 5) `auth.enabled: true` locks them instead of leaving them open.
-export const canEditConfig = (_c: unknown) => (YAML.parse(latestYaml()) as { auth?: { enabled?: unknown } } | null)?.auth?.enabled !== true
-// Flipped by the auth provider when M1 item 5 lands (stubbed in tests); until then no config can turn auth on, or nobody could change it back.
-export const auth = { provider: false }
-export function authIssue(text: string, g: Graph): Issue | null {
-  if (!g.auth.enabled || auth.provider) return null
-  const lc = new YAML.LineCounter(), r = (YAML.parseDocument(text, { lineCounter: lc }).getIn(['auth', 'enabled'], true) as { range?: number[] } | undefined)?.range
-  return { line: r ? lc.linePos(r[0]).line : 1, path: 'auth.enabled', message: 'auth is not available yet (M1 item 5)' }
+// Auth settings of the latest revision, re-read only when the text changes. Fails closed: a config that cannot be read, or an `auth:` that is not a map, means auth on with nobody allowed.
+let authFor = '', authNow: Graph['auth']
+export function authConfig(): Graph['auth'] {
+  const y = latestYaml()
+  if (y !== authFor) {
+    authFor = y
+    try {
+      const raw = (YAML.parse(y) as { auth?: unknown } | null)?.auth, a = (raw && typeof raw === 'object' ? raw : { enabled: raw !== undefined }) as { enabled?: unknown; mode?: unknown; users?: unknown }
+      authNow = { enabled: a.enabled !== undefined && a.enabled !== false, mode: a.mode === 'password' ? 'password' : 'tailscale', users: Array.isArray(a.users) ? a.users.filter((u): u is string => typeof u === 'string') : [] }
+    } catch { authNow = { enabled: true, mode: 'tailscale', users: [] } }
+  }
+  return authNow
 }
+// The one check point for config changes: with auth on, the request must have a user (the auth middleware sets it).
+export const canEditConfig = (c: Context) => !authConfig().enabled || !!c.get('user')
 export function bootstrap() {
   if (!fs.existsSync(CONFIG_FILE)) return
   const rev = db.latestRev()

@@ -61,7 +61,7 @@ function Side({ n }: { n: MockNode }) {
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: textColor(st.status) }}><Marker status={st.status} size={10} />{LABEL[st.status]}</span>
         <span className="b-sm" style={{ color: '#374151' }}>{st.status === 'down' ? `down ${minutesSince(st.since, now)} min` : `${st.responseMs ? `200 · ${st.responseMs} ms · ` : ''}${ago(st.lastChecked, now)}`}</span>
       </div>
-      {n.checks.length > 0 && (
+      {st.history.length > 0 && (
         <div>
           <div className="b-h">Health check</div>
           <div className="b-grid"><span>Interval</span><b>5 min</b><span>Request</span><b>GET, expect 200</b><span>Keyword</span><b>“{n.name.replace(/\W.*/, '')}”</b><span>Timeout</span><b>10 s</b></div>

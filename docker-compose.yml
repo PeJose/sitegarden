@@ -1,0 +1,27 @@
+# docker compose up --build, with TS_AUTHKEY set in the environment. Nothing is published on the host: the app is reachable over the tailnet only.
+services:
+  tailscale:
+    image: tailscale/tailscale:stable
+    hostname: sitegarden
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+      TS_AUTH_ONCE: "true"
+      TS_HOSTNAME: sitegarden
+    volumes:
+      - ts-state:/var/lib/tailscale
+      - ./deploy:/config:ro
+    restart: unless-stopped
+  sitegarden:
+    build: .
+    network_mode: service:tailscale
+    depends_on: [tailscale]
+    volumes:
+      - sg-data:/data
+      - ./sitegarden.yaml:/app/sitegarden.yaml:ro
+    # secrets: SITEGARDEN_API_TOKEN_FILE, SITEGARDEN_PASSWORD_HASH_FILE (or the plain names) and any plugin secrets
+    restart: unless-stopped
+volumes:
+  ts-state:
+  sg-data:

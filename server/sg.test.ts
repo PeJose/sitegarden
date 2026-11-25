@@ -8,6 +8,7 @@ import { after, test } from 'node:test'
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-cli-')), local = path.join(dir, 'local')
 process.env.SITEGARDEN_DATA = path.join(dir, 'data') // before store.ts and config.ts load
 process.env.SITEGARDEN_CONFIG = path.join(dir, 'server.yaml')
+process.env.SITEGARDEN_API_TOKEN = 'cli-token-123456'
 const root = path.join(import.meta.dirname, '..')
 const base = `world: { seed: t }
 plugins: ['${root}/plugins/essentials']
@@ -39,8 +40,9 @@ engine.apply = async (_log, _stale, progress) => {
 const srv = await start(0)
 after(() => srv.close())
 
-const sg = (...args: string[]) => new Promise<{ code: number; out: string }>((resolve) => {
-  const p = execFile(process.execPath, ['--import', 'tsx', path.join(root, 'server/sg.ts'), ...args], { cwd: root, env: { ...process.env, SITEGARDEN_CONFIG: file, SITEGARDEN_SERVER: `http://localhost:${srv.port}` } }, (e, stdout, stderr) => resolve({ code: e ? Number(e.code) : 0, out: stdout + stderr }))
+const sg = (...args: string[]) => sgWith({}, ...args)
+const sgWith = (env: Record<string, string>, ...args: string[]) => new Promise<{ code: number; out: string }>((resolve) => {
+  const p = execFile(process.execPath, ['--import', 'tsx', path.join(root, 'server/sg.ts'), ...args], { cwd: root, env: { ...process.env, SITEGARDEN_CONFIG: file, SITEGARDEN_SERVER: `http://localhost:${srv.port}`, ...env } }, (e, stdout, stderr) => resolve({ code: e ? Number(e.code) : 0, out: stdout + stderr }))
   p.stdin!.end('n\n')
 })
 const withNode = (id: string) => base.replace('edges:', `  - { id: ${id}, type: repo, group: g1 }\nedges:`)
@@ -108,4 +110,22 @@ test('when the server render fails, apply prints the message and exits 1 instead
 test('sg plan prints a warning for a declared secret that has no value', async () => {
   fs.writeFileSync(file, db.getRev(db.latestRev())!.yaml.replace('groups:', 'secrets:\n  SG_TEST_UNSET: {}\ngroups:'))
   assert.match((await sg('plan')).out, /warning: secret SG_TEST_UNSET is not set\n/)
+})
+
+test('against a locked server sg needs SITEGARDEN_TOKEN: without or with a wrong one it exits 4, with the right one plan and apply work', async () => {
+  const text = () => db.getRev(db.latestRev())!.yaml, withAuth = (a: string) => text().replace(/\nauth: .*\n/, '\n') + `auth: ${a}\n`
+  await sg('pull', '--force')
+  fs.writeFileSync(file, withAuth('{ enabled: true, mode: password }'))
+  const tok = { SITEGARDEN_TOKEN: 'cli-token-123456' }
+  assert.equal((await sgWith(tok, 'apply', '--yes')).code, 0) // auth is off until this lands; the token is for the release wait that follows it
+  for (const env of [{}, { SITEGARDEN_TOKEN: 'wrong-token' }] as Record<string, string>[]) {
+    const r = await sgWith(env, 'plan')
+    assert.deepEqual([r.code, r.out.trim()], [4, 'server needs a token: set SITEGARDEN_TOKEN'])
+  }
+  assert.match((await sgWith(tok, 'plan')).out, /no changes/)
+  fs.writeFileSync(file, withAuth('{ enabled: false }'))
+  const r = await sgWith(tok, 'apply', '--yes')
+  assert.deepEqual([r.code, db.latestRev()], [0, 7])
+  assert.match(r.out, /release published/)
+  assert.equal((await sg('plan')).code, 0) // auth is off again: no token needed
 })

@@ -99,3 +99,21 @@ test('prune moves old events and check history to the archive (check.result drop
   assert.match(plan.map((p) => p.detail).join(' '), /snapshot_history_node/)
   raw.close()
 })
+
+test('sessions: found until they expire, extended, removed; prune drops the expired ones; a v4 file gets the table', () => {
+  let t = 1000
+  const f = tmp(), old = new DatabaseSync(f)
+  openDb(f).close()
+  old.exec('DROP TABLE sessions; PRAGMA user_version=4')
+  old.close()
+  const db = openDb(f, () => t)
+  db.addSession('h1', 'owner', 5000); db.addSession('h2', 'owner', 9000)
+  assert.deepEqual([db.session('h1', 4999)?.user, db.session('h1', 5000), db.session('nope', 0)], ['owner', undefined, undefined])
+  db.extendSession('h1', 20_000)
+  assert.equal(db.session('h1', 15_000)?.expires, 20_000)
+  t = 10_000; db.prune(0)
+  assert.deepEqual([db.session('h2', 0), db.session('h1', 0)?.user], [undefined, 'owner'])
+  db.removeSession('h1')
+  assert.equal(db.session('h1', 0), undefined)
+  db.close()
+})

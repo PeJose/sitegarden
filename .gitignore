@@ -34,3 +34,7 @@ schema.json
 
 # local plan/apply state (`pnpm sg`)
 .sitegarden/
+
+# playwright
+test-results/
+playwright-report/

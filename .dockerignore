@@ -1,0 +1,11 @@
+node_modules
+.data
+.git
+.github
+.sitegarden
+perf/out
+web/
+dist
+e2e
+test-results
+playwright-report

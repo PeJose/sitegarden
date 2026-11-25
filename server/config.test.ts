@@ -10,7 +10,7 @@ process.env.SITEGARDEN_DATA = dir // before store.ts and config.ts load
 process.env.SITEGARDEN_CONFIG = path.join(dir, 'sitegarden.yaml')
 const root = path.join(import.meta.dirname, '..')
 fs.writeFileSync(process.env.SITEGARDEN_CONFIG, fs.readFileSync(path.join(root, 'sitegarden.yaml'), 'utf8').replaceAll('./plugins/', `${root}/plugins/`))
-const { addEstate, bootstrap, db, latestYaml, loadConfig, loadGraph, removeLastEstate } = await import('./config')
+const { addEstate, authConfig, bootstrap, canEditConfig, db, latestYaml, loadConfig, loadGraph, removeLastEstate } = await import('./config')
 const { makeEstate } = await import('./mock')
 
 test('an empty store imports the file once as rev 1, later file edits change nothing', async () => {
@@ -52,4 +52,19 @@ test('the sample config expands its shorthands into the links it used to spell o
   assert.deepEqual(links('sedum-site2')?.map((l) => l.label), ['sedum.example', 'Hosting panel'])
   const cfg = await loadConfig(), node = cfg.estates[0].nodes.find((n) => n.id === 'fernhill-repo')!
   assert.ok(!('repo' in node) && node.links) // the render config carries the links, not the field
+})
+
+test('canEditConfig: always with auth off, with auth on only for a request that has a user; an unreadable auth block means on', () => {
+  const req = (user?: string) => ({ get: () => user }) as unknown as Parameters<typeof canEditConfig>[0]
+  const text = latestYaml(), put = (auth: string) => db.storeRev(db.latestRev(), `${text}\n${auth}`, 'cli') // authConfig reads the text only
+  assert.deepEqual([authConfig().enabled, canEditConfig(req())], [false, true])
+  put('auth: { enabled: true, mode: password }')
+  assert.deepEqual([authConfig().mode, canEditConfig(req()), canEditConfig(req('owner'))], ['password', false, true])
+  assert.equal(authConfig().users.length, 0)
+  put('auth: nonsense')
+  assert.deepEqual([authConfig().enabled, canEditConfig(req())], [true, false])
+  put('auth: { enabled: "yes" }')
+  assert.equal(authConfig().enabled, true)
+  put('auth: { enabled: false }')
+  assert.deepEqual([authConfig().enabled, canEditConfig(req())], [false, true])
 })

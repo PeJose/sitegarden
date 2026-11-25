@@ -84,7 +84,7 @@ export function Popover({ nodeId, x, y, boxW }: { nodeId: string; x: number; y: 
             <span style={{ color: BLOCK[d.tone].fg, fontSize: 15, fontWeight: 600 }}>{d.title}</span>
             <span className="side">{d.side}</span>
           </div>
-          {n.checks.length > 0 && (
+          {st.history.length > 0 && ( // real nodes have no mock.checks; any node with results gets the sparkline
             <div>
               <Spark values={st.history} down={st.status === 'down'} />
               <div className="cap">Response time, last 24 h</div>

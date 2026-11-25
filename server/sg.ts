@@ -3,8 +3,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import readline from 'node:readline/promises'
+import { Writable } from 'node:stream'
 
-// pnpm sg plan | apply | pull | schema [--server URL] [--yes] [--no-wait] [--local-render] [--force]
+// pnpm sg plan | apply | pull | schema | hash-password [--server URL] [--yes] [--no-wait] [--local-render] [--force]
 // plan/apply/pull talk to a server (SITEGARDEN_SERVER, default http://localhost:8787); the server's latest revision is the state.
 const args = process.argv.slice(2), cmd = args[0], flag = (n: string) => args.includes(`--${n}`)
 const CONFIG_FILE = path.resolve(process.env.SITEGARDEN_CONFIG ?? path.join(import.meta.dirname, '../sitegarden.yaml'))
@@ -24,8 +25,14 @@ function remember(rev: number, yaml: string) {
 }
 
 const die = (code: number, msg: string): never => { console.error(msg); process.exit(code) }
+// A server with auth on wants the API token (the secret SITEGARDEN_API_TOKEN there) as a bearer token.
+const token = process.env.SITEGARDEN_TOKEN
+async function go(url: string, init: RequestInit = {}) {
+  const r = await fetch(url, token ? { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } } : init)
+  return r.status === 401 ? die(4, 'server needs a token: set SITEGARDEN_TOKEN') : r
+}
 async function call(p: string, body?: unknown) {
-  const r = await fetch(server + p, body === undefined ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch((e: Error) => die(1, `cannot reach ${server}: ${e.cause ?? e.message}`))
+  const r = await go(server + p, body === undefined ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch((e: Error) => die(1, `cannot reach ${server}: ${e.cause ?? e.message}`))
   const out = { status: r.status, body: (await r.json().catch(() => ({}))) as any }
   if (out.status === 409 && out.body.error === 'drift') die(3, `server is at rev ${out.body.rev}, you are based on rev ${state().rev}: run sg pull`)
   if (out.status === 422 || (out.status === 200 && out.body.ok === false)) {
@@ -48,8 +55,8 @@ async function plan() {
 
 // Follows the event stream (progress lines) until the release for this plan is complete.
 async function release(id: string, ctl: AbortController) {
-  const done = async () => { const r = (await (await fetch(`${server}/api/release`)).json().catch(() => null)) as { id?: string; complete?: boolean } | null; return r?.id === id && !!r.complete }
-  const res = await fetch(`${server}/api/events`, { signal: ctl.signal })
+  const done = async () => { const r = (await (await go(`${server}/api/release`)).json().catch(() => null)) as { id?: string; complete?: boolean } | null; return r?.id === id && !!r.complete }
+  const res = await go(`${server}/api/events`, { signal: ctl.signal })
   return { done, wait: async (rev: number) => { // the stream replays stored events first, so progress is filtered by rev
     let buf = ''
     for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
@@ -78,7 +85,7 @@ async function localRenderer() {
     const miss = new Set((await call('/api/artifacts/missing', { names })).missing as string[]), todo = [...new Map(plan.tiles.filter((t) => miss.has(t.name)).map((t) => [t.name, t])).values()]
     console.log(`rendering ${todo.length} of ${names.length} tiles here`)
     await renderTiles(plan, todo)
-    const put = async (n: string) => { const r = await fetch(`${server}/a/${n}`, { method: 'PUT', body: fs.readFileSync(art(n)) }); if (!r.ok) die(1, `upload of ${n} failed: ${r.status}`) }
+    const put = async (n: string) => { const r = await go(`${server}/a/${n}`, { method: 'PUT', body: fs.readFileSync(art(n)) }); if (!r.ok) die(1, `upload of ${n} failed: ${r.status}`) }
     for (let i = 0; i < todo.length; i += 8) await Promise.all(todo.slice(i, i + 8).map((t) => put(t.name)))
     console.log(`uploaded ${todo.length} tiles`)
     return plan.world.positions
@@ -112,12 +119,23 @@ if (cmd === 'plan') {
   fs.writeFileSync(CONFIG_FILE, s.yaml)
   remember(s.rev, s.yaml)
   console.log(`pulled rev ${s.rev} into ${CONFIG_FILE}`)
+} else if (cmd === 'hash-password') { // the password comes from stdin, hidden on a terminal; the hash goes to stdout for SITEGARDEN_PASSWORD_HASH
+  let pw = ''
+  if (process.stdin.isTTY) {
+    const rl = readline.createInterface({ input: process.stdin, output: new Writable({ write: (_c, _e, done) => done() }), terminal: true })
+    process.stderr.write('Password: ')
+    pw = await rl.question('')
+    rl.close()
+    process.stderr.write('\n')
+  } else { for await (const chunk of process.stdin) pw += chunk; pw = pw.replace(/\r?\n$/, '') }
+  if (!pw) die(1, 'empty password')
+  console.log(await (await import('./auth')).hashPassword(pw))
 } else if (cmd === 'schema') {
   const { schemaJson } = await import('./config')
   const file = path.join(path.dirname(CONFIG_FILE), 'schema.json')
   fs.writeFileSync(file, `${JSON.stringify(await schemaJson(), null, 2)}\n`)
   console.log(`wrote ${file}`)
 } else {
-  die(2, 'usage: pnpm sg plan | apply | pull | schema [--server URL] [--yes] [--no-wait] [--local-render] [--force]')
+  die(2, 'usage: pnpm sg plan | apply | pull | schema | hash-password [--server URL] [--yes] [--no-wait] [--local-render] [--force]')
 }
 process.exit(0)
