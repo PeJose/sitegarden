@@ -117,3 +117,19 @@ test('sessions: found until they expire, extended, removed; prune drops the expi
   assert.equal(db.session('h1', 0), undefined)
   db.close()
 })
+
+test('api tokens: found by hash only, never listed with it, touched, revoked; a v5 file gets the table', () => {
+  const f = tmp(), old = new DatabaseSync(f)
+  openDb(f).close()
+  old.exec('DROP TABLE api_tokens; PRAGMA user_version=5')
+  old.close()
+  const db = openDb(f, () => 1000)
+  const id = db.addToken('ci', 'h1', 1000)
+  assert.deepEqual(db.tokens().map((t) => ({ ...t })), [{ id, name: 'ci', created: 1000, last_used: null }])
+  assert.deepEqual([db.tokenByHash('h1')?.name, db.tokenByHash('nope')], ['ci', undefined])
+  assert.throws(() => db.addToken('dup', 'h1', 1)) // a hash is unique
+  db.touchToken(id, 5000)
+  assert.equal(db.tokens()[0].last_used, 5000)
+  assert.deepEqual([db.removeToken(id), db.removeToken(id), db.tokenByHash('h1')], [true, false, undefined])
+  db.close()
+})

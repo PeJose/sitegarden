@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { serve } from '@hono/node-server'
@@ -17,7 +18,7 @@ import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
 import { DriftError } from './core/db'
 import { createHolder } from './core/holder'
 import { WORST, createScheduler } from './core/scheduler'
-import type { Status } from './core/sdk'
+import { SDK_VERSION, type Status } from './core/sdk'
 import { makeEstate } from './mock'
 import { ART, DATA, RENDERER, currentRelease, has, hash, writeAtomic } from './store'
 
@@ -29,7 +30,33 @@ app.route('/', auth.routes)
 const VERSION = (JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../package.json'), 'utf8')) as { version: string }).version
 app.get('/api/health', (c) => c.json({ ok: true, version: VERSION }, 200, { 'Cache-Control': 'no-store' }))
 
+const demo = () => host.plugins().some((p) => p.id === 'mock' && p.status === 'loaded')
 const guard = async (c: Context, next: Next) => canEditConfig(c) ? next() : c.json({ error: 'config changes need an authorized user' }, 403)
+
+// Everything the settings page shows. Plugin failure reasons stay in the log: never `error` or `dir`.
+app.get('/api/settings', (c) => {
+  const rev = db.latestRev(), r = rev ? db.getRev(rev) : undefined
+  return c.json({ version: VERSION, sdk: SDK_VERSION, renderer: RENDERER, demo: demo(), config: r ? { rev: r.rev, at: r.at, source: r.source } : null, plugins: host.plugins().map((p) => ({ id: p.id, version: p.version, status: p.status })) }, 200, { 'Cache-Control': 'no-store' })
+})
+
+// Generated API tokens: the value leaves the server once, in the POST response; only its SHA-256 is stored. A generated token cannot manage tokens.
+const manage = async (c: Context, next: Next) => !authConfig().enabled || (c.get('user') && !String(c.get('user')).startsWith('token:')) ? next() : c.json({ error: 'tokens are managed by a signed-in user' }, 403)
+app.use('/api/tokens*', manage)
+app.get('/api/tokens', (c) => c.json(db.tokens(), 200, { 'Cache-Control': 'no-store' }))
+app.post('/api/tokens', async (c) => {
+  const b = (await c.req.json().catch(() => null)) as { name?: unknown } | null, name = typeof b?.name === 'string' ? b.name.trim() : ''
+  if (!name || name.length > 64) return c.json({ error: 'name must be 1-64 characters' }, 400)
+  const token = `sg_${randomBytes(32).toString('base64url')}`
+  const id = db.addToken(name, createHash('sha256').update(token).digest('hex'), Date.now())
+  log.info(`[auth] token ${JSON.stringify(name)} created by ${c.get('user') ?? 'anyone (auth off)'}`)
+  return c.json({ id, name, token }, 201, { 'Cache-Control': 'no-store' })
+})
+app.delete('/api/tokens/:id', (c) => {
+  const id = Number(c.req.param('id')), t = db.tokens().find((x) => x.id === id)
+  if (!t || !db.removeToken(id)) return c.json({ error: 'no such token' }, 404)
+  log.info(`[auth] token ${JSON.stringify(t.name)} revoked by ${c.get('user') ?? 'anyone (auth off)'}`)
+  return c.body(null, 204)
+})
 
 app.get('/schema.json', async (c) => c.json(await schemaJson(latestYaml())))
 
@@ -176,7 +203,7 @@ app.get('/api/status', (c) => {
       checks: own.map((s) => ({ id: s.check_id, status: s.status, detail: s.detail, at: s.at, ms: s.ms })),
     }
   }
-  return c.json({ lastEventId, demo: host.plugins().some((p) => p.id === 'mock' && p.status === 'loaded'), nodes }, 200, { 'Cache-Control': 'no-store' })
+  return c.json({ lastEventId, demo: demo(), nodes }, 200, { 'Cache-Control': 'no-store' })
 })
 let last = key(currentRelease())
 const debounce = (ms: number, f: () => void) => { let t: ReturnType<typeof setTimeout>; return () => { clearTimeout(t); t = setTimeout(f, ms) } }

@@ -8,6 +8,7 @@ export class DriftError extends Error {
   constructor(latest: number) { super(`server is at rev ${latest}`); this.latest = latest }
 }
 export interface HistoryRow { check_id: string; status: string; at: number; ms: number | null }
+export interface ApiToken { id: number; name: string; created: number; last_used: number | null }
 export interface Snapshot { node: string; check_id: string; status: string; at: number; detail: string | null; ms: number | null }
 
 // Everything the server remembers besides render artifacts. One writer, WAL; `user_version` is for later migrations.
@@ -50,6 +51,12 @@ export function openDb(file: string, now = Date.now) {
       CREATE TABLE IF NOT EXISTS sessions(id_hash TEXT PRIMARY KEY, user TEXT NOT NULL, created INTEGER NOT NULL, expires INTEGER NOT NULL);
       PRAGMA user_version=5`)
   }
+  if ((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version < 6) {
+    // Generated API tokens: only the SHA-256 of the value is stored.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS api_tokens(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, hash TEXT NOT NULL UNIQUE, created INTEGER NOT NULL, last_used INTEGER);
+      PRAGMA user_version=6`)
+  }
   for (const t of ['snapshots', 'snapshot_history']) if (!(db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).some((c) => c.name === 'ms')) db.exec(`ALTER TABLE ${t} ADD COLUMN ms INTEGER`)
   const q = <T>(sql: string) => { const s = db.prepare(sql); return { all: (...a: any[]) => s.all(...a) as T[], get: (...a: any[]) => s.get(...a) as T | undefined, run: (...a: any[]) => s.run(...a) } }
   const insEvent = q('INSERT INTO events(at, type, data) VALUES(?, ?, ?)'), after = q<{ id: number; at: number; type: string; data: string }>('SELECT * FROM events WHERE id > ? ORDER BY id')
@@ -62,6 +69,8 @@ export function openDb(file: string, now = Date.now) {
   const insRev = q('INSERT INTO config_revs(rev, at, source, yaml) VALUES(?, ?, ?, ?)'), getRev = q<Rev>('SELECT * FROM config_revs WHERE rev = ?')
   const insSession = q('INSERT INTO sessions(id_hash, user, created, expires) VALUES(?, ?, ?, ?)'), getSession = q<{ user: string; expires: number }>('SELECT user, expires FROM sessions WHERE id_hash = ? AND expires > ?')
   const extSession = q('UPDATE sessions SET expires = ? WHERE id_hash = ?'), delSession = q('DELETE FROM sessions WHERE id_hash = ?')
+  const insToken = q('INSERT INTO api_tokens(name, hash, created) VALUES(?, ?, ?)'), listTokens = q<ApiToken>('SELECT id, name, created, last_used FROM api_tokens ORDER BY id')
+  const byHash = q<{ id: number; name: string; last_used: number | null }>('SELECT id, name, last_used FROM api_tokens WHERE hash = ?'), useToken = q('UPDATE api_tokens SET last_used = ? WHERE id = ?'), delToken = q('DELETE FROM api_tokens WHERE id = ?')
   return {
     append(type: string, data: unknown): StoredEvent {
       const at = now(), r = insEvent.run(at, type, JSON.stringify(data))
@@ -86,6 +95,11 @@ export function openDb(file: string, now = Date.now) {
     session: (idHash: string, at: number) => getSession.get(idHash, at), // undefined when unknown or expired
     extendSession: (idHash: string, expires: number) => void extSession.run(expires, idHash),
     removeSession: (idHash: string) => void delSession.run(idHash),
+    addToken: (name: string, hash: string, at: number) => Number(insToken.run(name, hash, at).lastInsertRowid),
+    tokens: () => listTokens.all(), // never the hash
+    tokenByHash: (hash: string) => byHash.get(hash),
+    touchToken: (id: number, at: number) => void useToken.run(at, id),
+    removeToken: (id: number) => Number(delToken.run(id).changes) > 0,
     saveSnapshot(node: string, checkId: string, status: string, detail?: string, ms?: number) {
       const at = now()
       upsert.run(node, checkId, status, at, detail ?? null, ms ?? null)

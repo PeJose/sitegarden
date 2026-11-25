@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { createHash } from 'node:crypto'
 import { test } from 'node:test'
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-app-'))
@@ -27,7 +28,8 @@ fs.writeFileSync(path.join(dir, 'web/assets/app-1a2b.js'), 'console.log(1)')
 fs.writeFileSync(path.join(dir, 'web/favicon.svg'), '<svg/>')
 fs.writeFileSync(process.env.SITEGARDEN_CONFIG, base)
 const { app, scheduler } = await import('./app')
-const { bootstrap, db } = await import('./config')
+const { bootstrap, db, host } = await import('./config')
+const { SDK_VERSION } = await import('./core/sdk')
 const { listenIssue, start } = await import('./app')
 bootstrap()
 
@@ -275,4 +277,65 @@ test('status: a check the config no longer runs does not count', async () => {
   assert.deepEqual((await status()).nodes.b.checks.map((c: { id: string }) => c.id), ['http'])
   scheduler.set([], [])
   assert.equal((await status()).nodes.b.status, 'unknown')
+})
+
+test('/api/settings: versions, config revision, plugins with id, version and status only (never a failure reason or a path)', async () => {
+  const rec = { id: 'broken', dir: '/srv/secret-dir', version: '0.0.0', status: 'failed' as const, error: 'boom: /srv/secret-dir/x.js' }
+  host.plugins().push(rec)
+  try {
+    const [s, b] = await json(app.request('/api/settings'))
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
+    assert.equal(s, 200)
+    assert.deepEqual([b.version, b.sdk, b.demo, b.config.rev], [pkg.version, SDK_VERSION, false, db.latestRev()])
+    assert.deepEqual(Object.keys(b.config).sort(), ['at', 'rev', 'source'])
+    assert.deepEqual(b.plugins.find((p: any) => p.id === 'broken'), { id: 'broken', version: '0.0.0', status: 'failed' })
+    assert.ok(b.plugins.every((p: any) => !('error' in p) && !('dir' in p)))
+    assert.ok(!JSON.stringify(b).includes('secret-dir'))
+  } finally { host.plugins().splice(host.plugins().indexOf(rec), 1) }
+})
+
+test('api tokens: the value is returned once, only its hash is stored, it works as a bearer and revoking ends it; names are validated', async () => {
+  assert.equal((await post('/api/tokens', { name: '  ' })).status, 400)
+  assert.equal((await post('/api/tokens', { name: 'x'.repeat(65) })).status, 400)
+  assert.equal((await post('/api/tokens', {})).status, 400)
+  const [s, t] = await json(post('/api/tokens', { name: ' ci ' }))
+  assert.deepEqual([s, t.name, /^sg_[\w-]{43}$/.test(t.token)], [201, 'ci', true])
+  const [, list] = await json(app.request('/api/tokens'))
+  assert.deepEqual(Object.keys(list[0]).sort(), ['created', 'id', 'last_used', 'name'])
+  assert.ok(!JSON.stringify(list).includes(t.token))
+  assert.equal(db.tokenByHash(createHash('sha256').update(t.token).digest('hex'))?.name, 'ci')
+  assert.equal((await app.request('/api/tokens/999', { method: 'DELETE' })).status, 404)
+  assert.equal((await app.request(`/api/tokens/${t.id}`, { method: 'DELETE' })).status, 204)
+  assert.deepEqual((await json(app.request('/api/tokens')))[1], [])
+})
+
+test('with auth on: a generated token works on the API but gets 403 on token routes; the env token and a signed-in user manage them; nobody gets 401', async () => {
+  const yaml = base + 'auth: { enabled: true, mode: tailscale, users: [Owner@example.com] }\n', who = { 'Tailscale-User-Login': 'owner@example.com' }, env = { Authorization: 'Bearer api-tok-123456' }
+  const rev = db.latestRev()
+  db.storeRev(rev, yaml, 'test') // direct: authConfig() follows the latest revision
+  try {
+    const mk = (headers: Record<string, string>) => app.request('/api/tokens', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'bot' }) })
+    const made = await (await mk(env)).json() as { id: number; token: string }
+    const gen = { Authorization: `Bearer ${made.token}` }
+    assert.equal((await app.request('/api/state', { headers: gen })).status, 200)
+    assert.equal((await mk(gen)).status, 403)
+    assert.equal((await app.request('/api/tokens', { headers: gen })).status, 403)
+    assert.equal((await app.request(`/api/tokens/${made.id}`, { method: 'DELETE', headers: gen })).status, 403)
+    assert.equal((await mk({})).status, 401)
+    assert.equal((await app.request('/api/settings')).status, 401)
+    const mine = await (await mk(who)).json() as { id: number }
+    assert.equal((await app.request('/api/tokens', { headers: who })).status, 200)
+    assert.equal((await app.request(`/api/tokens/${mine.id}`, { method: 'DELETE', headers: who })).status, 204)
+    assert.equal((await app.request(`/api/tokens/${made.id}`, { method: 'DELETE', headers: env })).status, 204)
+    assert.equal((await app.request('/api/state', { headers: gen })).status, 401) // revoked
+  } finally { db.storeRev(db.latestRev(), base, 'test') }
+})
+
+test('the token value and the env token never reach the log', async () => {
+  const lines: string[] = [], info = console.log
+  console.log = (...a: unknown[]) => void lines.push(a.join(' '))
+  let t: { token: string; id: number }
+  try { t = await (await post('/api/tokens', { name: 'quiet' })).json() as typeof t!; await app.request(`/api/tokens/${t.id}`, { method: 'DELETE' }) } finally { console.log = info }
+  assert.ok(lines.some((l) => l.includes('token "quiet" created')))
+  assert.ok(lines.every((l) => !l.includes(t!.token) && !l.includes('api-tok-123456')))
 })
