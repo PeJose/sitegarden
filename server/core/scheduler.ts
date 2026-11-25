@@ -20,7 +20,7 @@ export interface SchedulerOptions { db: Db; emit: (type: string, data: unknown) 
 export interface Planned { node: CheckNode; check: CheckDef; cfg: string }
 interface Inst { key: string; check: CheckDef; node: CheckNode; cfg: string; every: number; fails: number; cancel?: () => void; queued: boolean }
 
-// One timer per (check, node). First run lands anywhere in the first interval, later ones every ±10 %; a `down` result backs off 2^n up to 4x.
+// One timer per (check, node). First run lands anywhere in the first interval (within 5 s for a check with no stored result), later ones every ±10 %; a `down` result backs off 2^n up to 4x.
 export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random = Math.random, timers = realTimers }: SchedulerOptions) {
   const insts = new Map<string, Inst>(), queue: Inst[] = [], status = new Map<string, Status>() // status: instance key -> last result
   let active = 0, stopped = false
@@ -68,7 +68,7 @@ export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random
         if (old && old.every === every && old.cfg === cfg) { old.check = c; old.node = n; keep.set(key, old); continue }
         const i: Inst = { key, check: c, node: n, cfg, every, fails: 0, queued: false }
         keep.set(key, i)
-        arm(i, random() * every)
+        arm(i, random() * (status.has(key) ? every : Math.min(every, 5000))) // never run: within 5 s, so a fresh map isn't grey for a whole interval
       }
       for (const [k, i] of insts) if (keep.get(k) !== i) { i.cancel?.(); status.delete(k) }
       insts.clear()
