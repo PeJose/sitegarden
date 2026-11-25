@@ -19,9 +19,16 @@ edges:
   - { from: a, to: b, type: deploy }
 `
 process.env.SG_TEST_TOKEN = 'tok-abcdef123'
+process.env.SITEGARDEN_API_TOKEN = 'api-tok-123456'
+process.env.SITEGARDEN_WEB = path.join(dir, 'web') // before app.ts loads
+fs.mkdirSync(path.join(dir, 'web/assets'), { recursive: true })
+fs.writeFileSync(path.join(dir, 'web/index.html'), '<title>app</title>')
+fs.writeFileSync(path.join(dir, 'web/assets/app-1a2b.js'), 'console.log(1)')
+fs.writeFileSync(path.join(dir, 'web/favicon.svg'), '<svg/>')
 fs.writeFileSync(process.env.SITEGARDEN_CONFIG, base)
 const { app, scheduler } = await import('./app')
-const { auth, bootstrap, db } = await import('./config')
+const { bootstrap, db } = await import('./config')
+const { listenIssue, start } = await import('./app')
 bootstrap()
 
 const post = (url: string, body: unknown) => app.request(url, { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } })
@@ -66,9 +73,9 @@ test('plan warns about a declared secret with no value, and an undeclared refere
 
 const { engine } = await import('./app')
 engine.apply = async () => ({ rendered: {}, tiles: 0, ms: 0, first: 0, aborted: false }) // no rendering in these tests
-const apply = async (yaml: string, o: Record<string, unknown> = {}) => {
-  const baseRev = db.latestRev()
-  return json(post('/api/apply', { yaml, baseRev, planId: hash(`${baseRev}:${yaml}`), render: 'server', ...o }))
+const apply = async (yaml: string, o: Record<string, unknown> & { headers?: Record<string, string> } = {}) => {
+  const baseRev = db.latestRev(), { headers, ...rest } = o
+  return json(app.request('/api/apply', { method: 'POST', body: JSON.stringify({ yaml, baseRev, planId: hash(`${baseRev}:${yaml}`), render: 'server', ...rest }), headers: { 'Content-Type': 'application/json', ...headers } }))
 }
 const { hash } = await import('./store')
 const withNode = (id: string) => base.replace('edges:', `  - { id: ${id}, type: repo, group: g1 }\nedges:`)
@@ -155,11 +162,14 @@ test('artifact upload checks the name and the size, and missing lists what the s
   assert.equal((await json(post('/api/artifacts/missing', { names: ['../x'] })))[0], 400)
 })
 
-test('enabling auth is a 422 on the auth.enabled line while no auth provider exists', async () => {
+test('auth.enabled: true is accepted; tailscale mode without users is a 422 on the auth line', async () => {
   const rev = db.latestRev(), yaml = withNode('c') + 'auth: { enabled: true }\n'
   const [s, r] = await apply(yaml)
-  assert.deepEqual([s, r.issues], [422, [{ line: yaml.split('\n').length - 1, path: 'auth.enabled', message: 'auth is not available yet (M1 item 5)' }]])
+  assert.deepEqual([s, r.issues], [422, [{ line: yaml.split('\n').length - 1, path: 'auth.users', message: 'tailscale mode needs at least one login in users' }]])
   assert.equal(db.latestRev(), rev)
+  assert.equal((await apply(withNode('c') + 'auth: { enabled: true, mode: password }\n'))[0], 200) // password mode needs no users
+  assert.equal((await app.request('/api/state', { headers: { Authorization: 'Bearer api-tok-123456' } })).status, 200)
+  assert.equal((await apply(withNode('c') + 'auth: { enabled: false }\n', { headers: { Authorization: 'Bearer api-tok-123456' } }))[0], 200) // back off, as the signed-in user
 })
 
 test('an apply error that echoes a secret is stored and logged as [secret:NAME]', async () => {
@@ -174,17 +184,44 @@ test('an apply error that echoes a secret is stored and logged as [secret:NAME]'
   assert.ok(lines.some((l) => l.includes('[secret:SG_TEST_TOKEN]')) && !lines.some((l) => l.includes('tok-abcdef123')))
 })
 
-test('with auth enabled, apply and GUI edits are refused and no rev is made', async () => {
-  auth.provider = true // stub: the provider exists, so the config may turn auth on
-  const [s] = await apply(db.getRev(db.latestRev())!.yaml + 'auth: { enabled: true }\n')
-  assert.equal(s, 200) // the change that turns it on is the last one
+test('with auth enabled, config changes need a user, and one signed in can still change them back', async () => {
+  const on = withNode('c') + 'auth: { enabled: true, mode: tailscale, users: [Owner@example.com] }\n', who = { 'Tailscale-User-Login': 'owner@example.com' }
+  assert.equal((await apply(on))[0], 200) // the change that turns it on is the last one without a user
   const rev = db.latestRev()
-  assert.equal((await apply(withNode('h')))[0], 403)
-  assert.equal((await json(post('/api/estates', estate)))[0], 403)
-  assert.equal((await put('tile-nope.webp', 'x')).status, 403)
-  assert.equal((await json(post('/api/artifacts/missing', { names: [] })))[0], 403)
-  assert.equal((await json(app.request('/api/estates/last', { method: 'DELETE' })))[0], 403)
+  assert.equal((await apply(withNode('h')))[0], 401)
+  assert.equal((await json(post('/api/estates', estate)))[0], 401)
+  assert.equal((await put('tile-nope.webp', 'x')).status, 401)
+  assert.equal((await json(post('/api/artifacts/missing', { names: [] })))[0], 401)
+  assert.equal((await json(app.request('/api/estates/last', { method: 'DELETE' })))[0], 401)
+  assert.equal((await app.request('/api/state', { headers: { 'Tailscale-User-Login': 'intruder@example.com' } })).status, 403)
   assert.equal(db.latestRev(), rev)
+  const off = on.replace('auth: { enabled: true,', 'auth: { enabled: false,'), baseRev = db.latestRev()
+  const r = await app.request('/api/apply', { method: 'POST', headers: who, body: JSON.stringify({ yaml: off, baseRev, planId: hash(`${baseRev}:${off}`), render: 'server' }) })
+  assert.equal(r.status, 200)
+  assert.equal((await app.request('/api/state')).status, 200)
+})
+
+test('serves the built app: assets cached for good, the page revalidated, deep links get the page, API and asset misses stay 404', async () => {
+  const asset = await app.request('/assets/app-1a2b.js'), page = await app.request('/'), deep = await app.request('/some/deep/link')
+  assert.deepEqual([asset.status, asset.headers.get('Cache-Control'), await asset.text()], [200, 'public, max-age=31536000, immutable', 'console.log(1)'])
+  assert.deepEqual([page.status, page.headers.get('Cache-Control'), await page.text()], [200, 'no-cache', '<title>app</title>'])
+  assert.deepEqual([deep.status, deep.headers.get('Cache-Control'), await deep.text()], [200, 'no-cache', '<title>app</title>'])
+  assert.equal((await app.request('/favicon.svg')).headers.get('Cache-Control'), 'no-cache')
+  for (const miss of ['/assets/nope.js', '/api/nope', '/a/nope.webp', '/x.js']) assert.equal((await app.request(miss)).status, 404, miss)
+  assert.equal((await app.request('/', { method: 'POST' })).status, 404)
+})
+
+test('health answers with the version and no auth', async () => {
+  const [s, h] = await json(app.request('/api/health'))
+  assert.deepEqual([s, h.ok, h.version], [200, true, JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version])
+})
+
+test('the server refuses a non-loopback address with auth off unless SITEGARDEN_INSECURE=1', async () => {
+  await assert.rejects(start(0, '0.0.0.0'), /refusing to listen on 0\.0\.0\.0 with auth off/)
+  assert.deepEqual(['127.0.0.1', 'localhost', '::1'].map((h) => listenIssue(h, false, false)), [null, null, null])
+  assert.match(listenIssue('0.0.0.0', false, false)!, /SITEGARDEN_INSECURE=1/)
+  assert.equal(listenIssue('0.0.0.0', false, true), null)
+  assert.equal(listenIssue('0.0.0.0', true, false), null)
 })
 
 const nap = () => new Promise((r) => setTimeout(r, 5))

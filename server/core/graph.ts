@@ -27,7 +27,12 @@ export function buildSchema(types: NodeTypes, checkTypes: CheckTypeDef[] = []) {
   return z.strictObject({
     world: z.strictObject({ seed: z.string() }),
     plugins: z.array(z.string()).default([]),
-    auth: z.strictObject({ enabled: z.boolean().default(false) }).default({ enabled: false }).describe('Real auth lands in M1 item 5; until then `enabled: true` locks config changes'),
+    auth: z.strictObject({
+      enabled: z.boolean().default(false),
+      mode: z.enum(['tailscale', 'password']).default('tailscale').describe('tailscale trusts the Tailscale-User-Login header of `tailscale serve`; password is one login (user owner) with the scrypt hash in the secret SITEGARDEN_PASSWORD_HASH'),
+      users: z.array(z.string()).default([]).describe('Tailscale logins that may use the app (tailscale mode)'),
+    }).superRefine((a, ctx) => { if (a.enabled && a.mode === 'tailscale' && !a.users.length) ctx.addIssue({ code: 'custom', path: ['users'], message: 'tailscale mode needs at least one login in users' }) })
+      .default({ enabled: false, mode: 'tailscale', users: [] }).describe('Sign-in for the app and API; the CLI sends the secret SITEGARDEN_API_TOKEN as a bearer token'),
     secrets: z.record(z.string().regex(/^[A-Z][A-Z0-9_]*$/), z.strictObject({ expires: z.string().optional() })).default({}).describe('Secret names; values come from the server environment, never from here. Reference as ${secret:NAME}'),
     groups: z.array(z.strictObject({ id: z.string().min(1), label: z.string() })).default([]),
     nodes: z.array(nodes.length ? z.discriminatedUnion('type', nodes as [(typeof nodes)[number]]) : z.never()).default([]),

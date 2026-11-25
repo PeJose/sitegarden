@@ -123,3 +123,14 @@ test('checks entries are validated against their type with the line, and every d
   assert.match(bad('{ type: ping, hots: x }').message, /hots/)
   assert.deepEqual((parseGraph(checked(''), 'x.yaml', { repo: {} }).nodes[0] as { checks: unknown[] }).checks, [])
 })
+
+test('auth: off by default; tailscale mode needs users, password mode does not; unknown modes and keys are errors', () => {
+  assert.deepEqual(parseGraph(ok, 'x.yaml', types).auth, { enabled: false, mode: 'tailscale', users: [] })
+  assert.deepEqual(parseGraph(`${ok}auth: { enabled: true, mode: password }\n`, 'x.yaml', types).auth, { enabled: true, mode: 'password', users: [] })
+  assert.deepEqual(parseGraph(`${ok}auth: { enabled: true, users: [owner@example.com] }\n`, 'x.yaml', types).auth.users, ['owner@example.com'])
+  assert.deepEqual(parseGraph(`${ok}auth: { enabled: false }\n`, 'x.yaml', types).auth.enabled, false)
+  assert.deepEqual(lines(`${ok}auth:\n  enabled: true\n  users: []\n`).map((i) => [i.line, i.path]), [[11, 'auth.users']])
+  assert.deepEqual(lines(`${ok}auth: { enabled: true }\n`).map((i) => [i.line, i.path]), [[9, 'auth.users']])
+  assert.equal(lines(`${ok}auth: { mode: oidc }\n`).length, 1)
+  assert.equal(lines(`${ok}auth: { provider: x }\n`).length, 1)
+})

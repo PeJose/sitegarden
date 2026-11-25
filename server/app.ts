@@ -1,14 +1,16 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { serve } from '@hono/node-server'
-import { Hono, type Context, type Next } from 'hono'
+import { serveStatic } from '@hono/node-server/serve-static'
+import { Hono, type Context, type MiddlewareHandler, type Next } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { compress } from 'hono/compress'
 import type { ConfigEstate, Positions } from '../src/gen/types'
 import { rngFor } from '../src/gen/rng'
 import { apply, want } from './apply'
 import { computePlan, estimateMs, missing } from './plan'
-import { addEstate, authIssue, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, secretWarnings, secrets, toRenderConfig, validate } from './config'
+import { createAuth } from './auth'
+import { addEstate, authConfig, bootstrap, canEditConfig, bus, db, forgetPosition, host, latestYaml, loadGraph, loadPositions, removeLastEstate, savePositions, schemaJson, secretWarnings, secrets, toRenderConfig, validate } from './config'
 import { eventsHandler } from './core/events'
 import { log } from './core/log'
 import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
@@ -21,6 +23,11 @@ import { ART, DATA, RENDERER, currentRelease, has, hash, writeAtomic } from './s
 
 export const app = new Hono()
 app.use(compress())
+const auth = createAuth({ db, secrets, cfg: authConfig })
+app.use(auth.mw)
+app.route('/', auth.routes)
+const VERSION = (JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../package.json'), 'utf8')) as { version: string }).version
+app.get('/api/health', (c) => c.json({ ok: true, version: VERSION }, 200, { 'Cache-Control': 'no-store' }))
 
 const guard = async (c: Context, next: Next) => canEditConfig(c) ? next() : c.json({ error: 'config changes need an authorized user' }, 403)
 
@@ -85,8 +92,7 @@ const rejected = (message: string, issues: Issue[]) => { log.error(`[config] rej
 // Validation result for a candidate config: the graph, or every issue with its line.
 async function check(yaml: string): Promise<{ graph: Graph } | { issues: Issue[] }> {
   try {
-    const graph = await validate(yaml), bad = authIssue(yaml, graph)
-    return bad ? { issues: rejected(`line ${bad.line} ${bad.path}: ${bad.message}`, [bad]) } : { graph }
+    return { graph: await validate(yaml) }
   } catch (e) { if (e instanceof ConfigError) return { issues: rejected(e.message, e.issues) }; throw e }
 }
 const planId = (baseRev: number, yaml: string) => hash(`${baseRev}:${yaml}`)
@@ -200,11 +206,23 @@ async function runApply() {
 // A good reload re-plans the checks (plugins were reloaded first) and re-renders.
 const reloaded = () => graph.reload().then((ok) => { if (ok) { secretWarnings(graph.get()!).forEach((w) => log.warn(`[secrets] ${w.message}`)); scheduler.set(graph.get()!.nodes, host.checks(), host.configured(graph.get()!.nodes)); void runApply() } })
 
-export function start(port: number) {
+// Built web app next to the API; hashed files under /assets never change, the page itself is always revalidated. Unknown page paths get the app (client-side routes).
+const WEB = path.resolve(process.env.SITEGARDEN_WEB ?? path.join(import.meta.dirname, '../dist'))
+const found = (file: string, c: Context) => void c.set('cache', file.startsWith(path.join(WEB, 'assets') + path.sep) ? 'public, max-age=31536000, immutable' : 'no-cache')
+const web = (h: MiddlewareHandler): MiddlewareHandler => async (c, next) => { const r = await h(c, next), cc = c.get('cache'); if (r instanceof Response && cc) r.headers.set('Cache-Control', cc); return r } // the response exists before onFound runs
+const files = web(serveStatic({ root: WEB, onFound: found })), spa = web(serveStatic({ root: WEB, path: 'index.html', onFound: found }))
+app.get('*', files)
+app.get('*', (c, next) => /^\/(api|a|assets)\//.test(c.req.path) || path.extname(c.req.path) ? next() : spa(c, next))
+
+// Auth off on an address other than this machine's would put the app, and every token behind it, in front of the network.
+export const listenIssue = (addr: string, authOn: boolean, insecure: boolean) => authOn || insecure || addr === 'localhost' || addr === '::1' || addr === '[::1]' || /^127\./.test(addr) ? null : `refusing to listen on ${addr} with auth off: turn auth on, or set SITEGARDEN_INSECURE=1 to accept the risk`
+export function start(port: number, addr = '127.0.0.1') {
   bootstrap()
+  const issue = listenIssue(addr, authConfig().enabled, process.env.SITEGARDEN_INSECURE === '1')
+  if (issue) return Promise.reject(new Error(issue))
   const watcher = fs.watch(DATA, debounce(30, () => { const k = key(currentRelease()); if (k && k !== last) { last = k; bus.emit('release', k) } }))
   return new Promise<{ port: number; close(): void }>((resolve) => {
-    const server = serve({ fetch: app.fetch, port }, (i) => {
+    const server = serve({ fetch: app.fetch, port, hostname: addr }, (i) => {
       log.info(`[server] http://localhost:${i.port}`)
       void reloaded()
       resolve({ port: i.port, close: () => { watcher.close(); scheduler.stop(); server.close() } })
