@@ -168,3 +168,9 @@ export function createHost({ baseDir, db, http = createHttp({ secrets: createSec
   }
 }
 export type Host = ReturnType<typeof createHost>
+
+// `SITEGARDEN_DEMO=1` adds the mock plugin to the list unless some entry already points at it.
+export function withDemo(list: string[], baseDir: string, demo = process.env.SITEGARDEN_DEMO === '1') {
+  const mock = path.resolve(import.meta.dirname, '../../plugins/mock')
+  return demo && !list.some((e) => path.resolve(baseDir, e) === mock) ? [...list, mock] : list
+}

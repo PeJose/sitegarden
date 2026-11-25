@@ -1,0 +1,15 @@
+{
+  "name": "@sitegarden/mock",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "sitegarden": {
+    "id": "mock",
+    "apiVersion": "^1",
+    "server": "./server.ts",
+    "permissions": {},
+    "contributes": {
+      "checkTypes": ["mock"]
+    }
+  }
+}
