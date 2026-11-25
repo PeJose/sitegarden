@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.9.1] - 2026-11-25
+
+### Fixed
+- A group with no nodes hung the server (and the map) at 100 % CPU on config load. It is now a small empty plot of land, and the street generator refuses a non-finite map area instead of looping forever.
+
 ## [0.9.0] - 2026-11-25
 
 ### Added

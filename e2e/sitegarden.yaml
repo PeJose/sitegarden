@@ -1,4 +1,4 @@
-# Test fixture: two groups, every group has nodes (an empty group hangs world generation), checks every 2s so statuses move fast.
+# Test fixture: two groups, checks every 2s so statuses move fast.
 # fernhill-repo has no `mock:` block, like a real node.
 world:
   seed: e2e
