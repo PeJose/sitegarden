@@ -7,6 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Fixed
 - Mobile map: the tile level now changes only after the zoom has rested for 200 ms (pinch and wheel no longer mount and fetch every level they pass, nor swap the paper texture mid-gesture); zooming out keeps the sharper tiles already loaded (budget 96, off-screen ones evicted first); screen density counts up to 2, so phones (3) ask for the same, lighter tiles as 2x screens.
+- Mobile map: the paper texture now lives in the world layer (world units) instead of being repainted on every pan and zoom frame (raster tasks per 2 s pan on a throttled phone profile 826 to 92, per pinch 716-917 to 365-465); the tile images keep a stable DOM order, so a level change no longer removes and re-inserts dozens of them (36 per zoom-out before, 0 now).
 
 ## [0.11.0] - 2026-11-25
 

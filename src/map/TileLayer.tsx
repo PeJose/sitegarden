@@ -26,7 +26,7 @@ export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: S
   const wanted = new Set(want.map(keyOf))
   evict(lru.current, wanted, view, KEEP)
   // drop tiles of another theme, or that a newer release replaced (the file name is the content hash)
-  const mounted = [...lru.current.values()].filter((t) => t.src === (nameAt(scheme, t.z, t.x, t.y) ? srcOf(nameAt(scheme, t.z, t.x, t.y)!) : ''))
+  const mounted = [...lru.current.values()].filter((t) => t.src === (nameAt(scheme, t.z, t.x, t.y) ? srcOf(nameAt(scheme, t.z, t.x, t.y)!) : '')).sort((a, b) => (keyOf(a) < keyOf(b) ? -1 : 1)) // stable DOM order (z-index stacks): LRU order reshuffled and re-inserted dozens of <img> on every level change
 
   const firstWave = useRef<string[] | null>(null)
   firstWave.current ??= want.filter((t) => t.z === 1 && t.x * T < rx1 - m && (t.x + 1) * T > rx0 + m && t.y * T < ry1 - m && (t.y + 1) * T > ry0 + m).map(keyOf)
