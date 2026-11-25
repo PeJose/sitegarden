@@ -3,10 +3,11 @@ import type { JSX } from 'preact'
 import type { Scheme } from '../prefs'
 import type { TileView } from '../lib/view'
 import type { WorldData } from '../world'
-import { nameAt as tileName, srcOf, wantOf, type Tile } from './tiles'
+import { evict, nameAt as tileName, srcOf, wantOf, type Tile } from './tiles'
 
 const keyOf = (t: Tile) => `${t.z}/${t.x}/${t.y}/${t.src}` // identical paper tiles share one file, so the file name alone is not a position
-const KEEP = 48 // decoded tiles kept mounted after they scroll out of view
+// shortcut: 96 tiles (~20 MB decoded on a phone) incl. sharper leftovers, no memory-based budget; revisit if low-end phones reload the page
+const KEEP = 96 // decoded tiles kept mounted after they scroll out of view or the level drops
 
 // Server-rendered map tiles under the React Flow viewport: only visible tiles are requested, recent ones stay mounted (LRU),
 // and level 1 always sits under the sharper level so zooming never shows a hole while it loads.
@@ -23,7 +24,7 @@ export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: S
   const { want, missing } = wantOf(world, scheme, view)
   for (const t of want) { lru.current.delete(keyOf(t)); lru.current.set(keyOf(t), t) }
   const wanted = new Set(want.map(keyOf))
-  for (const k of lru.current.keys()) if (lru.current.size > KEEP && !wanted.has(k)) lru.current.delete(k)
+  evict(lru.current, wanted, view, KEEP)
   // drop tiles of another theme, or that a newer release replaced (the file name is the content hash)
   const mounted = [...lru.current.values()].filter((t) => t.src === (nameAt(scheme, t.z, t.x, t.y) ? srcOf(nameAt(scheme, t.z, t.x, t.y)!) : ''))
 

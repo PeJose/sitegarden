@@ -40,6 +40,11 @@ export function preloadTiles(world: WorldData, scheme: Scheme, vp: Viewport, siz
   }
 }
 
+// Over budget: drop unwanted tiles, off-screen ones first; sharper leftovers still on screen go last (the picture never gets blurrier while they fit).
+export function evict(lru: Map<string, Tile>, wanted: Set<string>, { c0, c1, r0, r1 }: TileView, keep: number) {
+  for (const any of [false, true]) for (const [k, t] of lru) if (lru.size > keep && !wanted.has(k) && (any || t.x < c0 || t.x > c1 || t.y < r0 || t.y > r1)) lru.delete(k)
+}
+
 export const flight = { active: false, timer: 0 as unknown as ReturnType<typeof setTimeout>, onEnd: new Set<() => void>() }
 export function startFlight(ms: number) {
   flight.active = true

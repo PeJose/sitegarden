@@ -5,7 +5,7 @@ import type { Scheme } from '../prefs'
 import { DEFS, twinkleSvg } from '../gen/render'
 import { lightsSvg } from '../gen/buildings'
 import type { WorldData } from '../world'
-import { viewOf, type TileView } from '../lib/view'
+import { levelFor, viewOf, type TileView } from '../lib/view'
 import { extConfig, registry } from '../ext/registry'
 import { flight } from './tiles'
 import { useViewport, viewport } from './viewport'
@@ -18,22 +18,29 @@ export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { wo
   const paper = useRef<HTMLDivElement>(null), el = useRef<HTMLDivElement>(null)
   const T = world.tiles.size
   const [view, setView] = useState<TileView>(() => viewOf(viewport.get(), T, size, window.devicePixelRatio))
+  const lvl = useRef(view.level) // the settled level
   useLayoutEffect(() => {
-    let key = ''
+    let key = '', last = viewport.get().zoom, timer = 0
+    const dpr = window.devicePixelRatio
     const apply = ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
       const k = 1024 * zoom // the texture repeats every 1024 world units
       el.current!.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`
       paper.current!.style.backgroundSize = `${k}px`
       paper.current!.style.backgroundPosition = `${x % k}px ${y % k}px`
-      const v = viewOf({ x, y, zoom }, T, size, window.devicePixelRatio)
+      if (zoom !== last) { // zooming: keep the level (CSS scales the mounted tiles), change it once the zoom has rested for 200 ms
+        last = zoom
+        clearTimeout(timer)
+        timer = window.setTimeout(() => { lvl.current = levelFor(zoom, dpr); apply(viewport.get()) }, 200)
+      }
+      const v = viewOf({ x, y, zoom }, T, size, dpr, lvl.current)
       const kk = `${v.level}/${v.c0}/${v.c1}/${v.r0}/${v.r1}`
       if (kk !== key && !flight.active) { key = kk; setView(v) } // mid-flight the mounted tiles stay as they are; landing calls apply again
     }
     apply(viewport.get())
-    const land = () => apply(viewport.get())
+    const land = () => { lvl.current = levelFor(viewport.get().zoom, dpr); apply(viewport.get()) } // landing: the preloaded destination level at once
     flight.onEnd.add(land)
     const off = viewport.subscribe(apply)
-    return () => { off(); flight.onEnd.delete(land) }
+    return () => { clearTimeout(timer); off(); flight.onEnd.delete(land) }
   }, [T, size])
   const tex = world.textures?.[scheme]?.[view.level]
   return (

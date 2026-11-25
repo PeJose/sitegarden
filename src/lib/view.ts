@@ -31,9 +31,9 @@ export function clampViewport(v: Viewport, [[x0, y0], [x1, y1]]: [[number, numbe
   return { ...v, x: one(v.x, x0, x1, w), y: one(v.y, y0, y1, h) }
 }
 
-// The first level sharp enough for this zoom and screen density.
+// The first level sharp enough for this zoom and screen density (density counts up to 2: on a phone 3 only fetches heavier tiles that look the same).
 export function levelFor(zoom: number, dpr: number): number {
-  const fit = SCALE.findIndex((s) => s >= zoom * Math.min(3, dpr || 1) * 0.9)
+  const fit = SCALE.findIndex((s) => s >= zoom * Math.min(2, dpr || 1) * 0.9)
   return Math.max(1, fit < 0 ? SCALE.length - 1 : fit)
 }
 
@@ -57,8 +57,9 @@ export function initialViewport(w: number, h: number, world: Pick<World, 'estate
 
 // What TileLayer depends on: the level and the range of tile cells in view (rect is the exact viewport in world units, for the first wave only).
 export interface TileView { level: number; c0: number; c1: number; r0: number; r1: number; rect: number[] }
-export function viewOf({ x, y, zoom }: Viewport, T: number, size: { w: number; h: number }, dpr: number): TileView {
+// `level` is the settled one WorldLayer holds while the zoom is moving; without it the level follows the zoom.
+export function viewOf({ x, y, zoom }: Viewport, T: number, size: { w: number; h: number }, dpr: number, level = levelFor(zoom, dpr)): TileView {
   const m = T / 2 // half a tile of margin so panning rarely waits
   const rx0 = -x / zoom - m, ry0 = -y / zoom - m, rx1 = (size.w - x) / zoom + m, ry1 = (size.h - y) / zoom + m
-  return { level: levelFor(zoom, dpr), c0: Math.floor(rx0 / T), c1: Math.floor(rx1 / T), r0: Math.floor(ry0 / T), r1: Math.floor(ry1 / T), rect: [rx0, ry0, rx1, ry1] }
+  return { level, c0: Math.floor(rx0 / T), c1: Math.floor(rx1 / T), r0: Math.floor(ry0 / T), r1: Math.floor(ry1 / T), rect: [rx0, ry0, rx1, ry1] }
 }
