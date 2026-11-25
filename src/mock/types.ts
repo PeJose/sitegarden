@@ -19,7 +19,7 @@ export interface MockNode {
   host: string
   links: LinkItem[]
   notes: string
-  checks: string[] // human description of the configured checks
+  checks?: string[] // human description of the mock checks; real nodes have none
   baseMs: number // typical response time for the generated history
   initialStatus: Status
 }

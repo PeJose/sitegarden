@@ -1,4 +1,5 @@
 # Test fixture: two groups, every group has nodes (an empty group hangs world generation), checks every 2s so statuses move fast.
+# fernhill-repo has no `mock:` block, like a real node.
 world:
   seed: e2e
 plugins:
@@ -19,7 +20,6 @@ nodes:
     checks:
       - type: mock
         every: 2s
-    mock: { checks: [], baseMs: 0, initialStatus: ok }
   - id: fernhill-site
     type: site
     group: fernhill

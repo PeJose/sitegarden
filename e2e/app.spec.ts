@@ -24,3 +24,8 @@ test('Check now posts /api/refresh and a newer check comes back', async ({ page,
   expect(JSON.parse((await refresh).postData() ?? '{}')).toEqual({ node: 'fernhill-site' })
   await expect.poll(last, { timeout: 10_000 }).toBeGreaterThan(before)
 })
+
+test('a node without a mock block opens its details', async ({ page }) => {
+  await page.goto('/?select=fernhill-repo')
+  await expect(page.getByRole('complementary', { name: 'acme/fernhill details' })).toBeVisible()
+})
