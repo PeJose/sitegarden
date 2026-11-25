@@ -1,0 +1,50 @@
+# Test fixture: two groups, every group has nodes (an empty group hangs world generation), checks every 2s so statuses move fast.
+auth:
+  enabled: true
+  mode: password
+world:
+  seed: e2e
+plugins:
+  - ../plugins/essentials
+  - ../plugins/mock
+groups:
+  - id: fernhill
+    label: fernhill
+  - id: copperleaf
+    label: copperleaf
+nodes:
+  - id: fernhill-repo
+    type: repo
+    group: fernhill
+    name: acme/fernhill
+    host: GitHub
+    repo: acme/fernhill
+    checks:
+      - type: mock
+        every: 2s
+    mock: { checks: [], baseMs: 0, initialStatus: ok }
+  - id: fernhill-site
+    type: site
+    group: fernhill
+    name: fernhill.example
+    host: host.example
+    url: https://fernhill.example
+    checks:
+      - type: mock
+        every: 2s
+    mock: { checks: [], baseMs: 150, initialStatus: ok }
+  - id: copperleaf-site
+    type: site
+    group: copperleaf
+    name: copperleaf.example
+    host: host.example
+    url: https://copperleaf.example
+    checks:
+      - type: mock
+        every: 2s
+    mock: { checks: [], baseMs: 200, initialStatus: ok }
+edges:
+  - from: fernhill-repo
+    to: fernhill-site
+    type: deploy
+    label: FTPS
