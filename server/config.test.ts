@@ -9,7 +9,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-cfg-'))
 process.env.SITEGARDEN_DATA = dir // before store.ts and config.ts load
 process.env.SITEGARDEN_CONFIG = path.join(dir, 'sitegarden.yaml')
 const root = path.join(import.meta.dirname, '..')
-fs.writeFileSync(process.env.SITEGARDEN_CONFIG, fs.readFileSync(path.join(root, 'sitegarden.yaml'), 'utf8').replace('./plugins/', `${root}/plugins/`))
+fs.writeFileSync(process.env.SITEGARDEN_CONFIG, fs.readFileSync(path.join(root, 'sitegarden.yaml'), 'utf8').replaceAll('./plugins/', `${root}/plugins/`))
 const { addEstate, bootstrap, db, latestYaml, loadConfig, loadGraph, removeLastEstate } = await import('./config')
 const { makeEstate } = await import('./mock')
 

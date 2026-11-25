@@ -4,7 +4,7 @@
 
 - [x] 1.1 `CheckResult.ms`, db `ms` columns with migration, scheduler passes `ms`, `http` returns `ms`, SDK 1.3.0 (D1). Verify: db test opening an old-schema file; scheduler test sees `ms` in `check.result`; essentials test asserts `ms` on ok and wrong-status results.
 - [x] 1.2 `GET /api/status` (D2), `WORST` exported from the scheduler. Verify: app tests for a node with no results, worst-of-checks, history order and `0` for failures, `since`, `lastEventId` taken before the read, `demo` flag.
-- [ ] 1.3 `plugins/mock` and `SITEGARDEN_DEMO=1` (D6); sample config (D7). Verify: plugin tests with injected random (first run = `initialStatus`, down recovery, `baseMs: 0`); host test for demo load and dedupe; `pnpm sg plan` against a scratch server: 0 tiles to render.
+- [x] 1.3 `plugins/mock` and `SITEGARDEN_DEMO=1` (D6); sample config (D7). Verify: plugin tests with injected random (first run = `initialStatus`, down recovery, `baseMs: 0`); host test for demo load and dedupe; `pnpm sg plan` against a scratch server: 0 tiles to render.
 
 ## 2. Client
 

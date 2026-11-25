@@ -4,6 +4,7 @@ world:
   seed: garden-58
 plugins:
   - ./plugins/essentials
+  - ./plugins/mock
 groups:
   - id: fernhill
     label: fernhill
@@ -31,6 +32,9 @@ nodes:
       - label: Webhooks
         url: https://www.sanity.io/manage/project/fh4abc12/api#webhooks
     notes: Content studio for the Fernhill apartment listings. Publishing fires the deploy webhook.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -42,6 +46,9 @@ nodes:
     host: GitHub
     repo: acme/fernhill
     notes: "Astro site. Deploy workflow: deploy.yml on main, uploads over FTPS."
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -56,6 +63,9 @@ nodes:
       - label: host.example panel
         url: https://panel.host.example
     notes: "Runbook: if down, check host.example panel first, then re-run the last green deploy."
+    checks:
+      - type: mock
+        every: 15s
     mock:
       checks:
         - http every 5m, expect 200 + "Fernhill"
@@ -76,6 +86,9 @@ nodes:
       - label: Webhooks
         url: https://www.sanity.io/manage/project/cl4def56/api#webhooks
     notes: Content studio for the Copperleaf catalogue.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -87,6 +100,9 @@ nodes:
     host: GitHub
     repo: acme/copperleaf
     notes: Storefront. Workflow deploy.yml on main.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -101,6 +117,9 @@ nodes:
       - label: Hosting panel
         url: https://panel.example-host.com
     notes: Slow since the image migration. Look at the origin cache before blaming the code.
+    checks:
+      - type: mock
+        every: 15s
     mock:
       checks:
         - http every 5m, expect 200 + "Copperleaf"
@@ -119,6 +138,9 @@ nodes:
       - label: Studio
         url: https://notes.sanity.studio
     notes: Blog posts and newsletter drafts.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -136,6 +158,9 @@ nodes:
       - label: Pull requests
         url: https://github.com/acme/notes/pulls
     notes: Next.js blog. deploy.yml on main.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -149,6 +174,9 @@ nodes:
       - label: Dashboard
         url: https://example.com/notes/db
     notes: Subscribers and comments.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks:
         - tcp 5432 every 5m
@@ -163,6 +191,9 @@ nodes:
       - label: Logs
         url: https://example.com/notes/job
     notes: Sends the weekly newsletter on Mondays, pings a heartbeat.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks:
         - heartbeat every 7d, grace 2h
@@ -178,6 +209,9 @@ nodes:
       - label: Vercel
         url: https://vercel.com/dashboard
     notes: Public blog, checked every 5 minutes.
+    checks:
+      - type: mock
+        every: 15s
     mock:
       checks:
         - http every 5m, expect 200
@@ -193,6 +227,9 @@ nodes:
       - label: Dashboard
         url: https://example.com/sedum/job
     notes: Nightly job, pings a heartbeat.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -207,6 +244,9 @@ nodes:
       - label: Hosting panel
         url: https://panel.example-host.com
     notes: Public site, checked every 5 minutes.
+    checks:
+      - type: mock
+        every: 15s
     mock:
       checks:
         - http every 5m, expect 200
@@ -223,6 +263,9 @@ nodes:
       - label: Hosting panel
         url: https://panel.example-host.com
     notes: Public site, checked every 5 minutes.
+    checks:
+      - type: mock
+        every: 15s
     mock:
       checks:
         - http every 5m, expect 200
@@ -238,6 +281,9 @@ nodes:
       - label: Sanity manage
         url: https://example.com/juniper/cms
     notes: Content studio.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -253,6 +299,9 @@ nodes:
       - label: Secrets
         url: https://github.com/acme/juniper/settings/secrets/actions
     notes: Deploy workflow runs on main.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -266,6 +315,9 @@ nodes:
       - label: Dashboard
         url: https://example.com/juniper/db
     notes: Primary database.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -279,6 +331,9 @@ nodes:
       - label: Sanity manage
         url: https://example.com/heather/cms
     notes: Content studio.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -292,6 +347,9 @@ nodes:
       - label: Dashboard
         url: https://example.com/heather/job
     notes: Nightly job, pings a heartbeat.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -305,6 +363,9 @@ nodes:
       - label: Dashboard
         url: https://example.com/heather/job
     notes: Nightly job, pings a heartbeat.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -320,6 +381,9 @@ nodes:
       - label: Secrets
         url: https://github.com/acme/heather/settings/secrets/actions
     notes: Deploy workflow runs on main.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -333,6 +397,9 @@ nodes:
       - label: Dashboard
         url: https://example.com/heather/db
     notes: Primary database.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
@@ -346,6 +413,9 @@ nodes:
       - label: Dashboard
         url: https://example.com/heather/db
     notes: Primary database.
+    checks:
+      - type: mock
+        every: 1m
     mock:
       checks: []
       baseMs: 0
