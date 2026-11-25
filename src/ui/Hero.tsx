@@ -1,6 +1,7 @@
 import { flyTo, preloadFly } from '../map/MapView'
 import { viewport } from '../map/viewport'
-import { engine, useEngine } from '../mock/engine'
+import { live, useEngine } from '../live/store'
+import { NO_DEPLOY, deploy } from '../live/demo'
 import { summarize } from '../summary'
 import { useNow } from '../lib/time'
 import { edges, nodeById } from '../mock/data'
@@ -54,7 +55,7 @@ export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (p: 'inve
             {sum.redeploying ? (
               <>A <u>redeploy</u> is already on its way; everything else is in bloom.</>
             ) : redeploy ? (
-              <>A <button className="uline" onClick={() => engine.deploy(redeploy.id)}>redeploy</button> might help; everything else is in bloom.</>
+              <>A <button className="uline" disabled={!st.demo} title={st.demo ? undefined : NO_DEPLOY} onClick={() => deploy(redeploy.id)}>redeploy</button> might help; everything else is in bloom.</>
             ) : (
               <>Everything else is in bloom.</>
             )}
@@ -64,7 +65,7 @@ export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (p: 'inve
         )}
       </p>
       <div className="row">
-        <button className="btn primary" onClick={() => engine.checkAll()}>Check everything</button>
+        <button className="btn primary" onClick={() => live.checkAll()}>Check everything</button>
         <button className="btn ghost" onClick={() => plantEstate().then((id) => id && say(`Planted ${id}.`))}>Plant a project →</button>
       </div>
       <nav aria-label="Estates" className="estates">

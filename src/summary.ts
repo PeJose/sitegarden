@@ -21,7 +21,7 @@ export function summarize(st: EngineState, now: number) {
     subject: first ? `${first.group}’s ${typeWord[first.type]}${bad.length > 1 ? ` and ${bad.length - 1} more` : ''}` : '',
     quiet: first ? (mins < 1 ? 'just went quiet' : `went quiet ${mins} minute${mins === 1 ? '' : 's'} ago`) : '',
     redeploying: first ? flowing(first.group) : false,
-    checkedText: checked < 1 ? 'checked just now' : `checked ${checked} min ago`,
+    checkedText: !lastChecked ? 'not checked yet' : checked < 1 ? 'checked just now' : `checked ${checked} min ago`,
     estates: groups.map((g) => {
       const ns = nodes.filter((n) => n.group === g.id)
       const statuses = ns.map((n) => st.nodes[n.id].status)

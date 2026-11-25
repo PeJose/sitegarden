@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { nodeById } from '../mock/data'
-import { useEngine } from '../mock/engine'
+import { useEngine } from '../live/store'
 import type { NodeType, Status } from '../mock/types'
 import { WORD } from '../gen/labels'
 import type { Estate } from '../gen/types'

@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react'
 import type { Estate, Pt, World } from './gen/types'
 import { setConfig } from './mock/data'
-import { engine } from './mock/engine'
+import { live } from './live/store'
+import { start } from './live/demo'
 import { configReady } from './ext/registry'
 
 export interface TileIndex { size: number; x0: number; y0: number; cols: number; rows: number; names: Record<'light' | 'night', (string | null)[][]> } // names[theme][zoom level][row * cols + col]
@@ -28,11 +29,12 @@ async function loadRelease() {
     return
   }
   rev = r.rev
-  const [cfg, w] = await Promise.all([fetch(`/a/${r.config}`).then((x) => x.json()), fetch(`/a/${r.world}`).then((x) => x.json()), configReady])
+  const [cfg, w, snap] = await Promise.all([fetch(`/a/${r.config}`).then((x) => x.json()), fetch(`/a/${r.world}`).then((x) => x.json()), live.snapshot(), configReady])
   performance.mark('world-json')
-  // one synchronous burst, so React renders config, engine and world together
+  // one synchronous burst, so React renders config, statuses and world together
   setConfig(cfg)
-  engine.sync()
+  live.load(snap)
+  start()
   world = { ...w, id: r.id, tiles: r.tiles, previews: r.previews, textures: r.textures }
   subs.forEach((f) => f())
   waiting.forEach((x) => { if (x.ok(r)) { waiting.delete(x); x.done() } })
@@ -40,7 +42,8 @@ async function loadRelease() {
 
 let events: EventSource | undefined
 export async function loadWorld() {
-  if (!events) { events = new EventSource('/api/events'); events.addEventListener('release', () => void loadRelease()) }
+  if (!events) { events = new EventSource('/api/events'); events.addEventListener('release', () => void loadRelease())
+    for (const t of ['node.status', 'check.result']) events.addEventListener(t, (m) => live.apply(t, JSON.parse((m as MessageEvent).data), +(m as MessageEvent).lastEventId)) }
   await loadRelease()
 }
 

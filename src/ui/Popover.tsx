@@ -1,5 +1,6 @@
 import { edges, nodeById, nodes } from '../mock/data'
-import { engine, useEngine } from '../mock/engine'
+import { live, useEngine } from '../live/store'
+import { NO_DEPLOY, deploy } from '../live/demo'
 import type { LinkItem, MockNode, Status } from '../mock/types'
 import { minutesSince } from '../summary'
 import { useNow } from '../lib/time'
@@ -34,6 +35,7 @@ function describe(status: Status, ms: number | null, since: number, now: number)
     case 'working': return { tone: 'warn', title: 'Deploying', side: 'in progress' }
     case 'degraded': return { tone: 'warn', title: 'Slow', side: ms ? `${ms} ms` : 'no answer' }
     case 'paused': return { tone: 'idle', title: 'Paused', side: '' }
+    case 'unknown': return { tone: 'idle', title: 'Not checked yet', side: '' }
     default: return { tone: 'ok', title: 'Healthy', side: ms ? `200 · ${ms} ms` : 'answering' }
   }
 }
@@ -43,10 +45,10 @@ function Spark({ values, down }: { values: number[]; down: boolean }) {
   const good = v.filter((x) => x > 0)
   const max = Math.max(...good, 1), min = Math.min(...good, 0)
   const w = down ? 214 : 260
-  const pts = v.map((x, i) => `${((i / (v.length - 1)) * w).toFixed(1)} ${(36 - ((x || min) - min) / (max - min || 1) * 14).toFixed(1)}`)
+  const pts = v.map((x, i) => `${((i / Math.max(v.length - 1, 1)) * w).toFixed(1)} ${(36 - ((x || min) - min) / (max - min || 1) * 14).toFixed(1)}`)
   return (
     <svg width="100%" height="44" viewBox="0 0 260 44" preserveAspectRatio="none" aria-hidden="true">
-      <path d={'M' + pts.join(' L')} fill="none" stroke={COLOR.ok} strokeWidth="1.8" />
+      {pts.length > 0 && <path d={'M' + pts.join(' L')} fill="none" stroke={COLOR.ok} strokeWidth="1.8" />}
       {down && <path d="M214 30 C222 22 228 8 236 4 H260" fill="none" stroke={COLOR.down} strokeWidth="1.8" />}
       <path d="M0 42H260" stroke="var(--hair)" />
     </svg>
@@ -60,6 +62,7 @@ export function Popover({ nodeId, x, y, boxW }: { nodeId: string; x: number; y: 
   const arrow = { '--x': x, '--y': y } as React.CSSProperties
   const n = nodeById(nodeId)!
   const st = useEngine((s) => s.nodes[nodeId])
+  const demo = useEngine((s) => s.demo)
   const now = useNow(15000)
   const edge = edges.find((e) => e.type === 'deploy' && (e.from === nodeId || e.to === nodeId)) ?? edges.find((e) => e.type === 'deploy' && nodeById(e.from)?.group === n.group)
   const d = describe(st.status, st.responseMs, st.since, now)
@@ -91,8 +94,8 @@ export function Popover({ nodeId, x, y, boxW }: { nodeId: string; x: number; y: 
             {links.map((l) => <a key={l.label} href={l.url} target="_blank" rel="noreferrer">{l.label} ↗</a>)}
           </div>
           <div className="row">
-            <button className="btn primary" disabled={st.status === 'working' || !edge} onClick={() => edge && engine.deploy(edge.id)}>Redeploy</button>
-            <button className="btn ghost" onClick={() => engine.check(nodeId)}>Check now</button>
+            <button className="btn primary" disabled={st.status === 'working' || !edge || !demo} title={demo ? undefined : NO_DEPLOY} onClick={() => edge && deploy(edge.id)}>Redeploy</button>
+            <button className="btn ghost" onClick={() => live.check(nodeId)}>Check now</button>
           </div>
         </div>
       </aside>
