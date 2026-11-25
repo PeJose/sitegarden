@@ -29,6 +29,7 @@ export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { wo
       paper.current!.style.backgroundPosition = `${x % k}px ${y % k}px`
       if (zoom !== last) { // zooming: keep the level (CSS scales the mounted tiles), change it once the zoom has rested for 200 ms
         last = zoom
+        lvl.current = Math.min(lvl.current, levelFor(zoom, dpr)) // zooming out drops the level at once (fewer, lighter tiles; the sharper ones stay mounted), only going up waits
         clearTimeout(timer)
         timer = window.setTimeout(() => { lvl.current = levelFor(zoom, dpr); apply(viewport.get()) }, 200)
       }
