@@ -57,7 +57,7 @@ The flow part of the old engine (`deploy`, `webhook`, `finishDeploy`, the copper
 
 ## Testing
 
-Unit tests for every task (`node:test`, add new files to the `test` script): db migration and `ms`, `/api/status` shapes (empty, mixed, `since`, event-id ordering), mock check (scene, recovery, randomness injected), live store (`load`, event merge, ignore old ids, unknown nodes), refresh calls. One headless smoke script (`scripts/smoke.ts`, playwright-core like `scripts/perf.ts`): start the server on a scratch db, open the map, assert a pin shows a server status and "Check everything" yields a `check.result`. No e2e suite in this change.
+Unit tests for every task (`node:test`, add new files to the `test` script): db migration and `ms`, `/api/status` shapes (empty, mixed, `since`, event-id ordering), mock check (scene, recovery, randomness injected), live store (`load`, event merge, ignore old ids, unknown nodes), refresh calls. No smoke or e2e script in this change; the e2e suite starts in M1 item 5.
 
 ## Risks / Trade-offs
 
