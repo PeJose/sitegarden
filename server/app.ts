@@ -143,7 +143,7 @@ app.delete('/api/estates/last', async (c) => {
 const key = (r: ReturnType<typeof currentRelease>) => r && `${r.id}:${r.rev}`
 app.get('/api/events', eventsHandler(bus, () => key(currentRelease())))
 const graph = createHolder(() => loadGraph(latestYaml()), bus.emit)
-const scheduler = createScheduler({ db, emit: bus.emit, redact: secrets.redact })
+export const scheduler = createScheduler({ db, emit: bus.emit, redact: secrets.redact })
 app.post('/api/refresh', async (c) => {
   const b = (await c.req.json().catch(() => null)) as { node?: unknown } | null
   if (b?.node !== undefined && typeof b.node !== 'string') return c.json({ error: 'node must be a node id' }, 400)
@@ -152,10 +152,9 @@ app.post('/api/refresh', async (c) => {
 // The map's statuses in one read; `lastEventId` comes first so an event emitted meanwhile is replayed by the client, never lost.
 const worstOf = (s: string[]) => s.sort((a, b) => WORST.indexOf(a as Status) - WORST.indexOf(b as Status))[0]
 app.get('/api/status', (c) => {
-  const lastEventId = db.lastEventId(), snaps = db.snapshots(), nodes: Record<string, unknown> = {}
+  const lastEventId = db.lastEventId(), live = scheduler.active(), snaps = db.snapshots().filter((s) => live.has(`${s.check_id}@${s.node}`)), nodes: Record<string, unknown> = {}
   for (const n of graph.get()?.nodes ?? []) {
-    const own = snaps.filter((s) => s.node === n.id), rows = db.history(n.id, 500)
-    // shortcut: a check removed from the config keeps its last snapshot and still counts, until snapshots are pruned
+    const own = snaps.filter((s) => s.node === n.id), rows = db.history(n.id, 500).filter((r) => live.has(`${r.check_id}@${n.id}`)) // a check removed from the config no longer counts
     const status = own.length ? worstOf(own.map((s) => s.status)) : 'unknown', by = new Map<string, string>()
     let since: number | null = null, run = ''
     for (const r of rows) { // replay: the node's status after each result, then the start of the run it ends in

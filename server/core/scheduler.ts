@@ -80,6 +80,8 @@ export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random
       hit.forEach((i) => { i.cancel?.(); i.cancel = undefined; enqueue(i) })
       return hit.length
     },
+    // Keys (`check@node`) of the checks the current config runs.
+    active: () => new Set(insts.keys()),
     stop() { stopped = true; insts.forEach((i) => i.cancel?.()); queue.length = 0 },
   }
 }
