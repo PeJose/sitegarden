@@ -117,3 +117,15 @@ test('gates sit on the plot edge and are deterministic', () => {
   for (const g of w.hood.gates) assert.ok(distPoly(w.estates.find((e) => e.id === g.estate)!.poly, g.at[0], g.at[1]) < 1.5)
   assert.deepEqual(w.hood.gates, generateWorld(c).hood.gates)
 })
+
+test('a group with no nodes is a small finite empty plot, alone or next to a normal group', () => {
+  const empty: ConfigEstate = { id: 'g-empty', label: 'g-empty', nodes: [], edges: [] }
+  for (const estates of [[empty], [cfg.estates[0], empty]]) {
+    const t = Date.now()
+    const w = generateWorld({ ...cfg, estates })
+    assert.ok(Date.now() - t < 5000)
+    assert.ok(Object.values(w.bounds).every(Number.isFinite))
+    const e = w.estates.find((x) => x.id === 'g-empty')!
+    assert.ok(Number.isFinite(e.r) && e.r > 0 && e.buildings.length === 0 && e.bb.every(Number.isFinite))
+  }
+})

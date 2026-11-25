@@ -87,7 +87,7 @@ export function genEstate(seed: string, ce: ConfigEstate, ox: number, oy: number
 
   const fit = (g: number) => {
     const pos = place(g, nRows)
-    const bx = union([...pos].flatMap(([id, p]) => nodeBoxes(id, p)))
+    const bx = pos.size ? union([...pos].flatMap(([id, p]) => nodeBoxes(id, p))) : [-30, -30, 30, 30] // no nodes: a small empty plot, not an infinite box
     const cx = (bx[0] + bx[2]) / 2, cy = (bx[1] + bx[3]) / 2
     for (const p of pos.values()) { p[0] -= cx; p[1] -= cy }
     // plot blob from the layout bounds plus margin; grows until every building and pin sits inside the outline,

@@ -18,6 +18,7 @@ export function genHood(seed: string, estates: Estate[], area: Box, angle: numbe
   const toL = (p: Pt) => rot(p, -angle, pivot)
   const corners = ([[area[0], area[1]], [area[2], area[1]], [area[0], area[3]], [area[2], area[3]]] as Pt[]).map(toL)
   const lb = bboxOf(corners)
+  if (!area.every(Number.isFinite)) throw new Error('genHood: non-finite map area') // a loop over it would never end
   const i0 = Math.floor(lb[0] / C), i1 = Math.ceil(lb[2] / C), j0 = Math.floor(lb[1] / C), j1 = Math.ceil(lb[3] / C)
   const clear = (p: Pt, m: number) => estates.every((e) => Math.hypot(p[0] - e.cx, p[1] - e.cy) > e.r + 80 || (!inside(e.poly, p[0], p[1]) && distPoly(e.poly, p[0], p[1]) > m))
   const cells: Cell[] = []
@@ -39,6 +40,7 @@ export function genHood(seed: string, estates: Estate[], area: Box, angle: numbe
 // One or two entrances per plot: the nearest street end that stopped at the plot gets a gate on the plot edge, and a
 // garden path leads from there to the nearest building (or joins an inner road if that is closer).
 function gatesFor(seed: string, e: Estate, cuts: Pt[]): Gate[] {
+  if (!e.buildings.length) return [] // the garden path leads to a building
   const r = rngFor(seed, e.id, 'gate')
   const near = cuts.map((c) => ({ c, d: distPoly(e.poly, c[0], c[1]) })).filter((x) => x.d < 260).sort((x, y) => x.d - y.d)
   const picks = near.slice(0, 1).concat(r() < 0.5 ? near.filter((x) => Math.hypot(x.c[0] - near[0].c[0], x.c[1] - near[0].c[1]) > 160).slice(0, 1) : [])
