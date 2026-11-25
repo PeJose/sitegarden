@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.10.0] - 2026-11-25
+
+### Added
+- Web plugins: the manifest's `web` entry is compiled into the web build for every plugin in the config's `plugins:` (`vite/sitegarden-plugins.ts`), against the host's Preact. A plugin registers only when `/api/config` (now with `plugins`) reports it as loaded; one that throws is isolated. Web SDK `@sitegarden/web-sdk` (`defineWebPlugin`, `useNodes`, `useStatuses`) at 1.0.0.
+- `essentials` ships a Checks tab (every node's checks: status, detail, response time, when).
+- Plugin API v1 is frozen; the stable surface is listed in `docs/plugins.md`.
+
+### Changed
+- The hero menu lists every side-panel tab by its title instead of two fixed buttons; `?panel=` takes a tab name.
+- `/api/status` checks and `check.result` events feed the live store, which keeps each node's checks.
+
 ## [0.9.1] - 2026-11-25
 
 ### Fixed

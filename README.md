@@ -30,7 +30,7 @@ Open http://localhost:5173. The API runs on port 8787 and renders the map on fir
 
 ## Configuration
 
-Projects live in `sitegarden.yaml` (override with `SITEGARDEN_CONFIG`). The file is a graph: groups (one per project), nodes (one per repo, studio or site) and edges between nodes of the same group. Plugins add node types and fields; `essentials` ships the five basic types.
+Projects live in `sitegarden.yaml` (override with `SITEGARDEN_CONFIG`). The file is a graph: groups (one per project), nodes (one per repo, studio or site) and edges between nodes of the same group. Plugins add node types and fields; `essentials` ships the five basic types and a Checks tab in the hero menu. A plugin can also ship a web part (manifest `web`), compiled into the web build at build time from the config's `plugins:` and shown only while the server has the plugin loaded (see [docs/plugins.md](docs/plugins.md)).
 
 ```yaml
 # yaml-language-server: $schema=./schema.json

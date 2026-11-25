@@ -147,6 +147,16 @@ export default definePlugin({
 - **Supported API: React 18 through `preact/compat` 10.** Plugins import `react` and `react-dom` as usual; the host's build aliases them to `preact/compat` (and `react/jsx-runtime` to `preact/jsx-runtime`). Hooks, `memo`, `Fragment`, `createPortal`, `useSyncExternalStore`, `useId`, `Suspense`/`lazy`, class error boundaries and `dangerouslySetInnerHTML` work. Not supported: `use()`, `useActionState`, `useOptimistic`, `ref` as a plain prop (use `forwardRef`), `<title>` hoisting; `startTransition` runs immediately. Events are native DOM events (no synthetic layer), `onChange` on inputs fires on `input`. No StrictMode double render in dev.
 - A plugin must not bundle its own copy of `preact` or `react`: two runtimes break hooks. The conformance kit fails a plugin that does.
 - Dev mode: the host's Vite dev server hot-reloads a plugin (`@preact/preset-vite`, prefresh).
+- `vite/sitegarden-plugins.ts` reads the config's `plugins:` (`SITEGARDEN_CONFIG`, default `sitegarden.yaml`) at build time and imports each manifest's `web` entry as `virtual:sitegarden-web-plugins`; an unreadable manifest fails the build. At runtime a bundled plugin registers only when `/api/config` lists it in `plugins` (loaded on the server), so removing it from the config hides its web part without a rebuild; adding one needs a rebuild. A plugin whose `register` throws is logged and leaves nothing behind.
+- A web plugin imports only `@sitegarden/web-sdk` (`src/ext/sdk.ts`), never other `src/` files. `ctx.add` accepts only ids of the plugin's own id (`kind:<plugin>:name`).
+
+## Plugin API v1 (frozen)
+
+Stable until v2: additive changes bump the minor (`SDK_VERSION`, `WEB_SDK_VERSION`); removals or changed meaning need v2. Everything not listed is internal.
+
+- **Server** (`server/core/sdk.ts`, `SDK_VERSION`): `definePlugin`, every member of `PluginContext`, `CheckResult` (`status`, `detail?`, `ms?`), `Status`.
+- **Web** (`src/ext/sdk.ts`, `WEB_SDK_VERSION` 1.0.0): `defineWebPlugin({ id, register(ctx) })`, `WebPluginContext` (`id`, `add`, `override`), `useNodes()`, `useStatuses()` (with `CheckState`), `Extension` (`id`, `slot`, `input`, `order?`, `title?`, `render`), `Render`, `Status`.
+- **Slots**: `map/layers` (`layer:*`) and `sidepanel/tabs` (`tab:*`; `title` labels the hero menu button, `render` gets `{ onClose, onPick(nodeId) }`).
 
 ## Config schema merging
 
@@ -184,7 +194,7 @@ Not used as a boundary:
 - `apiVersion` is a semver range checked against the SDK major version. An incompatible plugin is refused with a clear message.
 - Keep the SDK surface narrow; mark new APIs `@experimental`; rename hooks via `deprecateHook` with warnings.
 - `@sitegarden/plugin-test` conformance kit: manifest, schema merge, no bundled copy of Preact or React, permissions declared, disposers called.
-- **Before freezing the SDK, prototype one web plugin end to end** (build-time plugin, shared Preact, hot reload). This is the riskiest assumption in the design.
+- The build-time web plugin path is proven by `plugins/essentials/web.tsx` (its Checks tab): shared Preact, hot reload in dev.
 
 ## Pitfalls
 
