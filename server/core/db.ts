@@ -35,6 +35,15 @@ export function openDb(file: string, now = Date.now) {
       CREATE INDEX IF NOT EXISTS events_at ON events(at);
       PRAGMA user_version=3`)
   }
+  if ((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version < 4) {
+    // Rows older than the live window, kept for the M7 replay; M7 compacts them (dedupe, downsample).
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS archive_events(id INTEGER PRIMARY KEY, at INTEGER NOT NULL, type TEXT NOT NULL, data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS archive_history(node TEXT NOT NULL, check_id TEXT NOT NULL, status TEXT NOT NULL, at INTEGER NOT NULL, detail TEXT, ms INTEGER);
+      CREATE INDEX IF NOT EXISTS archive_events_at ON archive_events(at);
+      CREATE INDEX IF NOT EXISTS archive_history_at ON archive_history(at);
+      PRAGMA user_version=4`)
+  }
   for (const t of ['snapshots', 'snapshot_history']) if (!(db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).some((c) => c.name === 'ms')) db.exec(`ALTER TABLE ${t} ADD COLUMN ms INTEGER`)
   const q = <T>(sql: string) => { const s = db.prepare(sql); return { all: (...a: any[]) => s.all(...a) as T[], get: (...a: any[]) => s.get(...a) as T | undefined, run: (...a: any[]) => s.run(...a) } }
   const insEvent = q('INSERT INTO events(at, type, data) VALUES(?, ?, ?)'), after = q<{ id: number; at: number; type: string; data: string }>('SELECT * FROM events WHERE id > ? ORDER BY id')
@@ -52,8 +61,18 @@ export function openDb(file: string, now = Date.now) {
     },
     eventsAfter: (id: number): StoredEvent[] => after.all(id).map((e) => ({ ...e, data: JSON.parse(e.data) })),
     lastEventId: () => q<{ m: number | null }>('SELECT MAX(id) AS m FROM events').get()!.m ?? 0,
-    // Events and check history older than `olderThan`; latest snapshots, config revisions, cache and kv stay.
-    prune: (olderThan: number) => Number(q('DELETE FROM events WHERE at < ?').run(olderThan).changes) + Number(q('DELETE FROM snapshot_history WHERE at < ?').run(olderThan).changes),
+    // Moves events and check history older than `olderThan` to the archive tables, in one transaction. `check.result` events are
+    // dropped instead: the same results are in the archived history. Latest snapshots, config revisions, cache and kv stay.
+    prune(olderThan: number) {
+      db.exec('BEGIN')
+      try {
+        q("INSERT INTO archive_events(id, at, type, data) SELECT id, at, type, data FROM events WHERE at < ? AND type != 'check.result'").run(olderThan)
+        q('INSERT INTO archive_history(node, check_id, status, at, detail, ms) SELECT node, check_id, status, at, detail, ms FROM snapshot_history WHERE at < ?').run(olderThan)
+        const n = Number(q('DELETE FROM events WHERE at < ?').run(olderThan).changes) + Number(q('DELETE FROM snapshot_history WHERE at < ?').run(olderThan).changes)
+        db.exec('COMMIT')
+        return n
+      } catch (e) { db.exec('ROLLBACK'); throw e }
+    },
     saveSnapshot(node: string, checkId: string, status: string, detail?: string, ms?: number) {
       const at = now()
       upsert.run(node, checkId, status, at, detail ?? null, ms ?? null)

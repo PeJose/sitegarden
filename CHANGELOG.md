@@ -15,7 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Demo deploy and webhook flows play only while the mock plugin is loaded; otherwise deploy buttons are disabled until the GitHub plugin. The debug menu loses "break a site" and "fix all".
 - A check with no stored result runs within 5 seconds of start, so a fresh map is not grey for a whole interval.
 - A check removed from the config no longer counts toward its node's status.
-- Events and check history older than 30 days are pruned at start and then daily (before, only events and only at start); check history and events are indexed for the per-node and pruning reads.
+- Events and check history older than 30 days move to `archive_events` / `archive_history` at start and then daily, kept for the future time scrubber (before, old events were deleted, and only at start). `check.result` events are not archived; the same results are in the archived history. Check history and events are indexed for the per-node and pruning reads.
 
 ## [0.7.0] - 2026-11-24
 

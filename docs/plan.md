@@ -240,7 +240,7 @@ Order for the rest of M1: 4 → 5 → 6 → 9.
 
 ### M7 — Seasons (~11 days)
 
-1. Time scrubber replay (4 d)
+1. Time scrubber replay (4 d). Reads the live tables for the last 30 days and `archive_events` / `archive_history` before that (the daily pruner moves rows there since 0.8.0). Includes compacting the archive: keep only status changes plus a downsampled sample of the rest (e.g. 1 of every 5 ok results), and hourly summaries for long ranges
 2. Garden grows with uptime streaks (3 d)
 3. Seasons from the calendar (2 d)
 4. Weekly postcard PNG (2 d)
