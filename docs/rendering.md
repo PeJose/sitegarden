@@ -25,6 +25,8 @@ Artifacts are files in `.data/a/` named by the hash of their exact inputs (SVG, 
 
 Zoom levels are 0.125 / 0.5 / 1 / 2 px per world unit (level 0 only feeds the preview). Files not referenced by the current release are deleted after a complete apply. The browser loads `/api/release` (tiny), the preview, then visible tiles; `/a/*` is `immutable`, and `public/sw.js` (production only) keeps it all for offline revisits.
 
+Client tile levels: the level follows the zoom only after it has rested for 200 ms (while zooming, the mounted tiles are scaled by CSS and the paper texture stays), `levelFor` counts screen density up to 2, and tiles already loaded at a sharper level stay mounted above the current one (up to 96 tiles, off-screen ones evicted first), so zooming out never blurs what is decoded.
+
 ## Code
 
 - `src/gen`: seeded isomorphic generator (`world`, `estate`, `hood`) and the SVG layer functions in `render.ts`.

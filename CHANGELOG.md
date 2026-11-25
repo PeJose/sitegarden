@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.11.1] - 2026-11-25
+
+### Fixed
+- Mobile map: the tile level now changes only after the zoom has rested for 200 ms (pinch and wheel no longer mount and fetch every level they pass, nor swap the paper texture mid-gesture); zooming out keeps the sharper tiles already loaded (budget 96, off-screen ones evicted first); screen density counts up to 2, so phones (3) ask for the same, lighter tiles as 2x screens.
+
 ## [0.11.0] - 2026-11-25
 
 ### Added
