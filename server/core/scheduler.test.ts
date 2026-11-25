@@ -149,3 +149,12 @@ test('configured checks run on their own interval; an unchanged entry keeps its 
   assert.equal(at.length, 3) // restarted: first run at 10m * 0.5
   s.stop()
 })
+
+test('ms of a result is stored and emitted in check.result', async () => {
+  const { c, s, db, events } = setup(() => 0)
+  s.set([node('a')], [{ id: 'c', every: '5m', run: () => ({ status: 'ok', ms: 42 }) }, { id: 'd', every: '5m', run: () => ({ status: 'ok' }) }])
+  await c.advance(1)
+  assert.deepEqual(events.filter((e) => e.type === 'check.result').map((e) => e.data.ms), [42, undefined])
+  assert.deepEqual(db.snapshots().map((x) => [x.check_id, x.ms]), [['c', 42], ['d', null]])
+  s.stop()
+})

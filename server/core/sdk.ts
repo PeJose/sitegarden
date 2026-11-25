@@ -1,12 +1,12 @@
 import type { z } from 'zod'
 import type { HttpInit, HttpResponse } from './http'
 
-export const SDK_VERSION = '1.2.0'
+export const SDK_VERSION = '1.3.0'
 
 export type Disposer = () => void
 export type Status = 'ok' | 'degraded' | 'down' | 'working' | 'paused' | 'unknown'
 export interface CheckNode { id: string; type: string; [k: string]: unknown }
-export interface CheckResult { status: Status; detail?: string }
+export interface CheckResult { status: Status; detail?: string; ms?: number } // ms: response time, when the check measured one
 // Runs once per node of the listed types (every node when `nodeTypes` is left out).
 export interface CheckDef { id: string; every: string; nodeTypes?: string[]; run(node: CheckNode): CheckResult | Promise<CheckResult> }
 

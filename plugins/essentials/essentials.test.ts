@@ -56,9 +56,9 @@ const priv = 'allow_private: true'
 
 test('http check: ok, wrong status, missing text, status list, node url default, timeout', async () => {
   const ok = await runner(host, `{ type: http, url: "${base}/ok", expect_text: Fernhill, ${priv} }`)()
-  assert.equal(ok.status, 'ok'); assert.match(ok.detail!, /^200 in \d+ ms$/)
+  assert.equal(ok.status, 'ok'); assert.match(ok.detail!, /^200 in \d+ ms$/); assert.equal(typeof ok.ms, 'number')
   const wrong = await runner(host, `{ type: http, url: "${base}/down", ${priv} }`)()
-  assert.equal(wrong.status, 'down'); assert.match(wrong.detail!, /^expected 2xx, got 503 \(\d+ ms\)$/)
+  assert.equal(wrong.status, 'down'); assert.match(wrong.detail!, /^expected 2xx, got 503 \(\d+ ms\)$/); assert.equal(typeof wrong.ms, 'number')
   assert.match((await runner(host, `{ type: http, url: "${base}/ok", expect_status: 201, ${priv} }`)()).detail!, /^expected 201, got 200/)
   assert.equal((await runner(host, `{ type: http, url: "${base}/down", expect_status: [200, 503], ${priv} }`)()).status, 'ok')
   const text = await runner(host, `{ type: http, url: "${base}/ok", expect_text: Gone, ${priv} }`)()
@@ -67,7 +67,7 @@ test('http check: ok, wrong status, missing text, status list, node url default,
   const none = await runner(host, '{ type: http }')()
   assert.deepEqual([none.status, none.detail], ['down', 'no url on the check or the node'])
   const slow = await runner(host, `{ type: http, url: "${base}/slow", timeout: 1s, ${priv} }`)()
-  assert.deepEqual([slow.status, slow.detail], ['down', 'request timed out after 1000 ms'])
+  assert.deepEqual([slow.status, slow.detail, slow.ms], ['down', 'request timed out after 1000 ms', undefined])
 })
 
 test('alert_after 2: degraded, then down, then ok, and one success resets the count', async () => {

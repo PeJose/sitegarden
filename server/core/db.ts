@@ -7,7 +7,7 @@ export class DriftError extends Error {
   latest: number
   constructor(latest: number) { super(`server is at rev ${latest}`); this.latest = latest }
 }
-export interface Snapshot { node: string; check_id: string; status: string; at: number; detail: string | null }
+export interface Snapshot { node: string; check_id: string; status: string; at: number; detail: string | null; ms: number | null }
 
 // Everything the server remembers besides render artifacts. One writer, WAL; `user_version` is for later migrations.
 export function openDb(file: string, now = Date.now) {
@@ -27,10 +27,11 @@ export function openDb(file: string, now = Date.now) {
       CREATE TABLE IF NOT EXISTS config_revs(rev INTEGER PRIMARY KEY, at INTEGER NOT NULL, source TEXT NOT NULL, yaml TEXT NOT NULL);
       PRAGMA user_version=2`)
   }
+  for (const t of ['snapshots', 'snapshot_history']) if (!(db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).some((c) => c.name === 'ms')) db.exec(`ALTER TABLE ${t} ADD COLUMN ms INTEGER`)
   const q = <T>(sql: string) => { const s = db.prepare(sql); return { all: (...a: any[]) => s.all(...a) as T[], get: (...a: any[]) => s.get(...a) as T | undefined, run: (...a: any[]) => s.run(...a) } }
   const insEvent = q('INSERT INTO events(at, type, data) VALUES(?, ?, ?)'), after = q<{ id: number; at: number; type: string; data: string }>('SELECT * FROM events WHERE id > ? ORDER BY id')
-  const upsert = q('INSERT INTO snapshots(node, check_id, status, at, detail) VALUES(?, ?, ?, ?, ?) ON CONFLICT(node, check_id) DO UPDATE SET status=excluded.status, at=excluded.at, detail=excluded.detail')
-  const hist = q('INSERT INTO snapshot_history(node, check_id, status, at, detail) VALUES(?, ?, ?, ?, ?)')
+  const upsert = q('INSERT INTO snapshots(node, check_id, status, at, detail, ms) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(node, check_id) DO UPDATE SET status=excluded.status, at=excluded.at, detail=excluded.detail, ms=excluded.ms')
+  const hist = q('INSERT INTO snapshot_history(node, check_id, status, at, detail, ms) VALUES(?, ?, ?, ?, ?, ?)')
   const getCache = q<{ value: string; fetched_at: number }>('SELECT value, fetched_at FROM cache WHERE key = ?'), putCache = q('INSERT OR REPLACE INTO cache(key, value, fetched_at) VALUES(?, ?, ?)')
   const getKv = q<{ value: string }>('SELECT value FROM kv WHERE plugin = ? AND key = ?'), putKv = q('INSERT OR REPLACE INTO kv(plugin, key, value) VALUES(?, ?, ?)'), delKv = q('DELETE FROM kv WHERE plugin = ? AND key = ?')
   const latest = () => q<{ m: number | null }>('SELECT MAX(rev) AS m FROM config_revs').get()!.m ?? 0
@@ -43,10 +44,10 @@ export function openDb(file: string, now = Date.now) {
     eventsAfter: (id: number): StoredEvent[] => after.all(id).map((e) => ({ ...e, data: JSON.parse(e.data) })),
     lastEventId: () => q<{ m: number | null }>('SELECT MAX(id) AS m FROM events').get()!.m ?? 0,
     pruneEvents: (olderThan: number) => Number(q('DELETE FROM events WHERE at < ?').run(olderThan).changes),
-    saveSnapshot(node: string, checkId: string, status: string, detail?: string) {
+    saveSnapshot(node: string, checkId: string, status: string, detail?: string, ms?: number) {
       const at = now()
-      upsert.run(node, checkId, status, at, detail ?? null)
-      hist.run(node, checkId, status, at, detail ?? null)
+      upsert.run(node, checkId, status, at, detail ?? null, ms ?? null)
+      hist.run(node, checkId, status, at, detail ?? null, ms ?? null)
     },
     snapshots: () => q<Snapshot>('SELECT * FROM snapshots ORDER BY node, check_id').all(),
     cacheGet: (key: string) => { const r = getCache.get(key); return r && { value: JSON.parse(r.value) as unknown, fetched_at: r.fetched_at } },
