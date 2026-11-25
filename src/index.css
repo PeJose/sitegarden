@@ -43,7 +43,7 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
 .pane { position: relative; width: 100%; height: 100%; overflow: hidden; z-index: 0; touch-action: none; user-select: none; cursor: grab; }
 .pane.dragging { cursor: grabbing; }
 .viewport { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; pointer-events: none; }
-.paper { position: absolute; inset: 0; pointer-events: none; }
+.world .paper { position: absolute; left: -20480px; top: -20480px; width: 40960px; height: 40960px; background-size: 1024px; z-index: -2; pointer-events: none; } /* multiples of 1024: the texture stays aligned to world 0,0; under the preview (-1) */
 .world { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; will-change: transform; pointer-events: none; }
 .world .tile { position: absolute; max-width: none; user-select: none; opacity: 0; transition: opacity .25s; }
 .world .live { position: absolute; left: 0; top: 0; overflow: visible; z-index: 10; } /* above every tile level */

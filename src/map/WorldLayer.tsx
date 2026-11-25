@@ -15,7 +15,7 @@ import { Lantern, March, Wash } from './Fx'
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
 // The transform is written straight to the DOM from the viewport store; React only re-renders when the tile level or the visible tile range changes.
 export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
-  const paper = useRef<HTMLDivElement>(null), el = useRef<HTMLDivElement>(null)
+  const el = useRef<HTMLDivElement>(null)
   const T = world.tiles.size
   const [view, setView] = useState<TileView>(() => viewOf(viewport.get(), T, size, window.devicePixelRatio))
   const lvl = useRef(view.level) // the settled level
@@ -23,10 +23,7 @@ export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { wo
     let key = '', last = viewport.get().zoom, timer = 0
     const dpr = window.devicePixelRatio
     const apply = ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
-      const k = 1024 * zoom // the texture repeats every 1024 world units
       el.current!.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`
-      paper.current!.style.backgroundSize = `${k}px`
-      paper.current!.style.backgroundPosition = `${x % k}px ${y % k}px`
       if (zoom !== last) { // zooming: keep the level (CSS scales the mounted tiles), change it once the zoom has rested for 200 ms
         last = zoom
         lvl.current = Math.min(lvl.current, levelFor(zoom, dpr)) // zooming out drops the level at once (fewer, lighter tiles; the sharper ones stay mounted), only going up waits
@@ -46,9 +43,9 @@ export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { wo
   const tex = world.textures?.[scheme]?.[view.level]
   return (
     <>
-    {/* paper under everything, one screen big: the texture is a tile's own base, so it continues seamlessly under the tiles */}
-    <div className="paper" ref={paper} style={{ backgroundImage: `url(/a/${tex})` }} />
     <div className="world" ref={el}>
+      {/* paper under everything, in world units (repeats every 1024): the pan only moves the layer, nothing repaints. The texture is a tile's own base, so it continues seamlessly under the tiles */}
+      <div className="paper" style={{ backgroundImage: `url(/a/${tex})` }} />
       {registry.resolve('map', 'layers', extConfig.extensions).map((l) => <Fragment key={l.id}>{l.render({ world, scheme, view })}</Fragment>)}
     </div>
     </>
