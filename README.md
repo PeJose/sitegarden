@@ -2,7 +2,7 @@
 
 A self-hosted map of everything you run: repositories, CMS studios, hosts and sites, drawn as a hand-painted garden. Each project is a plot; each repo, studio or site is a building on it. You see what connects to what, whether it is up, and what is moving right now, and every link and action is one click away.
 
-> **Status: early development.** The map, rendering pipeline and UI run on mock data. Real health checks, integrations and deployment come next (see [Roadmap](#roadmap)). There are no releases yet, and the config format may change.
+> **Status: early development.** The map shows real check results from the server (the sample config runs a `mock` plugin so it looks alive). Integrations and deployment come next (see [Roadmap](#roadmap)). There are no releases yet, and the config format may change.
 
 ## Why
 
@@ -87,7 +87,13 @@ Nodes can have `checks:`, run on their own `every` (default `5m`). `essentials` 
         allow_private: false    # true to reach a private or loopback address
 ```
 
-A failing check is `degraded` until it has failed `alert_after` times in a row (default 1), then `down`; one success is `ok` again. The detail says what happened: `200 in 182 ms`, `expected 200, got 503 (95 ms)`, `text "Fernhill" not found (200, 182 ms)`, or the request error. Requests go through `ctx.http`, so the address rules in the next section apply.
+A failing check is `degraded` until it has failed `alert_after` times in a row (default 1), then `down`; one success is `ok` again. The detail says what happened: `200 in 182 ms`, `expected 200, got 503 (95 ms)`, `text "Fernhill" not found (200, 182 ms)`, or the request error, and the result carries the time as `ms` (a plugin's check returns `{ status, detail?, ms? }`). Requests go through `ctx.http`, so the address rules in the next section apply.
+
+The map, popover, status strip, Inventory and Links show the server's statuses: `GET /api/status` once, then `node.status` and `check.result` events over SSE. "Check now" and "Check everything" run the checks immediately (`POST /api/refresh`). A node without checks shows as not checked.
+
+### Mock plugin and demo mode
+
+`plugins/mock` provides a `mock` check type that makes up statuses and response times from a node's `mock:` block (`initialStatus` for the first run, `baseMs` for the timing), with the occasional slow or broken site that recovers by itself. The sample config lists it and gives each mocked node `checks: [{ type: mock, every: 15s }]`. While it is loaded, the map also plays demo deploy and webhook flows; without it, deploy buttons are disabled until the GitHub plugin (M2). `SITEGARDEN_DEMO=1` loads it even when the config does not list it.
 
 ### Secrets
 
@@ -123,6 +129,7 @@ Plugins never see a value. A plugin makes requests only through `ctx.http(url, i
 | `SITEGARDEN_CONFIG` | `sitegarden.yaml` | config file |
 | `SITEGARDEN_DATA` | `.data` | rendered artifacts and releases |
 | `PORT` | `8787` | API port |
+| `SITEGARDEN_DEMO` | unset | `1` loads the `mock` plugin (demo statuses and flows) |
 | `SG_RENDER_WORKERS` | CPU cores − 2 | parallel render workers |
 
 ## Development

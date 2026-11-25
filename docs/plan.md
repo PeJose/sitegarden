@@ -191,7 +191,7 @@ Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend 
 1. Core: graph model, YAML loader + schema merge, plugin host (tiers A/B), extension tree, store, scheduler, SSE (4 d)
 2. Secrets broker with `_FILE`, SSRF guard (1 d)
 3. `essentials`: node types, `repo:` / `sanity:` shorthands, HTTP + keyword checks (1.5 d)
-4. Map v0 (plain theme), side panel, Inventory + Links lists, Refresh (2 d)
+4. Map v0 (plain theme), side panel, Inventory + Links lists, Refresh (2 d). Done in 0.8.0: `/api/status` + SSE drive the map, Refresh runs server checks, a server-side `mock` plugin replaces the client's fake engine (demo flows stay client-side until M2)
 5. Dockerfile, compose with Tailscale sidecar, `tailscale` + `password` auth, README; first Playwright e2e suite that pins the stable flows (map loads, live statuses, refresh, login) and runs in PR CI (2.5 d)
 6. One web plugin end to end, built at build time against the host's Preact, to prove the SDK before it freezes (0.5 d)
 7. Client performance pass, before more UI lands (1.5 d). Observed 2026-11-20: the browser's GPU process sits at ~300% while the POC map is open, even when idle and fully loaded, and pan/zoom animations feel slow. Profile first (Chrome Performance + Layers panels, dev vs production build), then fix what the data shows. Suspects (React Flow, since replaced by the own viewport and Preact, was the first): re-rendering every pin/chip/label per frame, `backdrop-filter` blur on panels over a moving map, many rough.js SVG pins, CSS opacity transitions, idle animations (deploy path, red wash) that never stop. Target: near-zero GPU when idle, 60 fps pan on a mid phone

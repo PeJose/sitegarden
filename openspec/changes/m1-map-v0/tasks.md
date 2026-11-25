@@ -14,4 +14,4 @@
 
 ## 3. Close-out
 
-- [ ] 3.1 README, `docs/plugins.md`, `docs/plan.md` (item 4 done), CHANGELOG 0.8.0, `package.json` 0.8.0. Verify: `pnpm test`, `pnpm build`, oxlint no errors, version check against main.
+- [x] 3.1 README, `docs/plugins.md`, `docs/plan.md` (item 4 done), CHANGELOG 0.8.0, `package.json` 0.8.0. Verify: `pnpm test`, `pnpm build`, oxlint no errors, version check against main.
