@@ -1,5 +1,4 @@
 import { Fragment, memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useViewportStore, useReactFlowStoreApi } from '@xyflow/react'
 import { useEngine } from '../mock/engine'
 import { edges } from '../mock/data'
 import type { Scheme } from '../prefs'
@@ -9,33 +8,33 @@ import type { WorldData } from '../world'
 import { viewOf, type TileView } from '../lib/view'
 import { extConfig, registry } from '../ext/registry'
 import { flight } from './tiles'
+import { useViewport, viewport } from './viewport'
 import { Lantern, March, Wash } from './Fx'
 
-// The baked world (server tiles) sits under React Flow and follows its viewport transform. On top of it,
+// The baked world (server tiles) sits under the pins and follows the viewport transform. On top of it,
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
-// The transform is written straight to the DOM from React Flow's store; React only re-renders when the tile level or the visible tile range changes.
+// The transform is written straight to the DOM from the viewport store; React only re-renders when the tile level or the visible tile range changes.
 export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
-  const store = useReactFlowStoreApi().viewportStore
   const paper = useRef<HTMLDivElement>(null), el = useRef<HTMLDivElement>(null)
   const T = world.tiles.size
-  const [view, setView] = useState<TileView>(() => viewOf(store.getState().transform, T, size, window.devicePixelRatio))
+  const [view, setView] = useState<TileView>(() => viewOf(viewport.get(), T, size, window.devicePixelRatio))
   useLayoutEffect(() => {
     let key = ''
-    const apply = ([x, y, zoom]: number[]) => {
+    const apply = ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
       const k = 1024 * zoom // the texture repeats every 1024 world units
       el.current!.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`
       paper.current!.style.backgroundSize = `${k}px`
       paper.current!.style.backgroundPosition = `${x % k}px ${y % k}px`
-      const v = viewOf([x, y, zoom], T, size, window.devicePixelRatio)
+      const v = viewOf({ x, y, zoom }, T, size, window.devicePixelRatio)
       const kk = `${v.level}/${v.c0}/${v.c1}/${v.r0}/${v.r1}`
       if (kk !== key && !flight.active) { key = kk; setView(v) } // mid-flight the mounted tiles stay as they are; landing calls apply again
     }
-    apply(store.getState().transform)
-    const land = () => apply(store.getState().transform)
+    apply(viewport.get())
+    const land = () => apply(viewport.get())
     flight.onEnd.add(land)
-    const off = store.subscribe((s) => apply(s.transform))
+    const off = viewport.subscribe(apply)
     return () => { off(); flight.onEnd.delete(land) }
-  }, [store, T, size])
+  }, [T, size])
   const tex = world.textures?.[scheme]?.[view.level]
   return (
     <>
@@ -75,7 +74,7 @@ export const Live = memo(function Live({ world, scheme }: { world: WorldData; sc
 
 // Estate names and path labels follow the viewport: their on-screen size stays between a minimum and a maximum. Estate names always show; path labels fade out when zoomed so far out they would only overlap.
 export function Labels({ world }: { world: WorldData }) {
-  const zoom = useViewportStore((s) => s.transform[2]) // task 2.4 steps this
+  const zoom = useViewport((v) => v.zoom) // task 2.4 steps this
   const { bounds: b } = world
   const px = (natural: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, natural * zoom)) / zoom
   const fr = Math.min(px(11.5, 9.5, 13.5), 11.5 * 1.35) /* never wider than the room the generator reserved */, fe = px(13, 11, 17)

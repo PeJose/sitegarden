@@ -1,11 +1,11 @@
 import { useCallback, type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ReactFlowProvider, useReactFlowStoreApi } from '@xyflow/react'
 import { engine } from './mock/engine'
 import { nodeById } from './mock/data'
 import { usePrefs } from './prefs'
 import { HeroSmear } from './ui/HeroSmear'
 import { pinAt, useWorld, type WorldData } from './world'
-import { MapView, useFlyTo } from './map/MapView'
+import { MapView, flyTo } from './map/MapView'
+import { viewport } from './map/viewport'
 import { heroInset } from './lib/view'
 import { Hero } from './ui/Hero'
 import { StatusStrip } from './ui/StatusStrip'
@@ -28,9 +28,7 @@ export default function App() {
   if (!world) return <div className="app" />
   if (prefs.style === 'boring') return <Boring setStyle={prefs.setStyle} />
   return (
-    <ReactFlowProvider>
-      <Fun {...prefs} world={world} />
-    </ReactFlowProvider>
+    <Fun {...prefs} world={world} />
   )
 }
 
@@ -40,14 +38,13 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
   const [toast, setToast] = useState('')
   const [size, setSize] = useState<{ w: number; h: number } | null>(null) // measured, so the first frame matches the design exactly
   const box = useRef<HTMLDivElement>(null)
-  const flyTo = useFlyTo()
   const app = useRef<HTMLDivElement>(null)
   const [hidden, setHidden] = useState(() => { try { return localStorage.getItem('sitegarden-hero') === 'hidden' } catch { return false } })
   const collapsed = hidden && (size?.w ?? 1440) >= 760 // the stacked mobile hero covers nothing
   const toggle = () => setHidden((h) => { try { localStorage.setItem('sitegarden-hero', h ? 'open' : 'hidden') } catch { /* private mode */ } return !h })
   const toggleRef = useRef(toggle)
   toggleRef.current = toggle
-  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const say = useCallback((m: string) => {
     setToast(m)
@@ -99,16 +96,15 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
   )
 }
 
-// Follows the pin without a React render per frame: the store subscription writes --x/--y on the card; React only sees the card flip above/below the pin.
+// Follows the pin without a React render per frame: the viewport subscription writes --x/--y on the card; React only sees the card flip above/below the pin.
 function Anchored({ id, boxW }: { id: string; boxW: number }) {
-  const store = useReactFlowStoreApi().viewportStore
   const wrap = useRef<HTMLDivElement>(null)
   const [px, py] = pinAt(id)
-  const at = ([x, y, zoom]: number[]) => ({ x: px * zoom + x, y: py * zoom + y })
-  const [pos, setPos] = useState(() => at(store.getState().transform))
+  const at = ({ x, y, zoom }: { x: number; y: number; zoom: number }) => ({ x: px * zoom + x, y: py * zoom + y })
+  const [pos, setPos] = useState(() => at(viewport.get()))
   useLayoutEffect(() => {
     let below = pos.y < 430
-    const apply = (t: number[]) => {
+    const apply = (t: { x: number; y: number; zoom: number }) => {
       const p = at(t)
       if (p.y < 430 !== below) { below = !below; setPos(p) }
       wrap.current?.querySelector<HTMLElement>('.pop')?.style.setProperty('--x', String(Math.min(Math.max(p.x, 147), Math.max(147, boxW - 147))))
@@ -116,9 +112,9 @@ function Anchored({ id, boxW }: { id: string; boxW: number }) {
       const arrow = wrap.current?.querySelector<HTMLElement>('.pop-arrow')
       arrow?.style.setProperty('--x', String(p.x)); arrow?.style.setProperty('--y', String(p.y))
     }
-    apply(store.getState().transform)
-    return store.subscribe((s) => apply(s.transform))
+    apply(viewport.get())
+    return viewport.subscribe(apply)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, boxW, px, py])
+  }, [boxW, px, py])
   return <div ref={wrap} style={{ display: 'contents' }}><Popover nodeId={id} x={pos.x} y={pos.y} boxW={boxW} /></div>
 }

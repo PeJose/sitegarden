@@ -2,7 +2,7 @@
 
 Goal: a user can swap the theme, add their own buildings, node types, connections and integrations, and replace the main puzzles (map layers, lists, side-panel tabs) without touching the core. The core is small and untouchable.
 
-Design copies, in order of influence: **Backstage's new frontend system** (extension tree, replace by ID, disable in config), **VS Code** (declarative `contributes`, lazy activation, API version range), **Grafana** (import map with shared React), **tldraw** (custom shape = small class with schema and migrations), **Obsidian** (every registration returns a disposer).
+Design copies, in order of influence: **Backstage's new frontend system** (extension tree, replace by ID, disable in config), **VS Code** (declarative `contributes`, lazy activation, API version range), **Grafana** (shared runtime for web plugins; we build them in instead), **tldraw** (custom shape = small class with schema and migrations), **Obsidian** (every registration returns a disposer).
 
 ## The core (untouchable)
 
@@ -42,7 +42,7 @@ const Manifest = z.object({
   apiVersion: z.string(),                       // semver range, e.g. "^1" (like engines.vscode)
   dependsOn: z.record(z.string()).optional(),   // other plugin ids + ranges
   server: z.string().optional(),                // ESM entry
-  web: z.string().optional(),                   // ESM entry (React)
+  web: z.string().optional(),                   // ESM entry (Preact, through the React API)
   activation: z.array(z.string()).default(['startup']), // 'onNodeType:netlify', 'onView:deploys' …
   contributes: z.object({
     themes: z.array(z.string()).optional(),          // tokens.json paths
@@ -141,14 +141,12 @@ export default definePlugin({
 - **Dependency injection:** `ctx.use('github')` returns that plugin's exported API, typed by module augmentation:
   `declare module '@sitegarden/sdk' { interface Services { github: GithubApi } }`
 
-## Loading web plugins without rebuilding
+## Loading web plugins
 
-- **Import map with shared React, no Module Federation.** Grafana uses the same pattern (SystemJS plus an import map with externalised shared deps).
-- The server builds one inline `<script type="importmap">` **per request** from the enabled plugin list. It maps `react`, `react-dom`, `@xyflow/react` and `@sitegarden/sdk` to files the host serves. (Changing the import map after load needs Chrome 135+ or Safari 18.4+ and fails on conflicts; Firefox has no support. So the map is static per page load.)
-- Plugins are built with Vite library mode (`formats: ['es']`, those four externalised) and loaded with `import('/plugins/<id>/web.js')`, with the `integrity` hash from the lockfile and a CSP.
-- Native import maps: Chrome 89+, Firefox 108+, Safari 16.4+. `es-module-shims` only as a fallback.
-- The conformance kit fails a plugin whose bundle contains its own React (two Reacts is the classic failure).
-- Dev mode: `sitegarden dev ./my-plugin` loads the plugin from its Vite dev server and swaps it live.
+- **Build-time plugins, one runtime.** A web plugin is compiled into the web build with the host, so it shares the host's Preact and there is no import map, no Module Federation and no runtime loading. Adding or removing a web plugin means rebuilding the web app. The earlier plan (an import map per request, Grafana style) is dropped: the web app now ships one UI runtime of about 40 KB gzip and nothing else to share.
+- **Supported API: React 18 through `preact/compat` 10.** Plugins import `react` and `react-dom` as usual; the host's build aliases them to `preact/compat` (and `react/jsx-runtime` to `preact/jsx-runtime`). Hooks, `memo`, `Fragment`, `createPortal`, `useSyncExternalStore`, `useId`, `Suspense`/`lazy`, class error boundaries and `dangerouslySetInnerHTML` work. Not supported: `use()`, `useActionState`, `useOptimistic`, `ref` as a plain prop (use `forwardRef`), `<title>` hoisting; `startTransition` runs immediately. Events are native DOM events (no synthetic layer), `onChange` on inputs fires on `input`. No StrictMode double render in dev.
+- A plugin must not bundle its own copy of `preact` or `react`: two runtimes break hooks. The conformance kit fails a plugin that does.
+- Dev mode: the host's Vite dev server hot-reloads a plugin (`@preact/preset-vite`, prefresh).
 
 ## Config schema merging
 
@@ -163,7 +161,7 @@ export default definePlugin({
 - A theme is a tokens file in **W3C DTCG format** (`$value`, `$type`, `{alias}`), using the stable subset (color, dimension, duration, fontFamily) plus `$extensions.sitegarden` for custom data. The DTCG spec is still a draft, so keep to that subset.
 - The core compiles tokens to CSS custom properties on `:root[data-theme=…]`. Light, dark and night are separate token sets.
 - A theme that needs a different look, not just colours, replaces layer extensions by ID.
-- React Flow `nodeTypes` / `edgeTypes` objects are rebuilt only when the plugin set changes, never per render (React Flow requirement).
+- Layer and pin extensions are resolved when the plugin set changes, never per render.
 
 ## Isolation tiers
 
@@ -185,12 +183,12 @@ Not used as a boundary:
 
 - `apiVersion` is a semver range checked against the SDK major version. An incompatible plugin is refused with a clear message.
 - Keep the SDK surface narrow; mark new APIs `@experimental`; rename hooks via `deprecateHook` with warnings.
-- `@sitegarden/plugin-test` conformance kit: manifest, schema merge, React externalised, permissions declared, disposers called.
-- **Before freezing the SDK, prototype one web plugin end to end** (import map, shared React, hot reload). This is the riskiest assumption in the design.
+- `@sitegarden/plugin-test` conformance kit: manifest, schema merge, no bundled copy of Preact or React, permissions declared, disposers called.
+- **Before freezing the SDK, prototype one web plugin end to end** (build-time plugin, shared Preact, hot reload). This is the riskiest assumption in the design.
 
 ## Pitfalls
 
-1. Two copies of React. Externalise, and fail loudly in the conformance kit.
+1. Two copies of the UI runtime (Preact or React). Externalise, and fail loudly in the conformance kit.
 2. Treating Node `--permission` or `vm` as a sandbox.
 3. A wide SDK. Every export is a promise.
 4. Silent overrides. Always log them and show "who replaced what".

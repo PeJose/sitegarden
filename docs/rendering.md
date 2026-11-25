@@ -29,6 +29,6 @@ Zoom levels are 0.125 / 0.5 / 1 / 2 px per world unit (level 0 only feeds the pr
 
 - `src/gen`: seeded isomorphic generator (`world`, `estate`, `hood`) and the SVG layer functions in `render.ts`.
 - `server/`: `plan.ts` (hash everything), `apply.ts` (render, flatten, publish), `store.ts` (data dir, releases, GC), `config.ts` (YAML), `index.ts` (Hono, watcher, SSE), `sg.ts` (CLI).
-- `src/map`: React Flow is the pan/zoom viewport and the pin layer; server tiles follow its transform. Chips and path labels fade out by on-screen size (see `MapView`).
+- `src/map`: `viewport.ts` is the own pan/zoom store (wheel, drag, pinch, animated flights) and the pin layer's transform; server tiles follow it. Chips and path labels fade out by on-screen size (see `MapView`).
 - `src/mock`: data and the fake live engine. `src/Boring.tsx`: Boring.dc.html.
 - URL helpers: `?theme=night`, `?style=boring`, `?select=copperleaf-site`, `?panel=inventory|links`, `?still=1` (freeze the mock scene).

@@ -1,0 +1,5 @@
+{
+  // tsx only (pnpm test): node cannot resolve the directory alias of tsconfig.app.json, so point the aliases at the compat file itself
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": { "paths": { "react": ["./node_modules/preact/compat/dist/compat.mjs"], "react-dom": ["./node_modules/preact/compat/dist/compat.mjs"] } }
+}

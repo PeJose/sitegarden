@@ -1,5 +1,4 @@
 import { memo } from 'react'
-import type { NodeProps } from '@xyflow/react'
 import { nodeById } from '../mock/data'
 import { useEngine } from '../mock/engine'
 import type { NodeType, Status } from '../mock/types'
@@ -25,8 +24,7 @@ function chipText(status: Status, host: string): { text: string; color: string }
   return { text: host, color: 'var(--muted)' }
 }
 
-function PinNodeInner({ id, data }: NodeProps) {
-  const slot = (data as { chip: Estate['chips'][string]; pin: [number, number] }) // chip box reserved by the generator, world coords
+function PinNodeInner({ id, data: slot }: { id: string; data: { chip: Estate['chips'][string]; pin: [number, number] } }) { // slot: the chip box reserved by the generator, world coords
   const def = nodeById(id)
   const status = useEngine((s) => s.nodes[id]?.status)
   if (!def || !status) return null

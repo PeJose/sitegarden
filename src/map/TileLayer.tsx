@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import type { JSX } from 'preact'
 import type { Scheme } from '../prefs'
 import type { TileView } from '../lib/view'
 import type { WorldData } from '../world'
@@ -28,7 +29,7 @@ export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: S
 
   const firstWave = useRef<string[] | null>(null)
   firstWave.current ??= want.filter((t) => t.z === 1 && t.x * T < rx1 - m && (t.x + 1) * T > rx0 + m && t.y * T < ry1 - m && (t.y + 1) * T > ry0 + m).map(keyOf)
-  const onLoad = (k: string) => (e: React.SyntheticEvent<HTMLImageElement>) => {
+  const onLoad = (k: string) => (e: JSX.TargetedEvent<HTMLImageElement>) => {
     e.currentTarget.style.opacity = '1'
     loaded.current.add(k)
     if (!reported.current && firstWave.current!.every((s) => loaded.current.has(s))) {

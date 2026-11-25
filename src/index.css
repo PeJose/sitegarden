@@ -40,7 +40,9 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
 /* ---- layout ---- */
 .app { position: relative; height: 100vh; min-height: 560px; overflow: hidden; background: var(--bg); }
 .mapbox { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
-.mapbox .react-flow { background: transparent; }
+.pane { position: relative; width: 100%; height: 100%; overflow: hidden; z-index: 0; touch-action: none; user-select: none; cursor: grab; }
+.pane.dragging { cursor: grabbing; }
+.viewport { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; pointer-events: none; }
 .paper { position: absolute; inset: 0; pointer-events: none; }
 .world { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; will-change: transform; pointer-events: none; }
 .world .tile { position: absolute; max-width: none; user-select: none; opacity: 0; transition: opacity .25s; }
@@ -49,8 +51,8 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
 .wash-fade { transition: opacity 1.4s ease; }
 .est-labels { font: 600 15px Outfit, sans-serif; fill: var(--est); stroke: var(--est-halo); paint-order: stroke; stroke-linejoin: round; }
 .road-labels { font: 500 13px 'JetBrains Mono', monospace; fill: var(--road); stroke: var(--road-halo); stroke-linejoin: round; paint-order: stroke; }
-.react-flow__viewport { will-change: transform; } /* pins and chips become one composited layer that pan only moves (task 2.8) */
-.react-flow__node { cursor: pointer; }
+.viewport { will-change: transform; } /* pins and chips become one composited layer that pan only moves (task 2.8) */
+.pinbox { position: absolute; left: 0; top: 0; width: 34px; height: 34px; transform-origin: 0 0; pointer-events: all; cursor: pointer; }
 .pin { position: relative; width: 34px; height: 34px; }
 .pin svg { transform: scale(calc(.88 * var(--pin-k, 1))); } /* pins keep a minimum on-screen size when zoomed out */
 .pin .pulse-wrap { position: absolute; left: -22px; top: -22px; width: 78px; height: 78px; transform: scale(calc(.88 * var(--pin-k, 1))); } /* ring centred on the pin, sized as the old scaled svg */
@@ -58,11 +60,11 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
 .pin::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(34px * var(--pin-k, 1)); height: calc(34px * var(--pin-k, 1)); transform: translate(-50%, -50%); } /* so does their tap target */
 .chipbox { position: absolute; display: flex; align-items: center; opacity: var(--chip-o, 1); transition: opacity .2s, transform .2s; pointer-events: none; }
 /* chips fade out when their text would be too small to read; a hovered or focused pin always shows its own, enlarged to stay legible */
-.react-flow__node:hover .chipbox, .react-flow__node:focus-within .chipbox { opacity: 1; transform: scale(var(--hover-k, 1)); }
-.react-flow__node:hover { z-index: 1000 !important; }
+.pinbox:hover .chipbox, .pinbox:focus-within .chipbox { opacity: 1; transform: scale(var(--hover-k, 1)); }
+.pinbox:hover { z-index: 1000; }
 .road-labels { transition: opacity .2s; }
 .chip { display: flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; background: var(--card-chip); border-radius: 999px; box-shadow: 0 2px 8px var(--shadow-chip); font-size: 11.5px; font-weight: 500; white-space: nowrap; color: var(--ink); }
-.react-flow__node:focus-visible .pin { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 50%; }
+.pinbox:focus-visible .pin { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 50%; }
 
 .hero-smear { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; overflow: visible; }
 .hero, .hero-smear, .hero-handle { transition: transform .32s cubic-bezier(.22,.61,.36,1), visibility 0s; }
@@ -213,3 +215,8 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
 .b-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
 .b-actions button { flex: 1 1 120px; min-height: 44px; font: 500 14px Inter, sans-serif; color: #111827; background: #fff; border: 1px solid #D1D5DB; border-radius: 8px; cursor: pointer; }
 .b-actions .p { flex-basis: 140px; font-weight: 600; color: #fff; background: #111827; border: none; }
+
+/* a plugin that threw while rendering: a small card in its place (map layers float over the map box) */
+.ext-failed { position: relative; z-index: 6; margin: 8px; padding: 6px 12px; background: var(--solid); border: 1px solid var(--round-line); border-radius: 12px; box-shadow: 0 8px 24px var(--shadow-cmd); color: var(--ink); font: 500 13px Outfit, sans-serif; }
+.mapbox > .ext-failed { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; }
+.ext-failed code { font: 500 12px 'JetBrains Mono', monospace; color: var(--accent); }

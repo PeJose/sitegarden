@@ -634,3 +634,187 @@ commit 1e8b671 (dirty) · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · hea
 ### m1-core 5.2 note (blocks "m1-core 5.2 before" and "m1-core 5.2" above, same release, same machine)
 
 Map layers and side-panel tabs now render through the extension tree (React fragments only, so the DOM is unchanged). The screenshot diff passes against a build of the commit before the change (light-still 0 %, night-still 0.001 %). Idle GPU light 5.5 to 6.8 %, light-still 4.8 to 7.0 %, night-still 9.2 to 7.6 %; pan 12.1 to 13.3 % with 59.9 fps, 424 vs 422 paints, no long tasks. All within the 5 to 10 % noise of earlier blocks. The "before" run used a different release than the older blocks (zoom 0.369 vs 0.341), so compare the two new blocks with each other.
+
+## 2026-11-24 own-viewport-before-1
+
+commit c9abd34 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":244,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":7.1,"fps":60.1,"frames":601,"timers":0,"paints":302,"paintAreaMpx":93439.61,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":86,"layout":0,"script":28,"paint":37,"decode":0,"decodeAllThreads":0}}
+{"scenario":"light-still","zoom":0.368852,"loadMs":215,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":7.2,"fps":60,"frames":600,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":90,"layout":0,"script":29,"paint":39,"decode":0,"decodeAllThreads":0}}
+{"scenario":"night-still","zoom":0.368852,"loadMs":216,"bytes":{"total":3159359,"texture":402537,"tiles":1932828,"js":214589},"gpuPct":7.6,"fps":60.1,"frames":601,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":102,"layout":0,"script":30,"paint":35,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":264,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":13.4,"fps":59.9,"frames":182,"timers":8,"paints":420,"paintAreaMpx":844508558.71,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":25,"layout":2,"script":61,"paint":16,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":213,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":17.9,"fps":59.4,"frames":181,"timers":0,"paints":2568,"paintAreaMpx":425590267884.91,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":60,"maxLongTask":60,"tileReqs":42,"tileReqsOff":16,"ms":{"style":63,"layout":38,"script":76,"paint":22,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":217,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":7.7,"fps":60,"frames":182,"timers":8,"paints":426,"paintAreaMpx":1125985356.85,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":41,"layout":3,"script":124,"paint":30,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":216,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":14.7,"fps":59.4,"frames":179,"timers":0,"paints":2564,"paintAreaMpx":425590271841.22,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":42,"tileReqsOff":16,"ms":{"style":182,"layout":129,"script":220,"paint":74,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 own-viewport-before-2
+
+commit c9abd34 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":218,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":6.8,"fps":60.1,"frames":601,"timers":0,"paints":302,"paintAreaMpx":93439.61,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":83,"layout":0,"script":29,"paint":34,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":215,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":14.3,"fps":60,"frames":182,"timers":8,"paints":426,"paintAreaMpx":1125985356.85,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":27,"layout":2,"script":66,"paint":17,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":209,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":17.7,"fps":59.6,"frames":181,"timers":0,"paints":2564,"paintAreaMpx":425590267817.11,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":61,"maxLongTask":61,"tileReqs":42,"tileReqsOff":16,"ms":{"style":61,"layout":39,"script":75,"paint":22,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":226,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":7.6,"fps":60,"frames":182,"timers":8,"paints":420,"paintAreaMpx":844509174.82,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":47,"layout":3,"script":116,"paint":33,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":206,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":14.6,"fps":59.6,"frames":180,"timers":0,"paints":2560,"paintAreaMpx":425590267131.19,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":42,"tileReqsOff":16,"ms":{"style":192,"layout":122,"script":219,"paint":66,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 own-viewport-before-3
+
+commit c9abd34 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":213,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":7.2,"fps":59.9,"frames":600,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":88,"layout":0,"script":30,"paint":38,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":211,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":13.3,"fps":60.2,"frames":183,"timers":8,"paints":426,"paintAreaMpx":563034240.73,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":25,"layout":2,"script":64,"paint":16,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":228,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":18,"fps":59.5,"frames":181,"timers":0,"paints":2569,"paintAreaMpx":425590267682.63,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":62,"maxLongTask":62,"tileReqs":42,"tileReqsOff":16,"ms":{"style":62,"layout":39,"script":71,"paint":23,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":230,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":7.6,"fps":60,"frames":182,"timers":8,"paints":430,"paintAreaMpx":1407462152.46,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":51,"layout":2,"script":112,"paint":31,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":209,"bytes":{"total":3429482,"texture":537502,"tiles":2067480,"js":214589},"gpuPct":14.8,"fps":59.5,"frames":179,"timers":0,"paints":2568,"paintAreaMpx":425590272360.9,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":42,"tileReqsOff":16,"ms":{"style":186,"layout":130,"script":233,"paint":70,"decode":0,"decodeAllThreads":0}}
+```
+
+### own-viewport before (the three blocks above, same release, same machine)
+
+Build of c9abd34 (React Flow). Main chunk 570590 B raw / 181152 B gzip, css 30105 B / 6731 B gzip. Ranges over the 3 runs: light 6.8-7.1 % GPU; pan 13.4-14.3 % GPU, 60 fps, 0 long tasks, script 61-66 ms; pan-4x 7.6 %, 60 fps, 0 long tasks; zoom 17.7-18.0 % GPU, 59.4-59.6 fps, 1 long task (60 ms) in every run; zoom-4x 14.6-14.8 %, 59.4-59.6 fps. Screenshot reference for the diff: the light-still and night-still frames of this build.
+
+## 2026-11-24 own-viewport after (interleaved A/B, AC power)
+
+AC power (`pmset -g batt`: "AC Power"). A = build of c9abd34 (React Flow, re-measured here, not the earlier baseline blocks), B = this change; runs A1 B1 A2 B2 A3 B3 against the same server, `--only light,pan,pan-4x,zoom,zoom-4x`, Chrome 159, headless Metal. Ranges over 3 runs. (A first interleaved set on battery was capped at 30 fps for both builds and showed the same relative picture; it is dropped.)
+
+| scenario | build | GPU % | fps | long tasks (count, ms per run) | style ms | layout ms | script ms | tile reqs |
+|---|---|---|---|---|---|---|---|---|
+| light | A | 6.9-7.4 | 60 | 0 | 99-106 | 0 | 36-38 | 0 |
+| light | B | 6.8-7.3 | 60-60.1 | 0 | 97-108 | 0 | 33-37 | 0 |
+| pan | A | 13.4-14.1 | 59.9-60.1 | 0 | 26-31 | 1-2 | 59-69 | 7 |
+| pan | B | 12.8-14.8 | 60 | 0 | 28-34 | 1-2 | 68-72 | 7 |
+| pan-4x | A | 7.9-8.9 | 59.8-60 | 0 | 51-66 | 2-5 | 124-165 | 7 |
+| pan-4x | B | 8.2-10.0 | 59.9-60 | 0 | 51-73 | 3-4 | 142-182 | 7 |
+| zoom | A | 17.5-20.1 | 59.4-59.6 | 1, 1, 0 (60, 58, 0) | 59-68 | 38-41 | 70-74 | 42 |
+| zoom | B | 19.9-20.2 | 59.4-59.6 | 1, 1, 1 (58, 56, 63) | 62-67 | 40 | 45-52 | 58 |
+| zoom-4x | A | 14.7-17.0 | 59.0-59.5 | 0, 0, 1 (72) | 191-256 | 121-154 | 223-287 | 42 |
+| zoom-4x | B | 15.4-16.8 | 58.9-59.6 | 0, 0, 1 (73) | 187-230 | 126-155 | 138-171 | 58 |
+
+Budgets met: pan 60 fps (>= 55), pan-4x 59.9-60 (>= 50), idle GPU equal to A within noise, no long tasks in pan or idle. The zoom scenario has the same single ~60 ms long task in both builds (also in the earlier baseline blocks), so it is not new. Pan script is about 8 ms above A, zoom script about a third lower. Zoom requests 58 vs 42 tiles in B (not investigated).
+
+Screenshot diff against the A build's light-still / night-still (taken on battery, a still frame does not depend on it): light-still mean 0.002 %, over-threshold 0.011 %; night-still 0.014 % / 0.016 %; both pass.
+
+Main chunk: 570590 B raw / 181152 B gzip before, 327562 B raw / 99320 B gzip after (-43 % raw, -45 % gzip); css 30105 / 6731 B before, 19067 / 4964 B after.
+
+## 2026-11-24 zoom tile requests (preact-swap 1.1)
+
+Question: why `zoom` shows `tileReqs` 58 with the own viewport vs 42 with React Flow. Both builds (660c0a3, the commit before the swap, and the own-viewport head) ran the same scripted wheel zoom (3 s in and out) with a page-side log of the viewport zoom per frame, tile `img` mounts and tile resource entries, on headless Chrome 159 / Metal.
+
+| | React Flow | own viewport |
+|---|---|---|
+| distinct zoom steps, min and max | 21, 0.369 to 1.947 | 21, 0.369 to 1.947 |
+| level changes (`levelFor`, dpr 1) | 6 | 6 |
+| tile `img` mounts in the window | 424, in 18 batches | 424, in 18 batches (same sizes, same zoom steps) |
+| tile requests before the window (page load) | 104 | 88 |
+| tile requests in the window | 42 | 58 |
+| both together | 146 | 146 |
+
+The viewport sequences and the mount batches are the same, so the own viewport does not cross levels more often or mount tiles mid-gesture. The 16 extra requests are tiles React Flow had already fetched at page load (it mounts the tile layer once for its default viewport before the fit; MapView now frames before the first render, so nothing is mounted for another view) and that the own viewport fetches on the first wheel step instead. They are the same files (all 16 in the window are in React Flow's load-time set), and the total over load plus zoom is 146 for both. A measurement artefact of where the window starts, not a regression; nothing changed in the viewport or tile code. Load is now 16 tile requests lighter.
+
+## 2026-11-24 Preact behaviour check (preact-swap 2.2)
+
+Headless Chrome 159 (Metal), the production build on Preact 10.29 against the pre-swap build (own viewport on React 19), same data, scripted with playwright. Every observable matched, zero console errors (the only message is Playwright's "service worker blocked" warning, also in the React build).
+
+- Command bar: typing "check everything" fills the input (`onChange` through compat), Enter clears it and toasts "Checking everything…"; an unknown command toasts the hint.
+- Status strip: opened from the keyboard, the card stays open while focus moves between its rows and closes when focus leaves (`onBlur` with `relatedTarget`).
+- "All services" (23 rows) and "All links" (45 rows) open and close with Esc; clicking a plot flies from zoom 0.369 to 1.3; a pin opens its popover and a click on empty map closes it.
+- Labels: 17 `textPath` elements keep their `href`, all 17 road labels and 6 estate names have a width, road label opacity 1 at the fly-to zoom. Night theme: 54 light groups, tiles fade in (25 of 25 `onLoad` handlers ran).
+- Screenshot diff against the React build (`light-still`, `night-still`): mean 0 % / 0 %, over-threshold 0.002 % / 0 %, both pass. Animated frames of the panels, fly, popover and night (taken mid-animation, not pass/fail) differ by 0.33 to 0.40 % mean.
+- Main chunk 125645 B raw / 39508 B gzip (React build: 327562 / 99320); no `react.production` in `dist`.
+
+## 2026-11-24 pf-A1
+
+commit 0e22556 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":427,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":6.2,"fps":60,"frames":600,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":88,"layout":0,"script":32,"paint":29,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":346,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":13.6,"fps":60,"frames":181,"timers":8,"paints":421,"paintAreaMpx":1125979804.48,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":33,"layout":1,"script":79,"paint":23,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":358,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":19.2,"fps":59.6,"frames":179,"timers":0,"paints":2552,"paintAreaMpx":425590266420.94,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":59,"maxLongTask":59,"tileReqs":58,"tileReqsOff":26,"ms":{"style":61,"layout":35,"script":47,"paint":20,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":332,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":8.6,"fps":60.2,"frames":183,"timers":8,"paints":432,"paintAreaMpx":1125990910.58,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":50,"layout":3,"script":144,"paint":39,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":300,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":16.8,"fps":59.2,"frames":178,"timers":0,"paints":2551,"paintAreaMpx":425590265371.81,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":2,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":58,"tileReqsOff":26,"ms":{"style":210,"layout":134,"script":154,"paint":77,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 pf-B1
+
+commit 0e22556 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":325,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":6.8,"fps":60.1,"frames":601,"timers":3,"paints":302,"paintAreaMpx":92823.4,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":97,"layout":0,"script":33,"paint":34,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":347,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":13.4,"fps":60,"frames":181,"timers":22,"paints":494,"paintAreaMpx":1126023034.02,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":32,"layout":2,"script":44,"paint":22,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":348,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":20.3,"fps":59.4,"frames":181,"timers":59,"paints":2456,"paintAreaMpx":425590256915.78,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":58,"tileReqsOff":26,"ms":{"style":67,"layout":41,"script":17,"paint":23,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":380,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":10.6,"fps":60.2,"frames":183,"timers":23,"paints":497,"paintAreaMpx":2251921572.87,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":71,"layout":5,"script":134,"paint":54,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":325,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":18.1,"fps":59.2,"frames":178,"timers":56,"paints":2441,"paintAreaMpx":425590251745.59,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":2,"longTasks":1,"longTaskMs":62,"maxLongTask":62,"tileReqs":58,"tileReqsOff":26,"ms":{"style":259,"layout":163,"script":56,"paint":86,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 pf-A2
+
+commit 0e22556 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":363,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":6.3,"fps":60.1,"frames":601,"timers":1,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":97,"layout":0,"script":34,"paint":28,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":337,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":13,"fps":60.1,"frames":182,"timers":8,"paints":425,"paintAreaMpx":1125980425.88,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":22,"layout":1,"script":55,"paint":15,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":325,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":19.4,"fps":59.5,"frames":181,"timers":0,"paints":2591,"paintAreaMpx":425590269217.66,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":58,"maxLongTask":58,"tileReqs":58,"tileReqsOff":26,"ms":{"style":60,"layout":37,"script":45,"paint":21,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":343,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":9.3,"fps":59.9,"frames":182,"timers":8,"paints":432,"paintAreaMpx":1125987829.51,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":65,"layout":4,"script":167,"paint":39,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":337,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":17.3,"fps":59.2,"frames":180,"timers":0,"paints":2538,"paintAreaMpx":425590260457.87,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":2,"longTasks":1,"longTaskMs":63,"maxLongTask":63,"tileReqs":58,"tileReqsOff":26,"ms":{"style":222,"layout":138,"script":158,"paint":80,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 pf-B2
+
+commit 0e22556 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":339,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":6.4,"fps":60,"frames":600,"timers":0,"paints":300,"paintAreaMpx":92820.81,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":82,"layout":0,"script":28,"paint":25,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":328,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":13.4,"fps":59.9,"frames":181,"timers":23,"paints":492,"paintAreaMpx":1126023647.64,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":31,"layout":2,"script":43,"paint":22,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":311,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":19,"fps":59.3,"frames":178,"timers":58,"paints":2452,"paintAreaMpx":425590258106.06,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":60,"maxLongTask":60,"tileReqs":58,"tileReqsOff":26,"ms":{"style":64,"layout":38,"script":16,"paint":21,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":327,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":10,"fps":59.9,"frames":182,"timers":23,"paints":500,"paintAreaMpx":2251923425.45,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":72,"layout":5,"script":99,"paint":42,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":336,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":16,"fps":59,"frames":179,"timers":56,"paints":2464,"paintAreaMpx":425590257212.95,"maxPaintMpx":281474943.16,"maxFrameMs":67,"slowFrames":1,"longTasks":1,"longTaskMs":65,"maxLongTask":65,"tileReqs":58,"tileReqsOff":26,"ms":{"style":206,"layout":137,"script":54,"paint":74,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 pf-A3
+
+commit 0e22556 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":368,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":6.1,"fps":60,"frames":600,"timers":2,"paints":301,"paintAreaMpx":92822.1,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":89,"layout":0,"script":32,"paint":28,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":308,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":12.6,"fps":60.2,"frames":183,"timers":8,"paints":427,"paintAreaMpx":1125982277.11,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":21,"layout":1,"script":54,"paint":14,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":314,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":19,"fps":59.5,"frames":181,"timers":0,"paints":2559,"paintAreaMpx":425590266667.3,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":61,"maxLongTask":61,"tileReqs":58,"tileReqsOff":26,"ms":{"style":62,"layout":37,"script":45,"paint":20,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":335,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":9.1,"fps":59.8,"frames":182,"timers":8,"paints":441,"paintAreaMpx":2251888841.04,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":64,"layout":3,"script":170,"paint":43,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":312,"bytes":{"total":2053800,"texture":111149,"tiles":1201974,"js":132536},"gpuPct":16.6,"fps":59.2,"frames":179,"timers":0,"paints":2547,"paintAreaMpx":425590266219.61,"maxPaintMpx":281474943.16,"maxFrameMs":67,"slowFrames":1,"longTasks":1,"longTaskMs":70,"maxLongTask":70,"tileReqs":58,"tileReqsOff":26,"ms":{"style":219,"layout":138,"script":163,"paint":84,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 pf-B3
+
+commit 0e22556 · 159.0.8154.13 · Apple M1 Pro · 1440x900 dpr 1 · headless · GPU ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74)) / ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Version 15.5 (Build 24F74))
+
+```json
+{"scenario":"light","zoom":0.368852,"loadMs":335,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":6.4,"fps":60,"frames":600,"timers":3,"paints":301,"paintAreaMpx":92822.1,"maxPaintMpx":617.51,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":0,"tileReqsOff":0,"ms":{"style":78,"layout":0,"script":27,"paint":22,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan","zoom":0.368852,"loadMs":320,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":13.8,"fps":60.1,"frames":181,"timers":22,"paints":492,"paintAreaMpx":1126023647.64,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":31,"layout":2,"script":46,"paint":22,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom","zoom":0.368852,"loadMs":318,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":18.2,"fps":59.5,"frames":181,"timers":59,"paints":2471,"paintAreaMpx":425590258601.15,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":1,"longTaskMs":64,"maxLongTask":64,"tileReqs":58,"tileReqsOff":26,"ms":{"style":60,"layout":37,"script":15,"paint":21,"decode":0,"decodeAllThreads":0}}
+{"scenario":"pan-4x","zoom":0.368852,"loadMs":308,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":9.9,"fps":60,"frames":182,"timers":23,"paints":500,"paintAreaMpx":2251922809.19,"maxPaintMpx":281474943.16,"maxFrameMs":17,"slowFrames":0,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":7,"tileReqsOff":7,"ms":{"style":74,"layout":4,"script":118,"paint":43,"decode":0,"decodeAllThreads":0}}
+{"scenario":"zoom-4x","zoom":0.368852,"loadMs":312,"bytes":{"total":1994008,"texture":111149,"tiles":1201974,"js":72744},"gpuPct":16.4,"fps":59.3,"frames":181,"timers":56,"paints":2466,"paintAreaMpx":425590258333.68,"maxPaintMpx":281474943.16,"maxFrameMs":50,"slowFrames":1,"longTasks":0,"longTaskMs":0,"maxLongTask":0,"tileReqs":58,"tileReqsOff":26,"ms":{"style":210,"layout":139,"script":50,"paint":79,"decode":0,"decodeAllThreads":0}}
+```
+
+## 2026-11-24 preact-swap after (interleaved A/B, AC power)
+
+`pmset -g batt` before and after every run: "AC Power" all 18 times (an earlier attempt started on battery and was dropped). A = own viewport on React 19 (head before the swap), B = Preact 10.29; runs A1 B1 A2 B2 A3 B3 on one server, `--only light,pan,pan-4x,zoom,zoom-4x`, Chrome 159, headless Metal. Ranges over 3 runs.
+
+| scenario | build | GPU % | fps | long tasks (count, ms) | style ms | layout ms | script ms | tile reqs |
+|---|---|---|---|---|---|---|---|---|
+| light | A | 6.1-6.3 | 60-60.1 | 0 | 88-97 | 0 | 32-34 | 0 |
+| light | B | 6.4-6.8 | 60-60.1 | 0 | 78-97 | 0 | 27-33 | 0 |
+| pan | A | 12.6-13.6 | 60-60.2 | 0 | 21-33 | 1 | 54-79 | 7 |
+| pan | B | 13.4-13.8 | 59.9-60.1 | 0 | 31-32 | 2 | 43-46 | 7 |
+| pan-4x | A | 8.6-9.3 | 59.8-60.2 | 0 | 50-65 | 3-4 | 144-170 | 7 |
+| pan-4x | B | 9.9-10.6 | 59.9-60.2 | 0 | 71-74 | 4-5 | 99-134 | 7 |
+| zoom | A | 19.0-19.4 | 59.5-59.6 | 1, 1, 1 (59, 58, 61) | 60-62 | 35-37 | 45-47 | 58 |
+| zoom | B | 18.2-20.3 | 59.3-59.5 | 0, 1, 1 (0, 60, 64) | 60-67 | 37-41 | 15-17 | 58 |
+| zoom-4x | A | 16.6-17.3 | 59.2 | 0, 1, 1 (0, 63, 70) | 210-222 | 134-138 | 154-163 | 58 |
+| zoom-4x | B | 16.0-18.1 | 59.0-59.3 | 1, 1, 0 (62, 65, 0) | 206-259 | 137-163 | 50-56 | 58 |
+
+Budgets met: pan 60 fps (>= 55), pan-4x 59.9-60.2 (>= 50), no long tasks in idle or pan, no new long tasks (the ~60 ms one in zoom is in both builds, as before), idle GPU within noise (light 6.4-6.8 vs 6.1-6.3). Script time drops: pan 43-46 vs 54-79 ms, pan-4x 99-134 vs 144-170, zoom 15-17 vs 45-47, zoom-4x 50-56 vs 154-163. pan-4x GPU is about 1 point higher (9.9-10.6 vs 8.6-9.3) with style recalc 71-74 vs 50-65 ms; frame rate is unchanged. Zoom tile requests are 58 in both here: the 58 vs 42 was React Flow's (see the zoom tile requests block above).
+
+JS transferred up to tiles-visible: 72744 B vs 132536 B. Main chunk 327562 B raw / 99320 B gzip (A) to 125645 B / 39508 B (B): -62 % raw, -60 % gzip; css unchanged at 19067 B.
