@@ -1,7 +1,7 @@
 {
   "name": "sitegarden",
   "private": true,
-  "version": "0.9.1",
+  "version": "0.10.0",
   "type": "module",
   "engines": {
     "node": ">=22.13"
@@ -14,7 +14,7 @@
     "perf": "tsx scripts/perf.ts",
     "dev:server": "UV_THREADPOOL_SIZE=16 tsx watch server/index.ts",
     "dev:web": "vite",
-    "test": "tsx --tsconfig tsconfig.test.json --test src/gen/gen.test.ts src/lib/view.test.ts src/map/viewport.test.ts server/plan.test.ts server/config.test.ts server/core/db.test.ts server/core/events.test.ts server/core/graph.test.ts server/core/holder.test.ts server/core/plugins.test.ts server/core/scheduler.test.ts server/core/secrets.test.ts server/core/http.test.ts server/app.test.ts server/auth.test.ts server/sg.test.ts server/render.test.ts src/ext/tree.test.ts src/live/store.test.ts server/schema.test.ts plugins/essentials/essentials.test.ts plugins/mock/mock.test.ts",
+    "test": "tsx --tsconfig tsconfig.test.json --test src/gen/gen.test.ts src/lib/view.test.ts src/map/viewport.test.ts server/plan.test.ts server/config.test.ts server/core/db.test.ts server/core/events.test.ts server/core/graph.test.ts server/core/holder.test.ts server/core/plugins.test.ts server/core/scheduler.test.ts server/core/secrets.test.ts server/core/http.test.ts server/app.test.ts server/auth.test.ts server/sg.test.ts server/render.test.ts src/ext/tree.test.ts src/ext/web.test.ts vite/sitegarden-plugins.test.ts src/live/store.test.ts server/schema.test.ts plugins/essentials/essentials.test.ts plugins/mock/mock.test.ts",
     "e2e": "playwright test",
     "sg": "UV_THREADPOOL_SIZE=16 tsx server/sg.ts"
   },

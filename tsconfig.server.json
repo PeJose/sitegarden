@@ -16,5 +16,6 @@
     "erasableSyntaxOnly": true,
     "strict": true
   },
-  "include": ["server", "plugins", "src/gen"]
+  "include": ["server", "plugins", "src/gen"],
+  "exclude": ["plugins/*/web.tsx"]
 }

@@ -32,12 +32,15 @@ export interface MockEdge {
   label: string
 }
 
+export interface CheckState { id: string; status: Status; detail: string | null; at: number; ms: number | null } // a check's latest result
+
 export interface NodeState {
   status: Status
   lastChecked: number // 0 = never
   since: number // when the current status began
   responseMs: number | null
   history: number[] // response times, 0 = failed
+  checks: CheckState[]
 }
 
 export interface EngineState {

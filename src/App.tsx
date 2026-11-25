@@ -30,7 +30,7 @@ export default function App() {
 
 function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof usePrefs> & { world: WorldData }) {
   const [selected, setSelected] = useState<string | null>(world.estates.some((e) => params.get('select') && e.pins[params.get('select')!]) ? params.get('select') : null)
-  const [panel, setPanel] = useState<'inventory' | 'links' | null>(params.get('panel') === 'links' ? 'links' : params.get('panel') === 'inventory' ? 'inventory' : null)
+  const [panel, setPanel] = useState<string | null>(params.get('panel') && `tab:essentials:${params.get('panel')}`) // a tab id
   const [toast, setToast] = useState('')
   const [size, setSize] = useState<{ w: number; h: number } | null>(null) // measured, so the first frame matches the design exactly
   const box = useRef<HTMLDivElement>(null)
@@ -83,7 +83,7 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
         {size && <MapView world={world} scheme={scheme} size={size} collapsed={collapsed} onSelect={(id) => { setSelected(id); setPanel(null) }} />}
         <StatusStrip onPick={pickFromPanel} />
         {selected && nodeById(selected) && <Anchored key={selected} id={selected} boxW={size?.w ?? 1440} />}
-        {panel && registry.resolve('sidepanel', 'tabs', extConfig.extensions).find((t) => t.id === `tab:essentials:${panel}`)?.render({ onClose: () => setPanel(null), onPick: pickFromPanel })}
+        {panel && registry.resolve('sidepanel', 'tabs', extConfig.extensions).find((t) => t.id === panel)?.render({ onClose: () => setPanel(null), onPick: pickFromPanel })}
         {toast && <div className="toast" role="status">{toast}</div>}
         <CommandBar say={say} />
         <Controls scheme={scheme} style={style} toggleScheme={toggleScheme} setStyle={setStyle}  />

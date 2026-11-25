@@ -9,6 +9,7 @@ import { estateOf, plantEstate, useWorld } from '../world'
 import { nodes } from '../mock/data'
 import { useMemo } from 'react'
 import type { Estate } from '../gen/types'
+import { extConfig, registry } from '../ext/registry'
 import { Dot, colorOf } from './Dots'
 import type { Status } from '../mock/types'
 
@@ -31,7 +32,7 @@ function HeroTab({ onToggle }: { onToggle: () => void }) {
   )
 }
 
-export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (p: 'inventory' | 'links') => void; say: (m: string) => void; collapsed: boolean; onToggle: () => void }) {
+export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (tabId: string) => void; say: (m: string) => void; collapsed: boolean; onToggle: () => void }) {
   const st = useEngine((s) => s)
   const now = useNow(15000)
   const sum = summarize(st, now)
@@ -81,8 +82,7 @@ export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (p: 'inve
           </button>
         ))}
         <div className="more">
-          <button onClick={() => onPanel('inventory')}>All services →</button>
-          <button onClick={() => onPanel('links')}>All links →</button>
+          {registry.resolve('sidepanel', 'tabs', extConfig.extensions).map((t) => <button key={t.id} onClick={() => onPanel(t.id)}>{t.title ?? t.id} →</button>)}
         </div>
       </nav>
     </section>

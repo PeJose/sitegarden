@@ -7,6 +7,7 @@
     "id": "essentials",
     "apiVersion": "^1",
     "server": "./server.ts",
+    "web": "./web.tsx",
     "permissions": { "network": ["*"] },
     "contributes": {
       "nodeTypes": [{ "id": "repo" }, { "id": "cms" }, { "id": "site" }, { "id": "job" }, { "id": "db" }],

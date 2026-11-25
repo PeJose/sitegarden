@@ -34,7 +34,7 @@ const guard = async (c: Context, next: Next) => canEditConfig(c) ? next() : c.js
 app.get('/schema.json', async (c) => c.json(await schemaJson(latestYaml())))
 
 // What the browser needs to arrange its extensions; nothing secret.
-app.get('/api/config', (c) => c.json({ extensions: graph.get()?.extensions ?? {} }, 200, { 'Cache-Control': 'no-cache' }))
+app.get('/api/config', (c) => c.json({ extensions: graph.get()?.extensions ?? {}, plugins: host.plugins().filter((p) => p.status === 'loaded').map((p) => p.id) }, 200, { 'Cache-Control': 'no-cache' }))
 
 app.get('/api/release', (c) => {
   const r = currentRelease()

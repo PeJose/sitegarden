@@ -3,12 +3,12 @@ import { createPortal } from 'react-dom'
 
 // Every visual piece is an extension with an ID `kind:plugin:name`; a slot (`map`) takes the ones whose `input` (`layers`) it asks for.
 export type Render = (props: any, config: unknown) => ReactNode
-export interface Extension { id: string; slot: string; input: string; order?: number; render: Render }
+export interface Extension { id: string; slot: string; input: string; order?: number; title?: string; render: Render }
 export interface ExtensionConfig { disabled?: boolean; config?: unknown }
 export interface Replacement { id: string; replaced: string; by: string } // the plugin that lost and the one that won
-export interface Resolved { id: string; render: (props: unknown) => ReactNode }
+export interface Resolved { id: string; title?: string; render: (props: unknown) => ReactNode }
 
-const pluginOf = (id: string) => id.split(':')[1] ?? ''
+export const pluginOf = (id: string) => id.split(':')[1] ?? ''
 
 // One extension throwing while it renders shows a small card in its place and leaves every other extension alone.
 // A map layer lives in the scaled world, so its card floats over the map box instead (shortcut: failed layers share one spot, fine for the rare case).
@@ -45,7 +45,7 @@ export function createRegistry() {
         .map((x) => x.ext)
         .filter((e) => e.slot === slot && e.input === input && !config[e.id]?.disabled)
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-        .map((e) => { const r = (wraps.get(e.id) ?? []).reduce((f, w) => w(f), e.render); return { id: e.id, render: (props: unknown) => createElement(ErrorBoundary, { key: e.id, id: e.id, float: slot === 'map' }, createElement(Call, { f: () => r(props, config[e.id]?.config) })) } })
+        .map((e) => { const r = (wraps.get(e.id) ?? []).reduce((f, w) => w(f), e.render); return { id: e.id, title: e.title, render: (props: unknown) => createElement(ErrorBoundary, { key: e.id, id: e.id, float: slot === 'map' }, createElement(Call, { f: () => r(props, config[e.id]?.config) })) } })
     },
   }
 }
