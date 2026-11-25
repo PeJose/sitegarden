@@ -2,14 +2,14 @@
 
 ## 1. Production serving
 
-- [ ] 1.1 Static `dist/` with SPA fallback and cache headers, `/api/health`, `HOST` + safe start (D1). Verify: app tests for an asset, a deep link falling back to index.html, cache headers, health; a test for the safe-start refusal and its `SITEGARDEN_INSECURE` override.
+- [x] 1.1 Static `dist/` with SPA fallback and cache headers, `/api/health`, `HOST` + safe start (D1). Verify: app tests for an asset, a deep link falling back to index.html, cache headers, health; a test for the safe-start refusal and its `SITEGARDEN_INSECURE` override.
 
 ## 2. Auth
 
-- [ ] 2.1 Auth config schema, drop the "not available" lock, `canEditConfig` by user (D2). Verify: config tests (tailscale without users is an error on its line; `auth.enabled: true` accepted); existing guard tests updated.
-- [ ] 2.2 `server/auth.ts`: identity middleware, bearer token, tailscale header (D3). Verify: unit tests for every path in D3 and the open routes.
-- [ ] 2.3 scrypt hashing, sessions table + pruning, login/logout pages, rate limit, `sg hash-password` (D4). Verify: unit tests for hash/verify, session lifecycle, sliding expiry, prune, 429 after 5 failures, cookie flags.
-- [ ] 2.4 CLI token header and 401 message (D5). Verify: sg test against a locked test server.
+- [x] 2.1 Auth config schema, drop the "not available" lock, `canEditConfig` by user (D2). Verify: config tests (tailscale without users is an error on its line; `auth.enabled: true` accepted); existing guard tests updated.
+- [x] 2.2 `server/auth.ts`: identity middleware, bearer token, tailscale header (D3). Verify: unit tests for every path in D3 and the open routes.
+- [x] 2.3 scrypt hashing, sessions table + pruning, login/logout pages, rate limit, `sg hash-password` (D4). Verify: unit tests for hash/verify, session lifecycle, sliding expiry, prune, 429 after 5 failures, cookie flags.
+- [x] 2.4 CLI token header and 401 message (D5). Verify: sg test against a locked test server.
 
 ## 3. Docker
 
