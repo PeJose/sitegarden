@@ -8,7 +8,7 @@ import type { WorldData } from '../world'
 import { levelFor, viewOf, type TileView } from '../lib/view'
 import { extConfig, registry } from '../ext/registry'
 import { flight } from './tiles'
-import { useViewport, viewport } from './viewport'
+import { useSteppedZoom, viewport } from './viewport'
 import { Lantern, March, Wash } from './Fx'
 
 // The baked world (server tiles) sits under the pins and follows the viewport transform. On top of it,
@@ -79,7 +79,7 @@ export const Live = memo(function Live({ world, scheme }: { world: WorldData; sc
 
 // Estate names and path labels follow the viewport: their on-screen size stays between a minimum and a maximum. Estate names always show; path labels fade out when zoomed so far out they would only overlap.
 export function Labels({ world }: { world: WorldData }) {
-  const zoom = useViewport((v) => v.zoom) // task 2.4 steps this
+  const zoom = useSteppedZoom() // stepped while zooming, exact at rest
   const { bounds: b } = world
   const px = (natural: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, natural * zoom)) / zoom
   const fr = Math.min(px(11.5, 9.5, 13.5), 11.5 * 1.35) /* never wider than the room the generator reserved */, fe = px(13, 11, 17)

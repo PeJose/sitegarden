@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { clampViewport, type Viewport } from '../lib/view'
 
 // The map's own pan and zoom. Same feel as the d3-zoom React Flow used: wheel step, pinch, drag anchors, the van Wijk flight and cubic ease of setViewport.
@@ -156,4 +156,25 @@ export function bindPane(el: HTMLElement, store: ReturnType<typeof createViewpor
   el.addEventListener('pointerdown', down)
   el.addEventListener('wheel', onWheel, { passive: false })
   return () => { el.removeEventListener('pointerdown', down); el.removeEventListener('wheel', onWheel); clearTimeout(wheel); removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up) }
+}
+
+// Labels and chip variables re-lay-out text on every change (about half of a pinch's main-thread time on a phone), so while the zoom moves they follow it in 8% steps
+// (about the smallest change the eye reads on 9-17 px text; stepped like an old map) and snap to the exact zoom once it has rested for 200 ms.
+export const STEP = 1.08
+export const stepZoom = (z: number) => STEP ** Math.round(Math.log(z) / Math.log(STEP))
+export function useSteppedZoom(): number {
+  const [z, setZ] = useState(() => viewport.get().zoom)
+  useEffect(() => {
+    let timer = 0, last = viewport.get().zoom
+    setZ(last)
+    const off = viewport.subscribe(({ zoom }) => {
+      if (zoom === last) return // a pan
+      last = zoom
+      setZ(stepZoom(zoom))
+      clearTimeout(timer)
+      timer = window.setTimeout(() => setZ(last), 200)
+    })
+    return () => { clearTimeout(timer); off() }
+  }, [])
+  return z
 }

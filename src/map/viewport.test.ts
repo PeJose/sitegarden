@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { minZoom, panExtent, type Viewport } from '../lib/view'
-import { createViewport, cubicInOut, flight, Pointers, place, toWorld, wheelStep, wheelZoom, type Limits } from './viewport'
+import { createViewport, cubicInOut, flight, Pointers, place, STEP, stepZoom, toWorld, wheelStep, wheelZoom, type Limits } from './viewport'
 
 const b = { x: 0, y: 0, w: 4000, h: 3000 }
 const W = 1000, H = 600
@@ -95,4 +95,11 @@ test('animateTo arrives, and a new gesture or move cancels the running one', asy
   assert.equal(await second, false)
   c.step(500); assert.equal(s.get().x, mid); assert.equal(c.pending(), 0)
   assert.equal(await s.animateTo({ x: -7, y: 0, zoom: 1 }, 0), true); assert.equal(s.get().x, -7) // zero length: immediate
+})
+
+test('stepZoom snaps to 8% steps: neighbours share a step, a step apart differ, idempotent', () => {
+  assert.equal(stepZoom(1), 1)
+  assert.equal(stepZoom(1.02), stepZoom(1.0)) // inside one step
+  assert.ok(stepZoom(1.5) / stepZoom(1.2) > 1.2) // distinct steps further apart
+  for (const z of [0.3, 0.59, 1.7, 2.5]) { assert.equal(stepZoom(stepZoom(z)), stepZoom(z)); assert.ok(Math.abs(Math.log(stepZoom(z) / z)) <= Math.log(STEP) / 2 + 1e-9) } // never further than half a step off
 })

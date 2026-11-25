@@ -5,7 +5,7 @@ import type { WorldData } from '../world'
 import { WorldLayer } from './WorldLayer'
 import { endFlight, preloadTiles, startFlight } from './tiles'
 import { PinNode } from './PinNode'
-import { bindPane, place, toWorld, useViewport, viewport, type Limits } from './viewport'
+import { bindPane, place, toWorld, useSteppedZoom, viewport, type Limits } from './viewport'
 
 // Centre a world point in the part of the map the hero does not cover.
 const mapSize = { w: 1440, h: 900, collapsed: false } // kept current by MapView
@@ -48,7 +48,7 @@ export function MapView({ world, scheme, size, collapsed, onSelect }: { world: W
   const moved = useRef(false)
   const glide = useRef({ to: { x: 0, y: 0, zoom: 1 }, until: 0 })
   useState(() => viewport.set(initialViewport(size.w, size.h, world, collapsed))) // framed before the first render, so no tile is mounted for another view
-  const zoom = useViewport((v) => v.zoom) // zoom only: a pan does not render MapView
+  const zoom = useSteppedZoom() // stepped while zooming, exact at rest
   const pane = useRef<HTMLDivElement>(null), vp = useRef<HTMLDivElement>(null)
   const select = useRef(onSelect)
   useEffect(() => { select.current = onSelect })
