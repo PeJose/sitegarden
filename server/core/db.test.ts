@@ -82,3 +82,18 @@ test('ms is stored with the snapshot and its history; a file from before the col
   db.close()
   openDb(f).close() // a second open does not add the column again
 })
+
+test('prune drops old events and check history, keeps the latest snapshot', () => {
+  let t = 1000
+  const f = tmp(), db = openDb(f, () => t)
+  db.append('old', {}); db.saveSnapshot('a', 'c', 'down', undefined, 5)
+  t = 9000
+  db.append('new', {}); db.saveSnapshot('a', 'c', 'ok', undefined, 7)
+  assert.equal(db.prune(5000), 2)
+  assert.deepEqual([db.eventsAfter(0).map((e) => e.type), db.history('a', 10).map((r) => r.ms), db.snapshots().map((s) => s.status)], [['new'], [7], ['ok']])
+  db.close()
+  const raw = new DatabaseSync(f) // the per-node history read uses its index instead of a scan
+  const plan = raw.prepare('EXPLAIN QUERY PLAN SELECT check_id, status, at, ms FROM snapshot_history WHERE node = ? ORDER BY rowid DESC LIMIT ?').all('a', 10) as { detail: string }[]
+  assert.match(plan.map((p) => p.detail).join(' '), /snapshot_history_node/)
+  raw.close()
+})

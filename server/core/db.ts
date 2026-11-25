@@ -28,6 +28,13 @@ export function openDb(file: string, now = Date.now) {
       CREATE TABLE IF NOT EXISTS config_revs(rev INTEGER PRIMARY KEY, at INTEGER NOT NULL, source TEXT NOT NULL, yaml TEXT NOT NULL);
       PRAGMA user_version=2`)
   }
+  if ((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version < 3) {
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS snapshot_history_node ON snapshot_history(node);
+      CREATE INDEX IF NOT EXISTS snapshot_history_at ON snapshot_history(at);
+      CREATE INDEX IF NOT EXISTS events_at ON events(at);
+      PRAGMA user_version=3`)
+  }
   for (const t of ['snapshots', 'snapshot_history']) if (!(db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).some((c) => c.name === 'ms')) db.exec(`ALTER TABLE ${t} ADD COLUMN ms INTEGER`)
   const q = <T>(sql: string) => { const s = db.prepare(sql); return { all: (...a: any[]) => s.all(...a) as T[], get: (...a: any[]) => s.get(...a) as T | undefined, run: (...a: any[]) => s.run(...a) } }
   const insEvent = q('INSERT INTO events(at, type, data) VALUES(?, ?, ?)'), after = q<{ id: number; at: number; type: string; data: string }>('SELECT * FROM events WHERE id > ? ORDER BY id')
@@ -45,7 +52,8 @@ export function openDb(file: string, now = Date.now) {
     },
     eventsAfter: (id: number): StoredEvent[] => after.all(id).map((e) => ({ ...e, data: JSON.parse(e.data) })),
     lastEventId: () => q<{ m: number | null }>('SELECT MAX(id) AS m FROM events').get()!.m ?? 0,
-    pruneEvents: (olderThan: number) => Number(q('DELETE FROM events WHERE at < ?').run(olderThan).changes),
+    // Events and check history older than `olderThan`; latest snapshots, config revisions, cache and kv stay.
+    prune: (olderThan: number) => Number(q('DELETE FROM events WHERE at < ?').run(olderThan).changes) + Number(q('DELETE FROM snapshot_history WHERE at < ?').run(olderThan).changes),
     saveSnapshot(node: string, checkId: string, status: string, detail?: string, ms?: number) {
       const at = now()
       upsert.run(node, checkId, status, at, detail ?? null, ms ?? null)

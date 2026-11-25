@@ -9,7 +9,9 @@ export const KEEP_DAYS = 30
 export function createBus(db: Db, redact = (s: string) => s) {
   const scrub = (v: unknown): unknown => typeof v === 'string' ? redact(v) : Array.isArray(v) ? v.map(scrub) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, scrub(x)])) : v
   const listeners = new Set<(e: StoredEvent) => void>()
-  db.pruneEvents(Date.now() - KEEP_DAYS * 86_400_000)
+  const prune = () => db.prune(Date.now() - KEEP_DAYS * 86_400_000)
+  prune()
+  setInterval(prune, 86_400_000).unref() // a server that runs for months still drops old rows
   return {
     db,
     emit(type: string, data: unknown) {
