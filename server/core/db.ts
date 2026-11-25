@@ -7,6 +7,7 @@ export class DriftError extends Error {
   latest: number
   constructor(latest: number) { super(`server is at rev ${latest}`); this.latest = latest }
 }
+export interface HistoryRow { check_id: string; status: string; at: number; ms: number | null }
 export interface Snapshot { node: string; check_id: string; status: string; at: number; detail: string | null; ms: number | null }
 
 // Everything the server remembers besides render artifacts. One writer, WAL; `user_version` is for later migrations.
@@ -32,6 +33,7 @@ export function openDb(file: string, now = Date.now) {
   const insEvent = q('INSERT INTO events(at, type, data) VALUES(?, ?, ?)'), after = q<{ id: number; at: number; type: string; data: string }>('SELECT * FROM events WHERE id > ? ORDER BY id')
   const upsert = q('INSERT INTO snapshots(node, check_id, status, at, detail, ms) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(node, check_id) DO UPDATE SET status=excluded.status, at=excluded.at, detail=excluded.detail, ms=excluded.ms')
   const hist = q('INSERT INTO snapshot_history(node, check_id, status, at, detail, ms) VALUES(?, ?, ?, ?, ?, ?)')
+  const recent = q<HistoryRow>('SELECT check_id, status, at, ms FROM snapshot_history WHERE node = ? ORDER BY rowid DESC LIMIT ?')
   const getCache = q<{ value: string; fetched_at: number }>('SELECT value, fetched_at FROM cache WHERE key = ?'), putCache = q('INSERT OR REPLACE INTO cache(key, value, fetched_at) VALUES(?, ?, ?)')
   const getKv = q<{ value: string }>('SELECT value FROM kv WHERE plugin = ? AND key = ?'), putKv = q('INSERT OR REPLACE INTO kv(plugin, key, value) VALUES(?, ?, ?)'), delKv = q('DELETE FROM kv WHERE plugin = ? AND key = ?')
   const latest = () => q<{ m: number | null }>('SELECT MAX(rev) AS m FROM config_revs').get()!.m ?? 0
@@ -49,6 +51,7 @@ export function openDb(file: string, now = Date.now) {
       upsert.run(node, checkId, status, at, detail ?? null, ms ?? null)
       hist.run(node, checkId, status, at, detail ?? null, ms ?? null)
     },
+    history: (node: string, limit: number) => recent.all(node, limit).reverse(), // oldest first
     snapshots: () => q<Snapshot>('SELECT * FROM snapshots ORDER BY node, check_id').all(),
     cacheGet: (key: string) => { const r = getCache.get(key); return r && { value: JSON.parse(r.value) as unknown, fetched_at: r.fetched_at } },
     cacheSet: (key: string, value: unknown) => void putCache.run(key, JSON.stringify(value), now()),

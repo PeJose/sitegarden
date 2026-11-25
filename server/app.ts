@@ -14,7 +14,8 @@ import { log } from './core/log'
 import { ConfigError, diffGraphs, type Graph, type Issue } from './core/graph'
 import { DriftError } from './core/db'
 import { createHolder } from './core/holder'
-import { createScheduler } from './core/scheduler'
+import { WORST, createScheduler } from './core/scheduler'
+import type { Status } from './core/sdk'
 import { makeEstate } from './mock'
 import { ART, DATA, RENDERER, currentRelease, has, hash, writeAtomic } from './store'
 
@@ -147,6 +148,30 @@ app.post('/api/refresh', async (c) => {
   const b = (await c.req.json().catch(() => null)) as { node?: unknown } | null
   if (b?.node !== undefined && typeof b.node !== 'string') return c.json({ error: 'node must be a node id' }, 400)
   return c.json({ ok: true, queued: scheduler.refresh(b?.node as string | undefined) })
+})
+// The map's statuses in one read; `lastEventId` comes first so an event emitted meanwhile is replayed by the client, never lost.
+const worstOf = (s: string[]) => s.sort((a, b) => WORST.indexOf(a as Status) - WORST.indexOf(b as Status))[0]
+app.get('/api/status', (c) => {
+  const lastEventId = db.lastEventId(), snaps = db.snapshots(), nodes: Record<string, unknown> = {}
+  for (const n of graph.get()?.nodes ?? []) {
+    const own = snaps.filter((s) => s.node === n.id), rows = db.history(n.id, 500)
+    // shortcut: a check removed from the config keeps its last snapshot and still counts, until snapshots are pruned
+    const status = own.length ? worstOf(own.map((s) => s.status)) : 'unknown', by = new Map<string, string>()
+    let since: number | null = null, run = ''
+    for (const r of rows) { // replay: the node's status after each result, then the start of the run it ends in
+      by.set(r.check_id, r.status)
+      const now = worstOf([...by.values()])
+      if (now !== run) { run = now; since = r.at }
+    }
+    const withMs = own.filter((s) => s.ms !== null).sort((a, b) => b.at - a.at)[0]
+    nodes[n.id] = {
+      status, since: own.length ? since : null, lastChecked: own.length ? Math.max(...own.map((s) => s.at)) : null,
+      responseMs: withMs && withMs.status === 'ok' ? withMs.ms : null,
+      history: rows.filter((r) => r.ms !== null || r.status !== 'ok').slice(-48).map((r) => r.status === 'ok' ? r.ms! : 0),
+      checks: own.map((s) => ({ id: s.check_id, status: s.status, detail: s.detail, at: s.at, ms: s.ms })),
+    }
+  }
+  return c.json({ lastEventId, demo: host.plugins().some((p) => p.id === 'mock' && p.status === 'loaded'), nodes }, 200, { 'Cache-Control': 'no-store' })
 })
 let last = key(currentRelease())
 const debounce = (ms: number, f: () => void) => { let t: ReturnType<typeof setTimeout>; return () => { clearTimeout(t); t = setTimeout(f, ms) } }
