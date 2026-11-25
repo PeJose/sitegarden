@@ -44,6 +44,12 @@ export function openDb(file: string, now = Date.now) {
       CREATE INDEX IF NOT EXISTS archive_history_at ON archive_history(at);
       PRAGMA user_version=4`)
   }
+  if ((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version < 5) {
+    // Login sessions: only the SHA-256 of the cookie token is stored.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS sessions(id_hash TEXT PRIMARY KEY, user TEXT NOT NULL, created INTEGER NOT NULL, expires INTEGER NOT NULL);
+      PRAGMA user_version=5`)
+  }
   for (const t of ['snapshots', 'snapshot_history']) if (!(db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).some((c) => c.name === 'ms')) db.exec(`ALTER TABLE ${t} ADD COLUMN ms INTEGER`)
   const q = <T>(sql: string) => { const s = db.prepare(sql); return { all: (...a: any[]) => s.all(...a) as T[], get: (...a: any[]) => s.get(...a) as T | undefined, run: (...a: any[]) => s.run(...a) } }
   const insEvent = q('INSERT INTO events(at, type, data) VALUES(?, ?, ?)'), after = q<{ id: number; at: number; type: string; data: string }>('SELECT * FROM events WHERE id > ? ORDER BY id')
@@ -54,6 +60,8 @@ export function openDb(file: string, now = Date.now) {
   const getKv = q<{ value: string }>('SELECT value FROM kv WHERE plugin = ? AND key = ?'), putKv = q('INSERT OR REPLACE INTO kv(plugin, key, value) VALUES(?, ?, ?)'), delKv = q('DELETE FROM kv WHERE plugin = ? AND key = ?')
   const latest = () => q<{ m: number | null }>('SELECT MAX(rev) AS m FROM config_revs').get()!.m ?? 0
   const insRev = q('INSERT INTO config_revs(rev, at, source, yaml) VALUES(?, ?, ?, ?)'), getRev = q<Rev>('SELECT * FROM config_revs WHERE rev = ?')
+  const insSession = q('INSERT INTO sessions(id_hash, user, created, expires) VALUES(?, ?, ?, ?)'), getSession = q<{ user: string; expires: number }>('SELECT user, expires FROM sessions WHERE id_hash = ? AND expires > ?')
+  const extSession = q('UPDATE sessions SET expires = ? WHERE id_hash = ?'), delSession = q('DELETE FROM sessions WHERE id_hash = ?')
   return {
     append(type: string, data: unknown): StoredEvent {
       const at = now(), r = insEvent.run(at, type, JSON.stringify(data))
@@ -69,10 +77,15 @@ export function openDb(file: string, now = Date.now) {
         q("INSERT INTO archive_events(id, at, type, data) SELECT id, at, type, data FROM events WHERE at < ? AND type != 'check.result'").run(olderThan)
         q('INSERT INTO archive_history(node, check_id, status, at, detail, ms) SELECT node, check_id, status, at, detail, ms FROM snapshot_history WHERE at < ?').run(olderThan)
         const n = Number(q('DELETE FROM events WHERE at < ?').run(olderThan).changes) + Number(q('DELETE FROM snapshot_history WHERE at < ?').run(olderThan).changes)
+        q('DELETE FROM sessions WHERE expires < ?').run(now()) // expired logins go with the daily prune
         db.exec('COMMIT')
         return n
       } catch (e) { db.exec('ROLLBACK'); throw e }
     },
+    addSession: (idHash: string, user: string, expires: number) => void insSession.run(idHash, user, now(), expires),
+    session: (idHash: string, at: number) => getSession.get(idHash, at), // undefined when unknown or expired
+    extendSession: (idHash: string, expires: number) => void extSession.run(expires, idHash),
+    removeSession: (idHash: string) => void delSession.run(idHash),
     saveSnapshot(node: string, checkId: string, status: string, detail?: string, ms?: number) {
       const at = now()
       upsert.run(node, checkId, status, at, detail ?? null, ms ?? null)
