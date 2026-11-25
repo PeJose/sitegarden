@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-11-25
+
+### Added
+- `GET /api/status`: every node's status, last check, response time, up to 48 history points and its checks' latest results, plus the last event ID.
+- Check results can carry `ms` (response time); the `http` check reports it and `check.result` events include it. Plugin API 1.3.0 (additive).
+- `plugins/mock`: a `mock` check type that drives the sample map from the server. `SITEGARDEN_DEMO=1` loads it for any config.
+
+### Changed
+- The web app shows the server's statuses (snapshot, then SSE events) instead of a fake client-side engine. "Check now" and "Check everything" run the server's checks.
+- Demo deploy and webhook flows play only while the mock plugin is loaded; otherwise deploy buttons are disabled until the GitHub plugin. The debug menu loses "break a site" and "fix all".
+- A check with no stored result runs within 5 seconds of start, so a fresh map is not grey for a whole interval.
+- A check removed from the config no longer counts toward its node's status.
+- Events and check history older than 30 days move to `archive_events` / `archive_history` at start and then daily, kept for the future time scrubber (before, old events were deleted, and only at start). `check.result` events are not archived; the same results are in the archived history. Check history and events are indexed for the per-node and pruning reads.
+
 ## [0.7.0] - 2026-11-24
 
 ### Changed

@@ -32,15 +32,9 @@ export interface MockEdge {
   label: string
 }
 
-// SSE event shapes from docs/plan.md, plus a node.status event for the UI.
-export type EngineEvent =
-  | { type: 'check.ping'; nodeId: string }
-  | { type: 'flow.started'; id: string; kind: 'deploy' | 'webhook'; edgeId: string; t0: number }
-  | { type: 'flow.finished'; id: string; t1: number; result: 'ok' | 'failed' }
-
 export interface NodeState {
   status: Status
-  lastChecked: number
+  lastChecked: number // 0 = never
   since: number // when the current status began
   responseMs: number | null
   history: number[] // response times, 0 = failed
@@ -50,5 +44,6 @@ export interface EngineState {
   nodes: Record<string, NodeState>
   edges: Record<string, { lastResult: 'ok' | 'failed' | null }>
   flows: Record<string, 'deploy' | 'webhook'> // edge id -> flow in flight
+  demo: boolean // the server runs the mock plugin: the client may play deploy/webhook flows
   updatedAt: number
 }

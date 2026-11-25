@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { test } from 'node:test'
+import { DatabaseSync } from 'node:sqlite'
 import { DriftError, openDb } from './db'
 
 const tmp = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sg-db-')), 'sitegarden.db')
@@ -65,4 +66,36 @@ test('revisions grow, a stale base is rejected and only one of two racing stores
   assert.ok(results.some((r) => r instanceof DriftError))
   assert.equal(b.latestRev(), 3)
   a.close(); b.close()
+})
+
+test('ms is stored with the snapshot and its history; a file from before the column gets it on open', () => {
+  const f = tmp(), old = new DatabaseSync(f)
+  openDb(f).close()
+  for (const t of ['snapshots', 'snapshot_history']) old.exec(`ALTER TABLE ${t} DROP COLUMN ms`)
+  old.exec(`INSERT INTO snapshots(node, check_id, status, at) VALUES('n', 'old', 'ok', 1)`)
+  old.close()
+  const db = openDb(f)
+  assert.equal(db.snapshots()[0].ms, null)
+  db.saveSnapshot('n', 'http', 'ok', undefined, 120)
+  db.saveSnapshot('n', 'old', 'down')
+  assert.deepEqual(db.snapshots().map((s) => [s.check_id, s.ms]), [['http', 120], ['old', null]])
+  db.close()
+  openDb(f).close() // a second open does not add the column again
+})
+
+test('prune moves old events and check history to the archive (check.result dropped), keeps the latest snapshot', () => {
+  let t = 1000
+  const f = tmp(), db = openDb(f, () => t)
+  db.append('old', {}); db.append('check.result', {}); db.saveSnapshot('a', 'c', 'down', undefined, 5)
+  t = 9000
+  db.append('new', {}); db.saveSnapshot('a', 'c', 'ok', undefined, 7)
+  assert.equal(db.prune(5000), 3)
+  assert.deepEqual([db.eventsAfter(0).map((e) => e.type), db.history('a', 10).map((r) => r.ms), db.snapshots().map((s) => s.status)], [['new'], [7], ['ok']])
+  db.close()
+  const raw = new DatabaseSync(f) // the per-node history read uses its index instead of a scan
+  assert.deepEqual(raw.prepare('SELECT type FROM archive_events').all().map((r: any) => r.type), ['old'])
+  assert.deepEqual(raw.prepare('SELECT status, ms FROM archive_history').all().map((r: any) => [r.status, r.ms]), [['down', 5]])
+  const plan = raw.prepare('EXPLAIN QUERY PLAN SELECT check_id, status, at, ms FROM snapshot_history WHERE node = ? ORDER BY rowid DESC LIMIT ?').all('a', 10) as { detail: string }[]
+  assert.match(plan.map((p) => p.detail).join(' '), /snapshot_history_node/)
+  raw.close()
 })

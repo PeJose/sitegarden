@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { groups, nodes } from '../mock/data'
-import { engine, useEngine } from '../mock/engine'
+import { live, useEngine } from '../live/store'
 import { reasonOf, summarize } from '../summary'
 import { useNow } from '../lib/time'
 import { Dot } from './Dots'
@@ -23,7 +23,7 @@ export function StatusStrip({ onPick }: { onPick: (id: string) => void }) {
           </button>
         ) : <span className="when ok">all well ·</span>}
         <span className="when">{sum.checkedText}</span>
-        <button className="round" aria-label="Refresh everything" onClick={() => engine.checkAll()}>
+        <button className="round" aria-label="Refresh everything" onClick={() => live.checkAll()}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
         </button>
       </div>

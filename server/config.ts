@@ -8,7 +8,7 @@ import { createBus } from './core/events'
 import { createHttp } from './core/http'
 import { log, sink } from './core/log'
 import { createSecrets } from './core/secrets'
-import { createHost } from './core/plugins'
+import { createHost, withDemo } from './core/plugins'
 import { DATA, writeAtomic } from './store'
 
 export const CONFIG_FILE = path.resolve(process.env.SITEGARDEN_CONFIG ?? path.join(import.meta.dirname, '../sitegarden.yaml'))
@@ -25,7 +25,7 @@ const http = createHttp({ secrets })
 export const host = createHost({ baseDir: path.dirname(CONFIG_FILE), db, http, emit: bus.emit })
 let loaded = ''
 const pluginList = (text: string) => {
-  try { const l = (YAML.parse(text) as { plugins?: unknown } | null)?.plugins; return Array.isArray(l) ? l.filter((x): x is string => typeof x === 'string') : [] } catch { return [] } // a syntax error is reported by parseGraph
+  try { const l = (YAML.parse(text) as { plugins?: unknown } | null)?.plugins; return withDemo(Array.isArray(l) ? l.filter((x): x is string => typeof x === 'string') : [], path.dirname(CONFIG_FILE)) } catch { return [] } // a syntax error is reported by parseGraph
 }
 // The plugin list lives in the config itself, so it is read first; the set is reloaded only when the list changes.
 export async function loadPlugins(text = fs.readFileSync(CONFIG_FILE, 'utf8')) {

@@ -186,16 +186,19 @@ Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend 
 | M7 | Seasons | Jun 2027 | Time scrubber, growing garden, seasons, postcards |
 | M8 | Glasshouse | Jul 2027 | GPU-rendered watercolour (in the browser), instant re-renders, live seasons and weather |
 
-### M1 — Seed (~11.5 days)
+### M1 — Seed (~13.5 days)
 
 1. Core: graph model, YAML loader + schema merge, plugin host (tiers A/B), extension tree, store, scheduler, SSE (4 d)
 2. Secrets broker with `_FILE`, SSRF guard (1 d)
 3. `essentials`: node types, `repo:` / `sanity:` shorthands, HTTP + keyword checks (1.5 d)
-4. Map v0 (plain theme), side panel, Inventory + Links lists, Refresh (2 d)
-5. Dockerfile, compose with Tailscale sidecar, `tailscale` + `password` auth, README (1.5 d)
+4. Map v0 (plain theme), side panel, Inventory + Links lists, Refresh (2 d). Done in 0.8.0: `/api/status` + SSE drive the map, Refresh runs server checks, a server-side `mock` plugin replaces the client's fake engine (demo flows stay client-side until M2)
+5. Dockerfile, compose with Tailscale sidecar, `tailscale` + `password` auth, README; first Playwright e2e suite that pins the stable flows (map loads, live statuses, refresh, login) and runs in PR CI (2.5 d)
 6. One web plugin end to end, built at build time against the host's Preact, to prove the SDK before it freezes (0.5 d)
 7. Client performance pass, before more UI lands (1.5 d). Observed 2026-11-20: the browser's GPU process sits at ~300% while the POC map is open, even when idle and fully loaded, and pan/zoom animations feel slow. Profile first (Chrome Performance + Layers panels, dev vs production build), then fix what the data shows. Suspects (React Flow, since replaced by the own viewport and Preact, was the first): re-rendering every pin/chip/label per frame, `backdrop-filter` blur on panels over a moving map, many rough.js SVG pins, CSS opacity transitions, idle animations (deploy path, red wash) that never stop. Target: near-zero GPU when idle, 60 fps pan on a mid phone
 8. pre4, smaller and faster client: our own viewport instead of React Flow (0.6.0) and Preact instead of React (0.7.0). Main chunk 181 KB to 40 KB gzip, pan and zoom unchanged (budgets in `perf/results.md`)
+9. Settings page at `/settings`, after item 6 (1 d). Kept plain and simple: it exists to make the app debuggable and to give later work a home. **About:** app, plugin API and renderer versions, config revision with time and source, demo mode. **Plugins:** id, version, loaded or "failed to load" (the reason stays in the server log). **Dev tools:** the debug menu's buttons (deploy now, webhook now, plant / remove estate), which leave the map. Opened from the hero menu. Better design, display prefs, enable / disable and settings forms come in later milestones (M6).
+
+Order for the rest of M1: 4 → 5 → 6 → 9.
 
 ### M2 — Roots and lanterns (~9 days)
 
@@ -237,7 +240,7 @@ Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend 
 
 ### M7 — Seasons (~11 days)
 
-1. Time scrubber replay (4 d)
+1. Time scrubber replay (4 d). Reads the live tables for the last 30 days and `archive_events` / `archive_history` before that (the daily pruner moves rows there since 0.8.0). Includes compacting the archive: keep only status changes plus a downsampled sample of the rest (e.g. 1 of every 5 ok results), and hourly summaries for long ranges
 2. Garden grows with uptime streaks (3 d)
 3. Seasons from the calendar (2 d)
 4. Weekly postcard PNG (2 d)

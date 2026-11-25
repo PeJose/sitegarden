@@ -1,5 +1,5 @@
 import type { Db } from './db'
-import type { CheckDef, CheckNode, Status } from './sdk'
+import type { CheckDef, CheckNode, CheckResult, Status } from './sdk'
 
 const UNITS: Record<string, number> = { s: 1e3, m: 6e4, h: 36e5, d: 864e5 }
 export function parseEvery(v: string): number {
@@ -9,7 +9,7 @@ export function parseEvery(v: string): number {
 }
 
 // Worst first: a node shows the most urgent of its checks.
-const WORST: Status[] = ['down', 'degraded', 'working', 'unknown', 'paused', 'ok']
+export const WORST: Status[] = ['down', 'degraded', 'working', 'unknown', 'paused', 'ok']
 const worst = (s: Iterable<Status>) => [...s].sort((a, b) => WORST.indexOf(a) - WORST.indexOf(b))[0]
 
 export interface Timers { set(f: () => void, ms: number): () => void }
@@ -20,7 +20,7 @@ export interface SchedulerOptions { db: Db; emit: (type: string, data: unknown) 
 export interface Planned { node: CheckNode; check: CheckDef; cfg: string }
 interface Inst { key: string; check: CheckDef; node: CheckNode; cfg: string; every: number; fails: number; cancel?: () => void; queued: boolean }
 
-// One timer per (check, node). First run lands anywhere in the first interval, later ones every ±10 %; a `down` result backs off 2^n up to 4x.
+// One timer per (check, node). First run lands anywhere in the first interval (within 5 s for a check with no stored result), later ones every ±10 %; a `down` result backs off 2^n up to 4x.
 export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random = Math.random, timers = realTimers }: SchedulerOptions) {
   const insts = new Map<string, Inst>(), queue: Inst[] = [], status = new Map<string, Status>() // status: instance key -> last result
   let active = 0, stopped = false
@@ -44,15 +44,15 @@ export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random
     }
   }
   async function run(i: Inst) {
-    let res: { status: Status; detail?: string }
+    let res: CheckResult
     try { res = await i.check.run(i.node) } catch (e) { res = { status: 'down', detail: (e as Error).message } }
     res.detail = res.detail && redact(res.detail)
     i.queued = false
     if (stopped || insts.get(i.key) !== i) return
     i.fails = res.status === 'down' ? i.fails + 1 : 0
-    db.saveSnapshot(i.node.id, i.check.id, res.status, res.detail)
+    db.saveSnapshot(i.node.id, i.check.id, res.status, res.detail, res.ms)
     status.set(i.key, res.status)
-    emit('check.result', { node: i.node.id, check: i.check.id, status: res.status, detail: res.detail })
+    emit('check.result', { node: i.node.id, check: i.check.id, status: res.status, detail: res.detail, ms: res.ms })
     const own = [...insts.values()].filter((x) => x.node.id === i.node.id && status.has(x.key)).map((x) => status.get(x.key)!), now = worst(own)
     if (nodeStatus.get(i.node.id) !== now) { emit('node.status', { node: i.node.id, status: now, from: nodeStatus.get(i.node.id) }); nodeStatus.set(i.node.id, now) }
     arm(i, next(i))
@@ -68,7 +68,7 @@ export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random
         if (old && old.every === every && old.cfg === cfg) { old.check = c; old.node = n; keep.set(key, old); continue }
         const i: Inst = { key, check: c, node: n, cfg, every, fails: 0, queued: false }
         keep.set(key, i)
-        arm(i, random() * every)
+        arm(i, random() * (status.has(key) ? every : Math.min(every, 5000))) // never run: within 5 s, so a fresh map isn't grey for a whole interval
       }
       for (const [k, i] of insts) if (keep.get(k) !== i) { i.cancel?.(); status.delete(k) }
       insts.clear()
@@ -80,6 +80,8 @@ export function createScheduler({ db, emit, limit = 4, redact = (s) => s, random
       hit.forEach((i) => { i.cancel?.(); i.cancel = undefined; enqueue(i) })
       return hit.length
     },
+    // Keys (`check@node`) of the checks the current config runs.
+    active: () => new Set(insts.keys()),
     stop() { stopped = true; insts.forEach((i) => i.cancel?.()); queue.length = 0 },
   }
 }

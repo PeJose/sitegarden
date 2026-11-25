@@ -33,17 +33,17 @@ export default definePlugin({
       },
       async run(c, node, { http, store: { kv }, index }) {
         const key = `fails:${node.id}#${index}`
-        const fail = (detail: string) => { const n = Number(kv.get(key) ?? 0) + 1; kv.set(key, n); return { status: n >= c.alert_after ? 'down' as const : 'degraded' as const, detail } }
+        const fail = (detail: string, ms?: number) => { const n = Number(kv.get(key) ?? 0) + 1; kv.set(key, n); return { status: n >= c.alert_after ? 'down' as const : 'degraded' as const, detail, ms } }
         const url = c.url ?? node.url
         if (typeof url !== 'string') return fail('no url on the check or the node')
         const t0 = performance.now()
         let status: number, body: string
         try { const r = await http(url, { timeoutMs: parseEvery(c.timeout), allowPrivate: c.allow_private }); status = r.status; body = await r.text() } catch (e) { return fail((e as Error).message) }
         const ms = Math.round(performance.now() - t0), want = c.expect_status === undefined ? null : [c.expect_status].flat()
-        if (want ? !want.includes(status) : status < 200 || status > 299) return fail(`expected ${want?.join(' or ') ?? '2xx'}, got ${status} (${ms} ms)`)
-        if (c.expect_text !== undefined && !body.includes(c.expect_text)) return fail(`text "${c.expect_text}" not found (${status}, ${ms} ms)`)
+        if (want ? !want.includes(status) : status < 200 || status > 299) return fail(`expected ${want?.join(' or ') ?? '2xx'}, got ${status} (${ms} ms)`, ms)
+        if (c.expect_text !== undefined && !body.includes(c.expect_text)) return fail(`text "${c.expect_text}" not found (${status}, ${ms} ms)`, ms)
         kv.delete(key)
-        return { status: 'ok' as const, detail: `${status} in ${ms} ms` }
+        return { status: 'ok' as const, detail: `${status} in ${ms} ms`, ms }
       },
     })
     ctx.registerShorthand({

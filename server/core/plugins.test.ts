@@ -32,7 +32,7 @@ test('plugins load in dependsOn order, whatever the list order; registrations ar
 test('a plugin for a newer apiVersion is refused with both versions, others load', async () => {
   const h = createHost({ baseDir })
   await h.load(['./newer-api', './base'])
-  assert.match(status(h)['newer-api']!, /\^2.*1\.2\.0/)
+  assert.match(status(h)['newer-api']!, /\^2.*1\.3\.0/)
   assert.equal(status(h).base, 'loaded')
 })
 

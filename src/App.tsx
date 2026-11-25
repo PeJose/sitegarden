@@ -1,5 +1,5 @@
 import { useCallback, type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { engine } from './mock/engine'
+import { live } from './live/store'
 import { nodeById } from './mock/data'
 import { usePrefs } from './prefs'
 import { HeroSmear } from './ui/HeroSmear'
@@ -20,10 +20,6 @@ const params = new URLSearchParams(location.search) // ?select=copperleaf-site&s
 
 export default function App() {
   const prefs = usePrefs()
-  useEffect(() => {
-    engine.start(params.has('still'))
-    return () => engine.stop()
-  }, [])
   const world = useWorld()
   if (!world) return <div className="app" />
   if (prefs.style === 'boring') return <Boring setStyle={prefs.setStyle} />
@@ -51,6 +47,7 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(''), 4500)
   }, [])
+  useEffect(() => { live.say = say; return () => { live.say = undefined } }, [say])
 
   useLayoutEffect(() => {
     const r = box.current!.getBoundingClientRect()

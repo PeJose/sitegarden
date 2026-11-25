@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { edges, groups, nodeById, nodes } from '../mock/data'
-import { engine } from '../mock/engine'
+import { live } from '../live/store'
+import { NO_DEPLOY, deploy } from '../live/demo'
 
 const eg = () => [groups[groups.length - 1]?.id ?? 'estate', groups[0]?.id ?? 'estate']
 const hint = () => `Try “redeploy ${eg()[0]}”, “open ${eg()[1]} secrets” or “check everything”.`
@@ -14,13 +15,14 @@ const WHAT: Record<string, (label: string) => boolean> = {
 // Runs a typed command against the mock; returns what to tell the user.
 function run(text: string): string {
   const t = text.trim().toLowerCase().replace(/[“”"]/g, '')
-  if (/^check (everything|all)$/.test(t)) return engine.checkAll(), 'Checking everything…'
+  if (/^check (everything|all)$/.test(t)) return live.checkAll(), 'Checking everything…'
   const estate = groups.find((g) => t.includes(g.id) || t.includes(g.id.replace(/(\d)/, ' $1')))
   const redeploy = /^(re)?deploy\b/.exec(t)
   if (redeploy && estate) {
     const e = edges.find((x) => x.type === 'deploy' && nodeById(x.from)?.group === estate.id)
     if (!e) return `${estate.id} has nothing to deploy.`
-    return engine.getState().flows[e.id] ? `${estate.id} is already redeploying.` : (engine.deploy(e.id), `Redeploying ${estate.id}…`)
+    if (!live.getState().demo) return NO_DEPLOY + '.'
+    return live.getState().flows[e.id] ? `${estate.id} is already redeploying.` : (deploy(e.id), `Redeploying ${estate.id}…`)
   }
   const open = /^open\b.*?\b(secrets|actions|sanity|site)\b/.exec(t)
   if (open && estate) {

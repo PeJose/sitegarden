@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { edges, groups, nodeById, nodes } from './mock/data'
-import { engine, useEngine } from './mock/engine'
+import { live, useEngine } from './live/store'
+import { NO_DEPLOY, deploy } from './live/demo'
 import type { MockNode, Status } from './mock/types'
 import type { Style } from './prefs'
 import { FunSwitch } from './ui/Controls'
@@ -43,6 +44,7 @@ const boringLinks = (n: MockNode) => {
 
 function Side({ n }: { n: MockNode }) {
   const st = useEngine((s) => s.nodes[n.id])
+  const demo = useEngine((s) => s.demo)
   const now = useNow(15000)
   const edge = edges.find((e) => e.type === 'deploy' && nodeById(e.from)?.group === n.group)
   const tint = st.status === 'down' ? ['#FEF2F2', '#FECACA'] : st.status === 'ok' ? ['#F0FDF4', '#BBF7D0'] : ['#EFF6FF', '#BFDBFE']
@@ -74,8 +76,8 @@ function Side({ n }: { n: MockNode }) {
         <div className="b-links">{boringLinks(n).map((l) => <a key={l.url} href={l.url} target="_blank" rel="noreferrer">{l.label}</a>)}</div>
       </div>
       <div className="b-actions">
-        <button className="p" disabled={st.status === 'working' || !edge} onClick={() => edge && engine.deploy(edge.id)}>Deploy</button>
-        <button onClick={() => engine.check(n.id)}>Refresh</button>
+        <button className="p" disabled={st.status === 'working' || !edge || !demo} title={demo ? undefined : NO_DEPLOY} onClick={() => edge && deploy(edge.id)}>Deploy</button>
+        <button onClick={() => live.check(n.id)}>Refresh</button>
       </div>
     </aside>
   )
@@ -86,7 +88,7 @@ export function Boring({ setStyle }: { setStyle: (s: Style) => void }) {
   const bd = board()
   const st = useEngine((s) => s)
   const now = useNow(15000)
-  const mins = minutesSince(Math.max(...nodes.map((n) => st.nodes[n.id].lastChecked)), now)
+  const last = Math.max(...nodes.map((n) => st.nodes[n.id].lastChecked)), mins = minutesSince(last, now)
   const [tapped, setTapped] = useState(false)
   return (
     <div className="b-app">
@@ -94,8 +96,8 @@ export function Boring({ setStyle }: { setStyle: (s: Style) => void }) {
         <b className="b-logo">sitegarden</b>
         <span className="b-sm">{groups.length} projects · {nodes.length} services</span>
         <span style={{ flex: 1 }} />
-        <span className="b-sm">Updated {mins < 1 ? 'just now' : `${mins} min ago`}</span>
-        <button className="b-btn" onClick={() => engine.checkAll()}>
+        <span className="b-sm">{!last ? 'Not checked yet' : `Updated ${mins < 1 ? 'just now' : `${mins} min ago`}`}</span>
+        <button className="b-btn" onClick={() => live.checkAll()}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
           Refresh all
         </button>

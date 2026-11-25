@@ -20,7 +20,7 @@ edges:
 `
 process.env.SG_TEST_TOKEN = 'tok-abcdef123'
 fs.writeFileSync(process.env.SITEGARDEN_CONFIG, base)
-const { app } = await import('./app')
+const { app, scheduler } = await import('./app')
 const { auth, bootstrap, db } = await import('./config')
 bootstrap()
 
@@ -185,4 +185,50 @@ test('with auth enabled, apply and GUI edits are refused and no rev is made', as
   assert.equal((await json(post('/api/artifacts/missing', { names: [] })))[0], 403)
   assert.equal((await json(app.request('/api/estates/last', { method: 'DELETE' })))[0], 403)
   assert.equal(db.latestRev(), rev)
+})
+
+const nap = () => new Promise((r) => setTimeout(r, 5))
+const status = async () => (await json(app.request('/api/status')))[1]
+
+test('status: a node with no results is unknown with empty data; every node of the graph is there; demo is off', async () => {
+  const s = await status()
+  assert.deepEqual(s.nodes.a, { status: 'unknown', since: null, lastChecked: null, responseMs: null, history: [], checks: [] })
+  assert.ok(['a', 'b'].every((id) => id in s.nodes))
+  assert.equal(s.demo, false)
+  assert.equal(s.lastEventId, db.lastEventId())
+  assert.equal((await app.request('/api/status')).headers.get('Cache-Control'), 'no-store')
+})
+
+// The status only counts checks the config runs; these two never fire during the test.
+const runs = () => scheduler.set([{ id: 'a', type: 'repo' }, { id: 'b', type: 'site' }], ['http', 'other'].map((id) => ({ id, every: '1d', run: () => ({ status: 'ok' as const }) })))
+
+test('status: worst of the checks, history oldest first with 0 for failures, since from the trailing run, responseMs from the newest timed result', async () => {
+  runs()
+  db.saveSnapshot('a', 'http', 'down', 'boom'); await nap()
+  db.saveSnapshot('a', 'http', 'ok', undefined, 120); await nap()
+  db.saveSnapshot('a', 'other', 'ok'); await nap() // no ms and ok: not in the history
+  db.saveSnapshot('a', 'http', 'ok', undefined, 90)
+  const rows = db.history('a', 500), s = (await status()).nodes.a
+  assert.deepEqual([s.status, s.history, s.responseMs, s.since, s.lastChecked], ['ok', [0, 120, 90], 90, rows[1].at, rows[3].at])
+  assert.deepEqual(s.checks.map((c: { id: string; ms: number | null }) => [c.id, c.ms]), [['http', 90], ['other', null]])
+  db.saveSnapshot('a', 'other', 'degraded', 'slow'); await nap()
+  const t = (await status()).nodes.a
+  assert.deepEqual([t.status, t.since, t.history], ['degraded', db.history('a', 500)[4].at, [0, 120, 90, 0]])
+  db.saveSnapshot('a', 'http', 'down', 'boom', 700)
+  assert.deepEqual([(await status()).nodes.a.status, (await status()).nodes.a.responseMs], ['down', null])
+})
+
+test('status: only the last 48 history points are returned', async () => {
+  runs()
+  for (let i = 1; i <= 60; i++) db.saveSnapshot('b', 'http', 'ok', undefined, i)
+  const h = (await status()).nodes.b.history
+  assert.deepEqual([h.length, h[0], h[47]], [48, 13, 60])
+})
+
+test('status: a check the config no longer runs does not count', async () => {
+  runs()
+  db.saveSnapshot('b', 'gone', 'down', 'old')
+  assert.deepEqual((await status()).nodes.b.checks.map((c: { id: string }) => c.id), ['http'])
+  scheduler.set([], [])
+  assert.equal((await status()).nodes.b.status, 'unknown')
 })

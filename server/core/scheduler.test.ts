@@ -80,7 +80,7 @@ test('a failing check backs off up to 4x and one success resets it', async () =>
   let res: CheckResult = { status: 'down' }
   s.set([node('a')], [{ id: 'c', every: '5m', run: () => { at.push(c.now()); return res } }])
   await c.advance(2.5 * MIN)
-  assert.deepEqual(at, [2.5 * MIN])
+  assert.deepEqual(at, [2500]) // never run: within 5 s (5 s * random)
   await c.advance(60 * MIN)
   assert.deepEqual(at.slice(1).map((x, i) => (x - at[i]) / MIN), [10, 20, 20, 20].slice(0, at.length - 1))
   res = { status: 'ok' }
@@ -139,13 +139,33 @@ test('configured checks run on their own interval; an unchanged entry keeps its 
   const entry = (cfg: string, every: string): Planned => ({ node: node('a'), cfg, check: { id: 'http#0', every, run: () => { at.push(c.now()); return { status: 'down' } } } })
   s.set([node('a')], [], [entry('x', '1m')])
   await c.advance(30_000)
-  assert.deepEqual(at, [30_000]) // first run lands at every * random
+  assert.deepEqual(at, [2500]) // never run: within min(every, 5 s) * random
   await c.advance(MIN) // next run after 2 min of backoff is still ahead
   s.set([node('a')], [], [entry('x', '1m')]) // an apply that did not touch the check
   await c.advance(MIN)
-  assert.deepEqual(at.map((x) => x / MIN), [0.5, 2.5]) // timer kept: backoff 2^1 x 1 min
+  assert.deepEqual(at, [2500, 122_500]) // timer kept: backoff 2^1 x 1 min
   s.set([node('a')], [], [entry('y', '10m')])
   await c.advance(5 * MIN)
-  assert.equal(at.length, 3) // restarted: first run at 10m * 0.5
+  assert.equal(at.length, 3) // restarted with a stored result: first run at 10m * 0.5
+  s.stop()
+})
+
+test('after a restart, a check with a stored result keeps the full first-interval jitter', async () => {
+  const c = clock(), at: number[] = []
+  const db = openDb(path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sg-sch-')), 'sg.db'), c.now)
+  db.saveSnapshot('a', 'c', 'ok')
+  const s = createScheduler({ db, emit: () => {}, random: () => 0.5, timers: c.timers })
+  s.set([node('a')], [{ id: 'c', every: '5m', run: () => { at.push(c.now()); return { status: 'ok' } } }])
+  await c.advance(5 * MIN)
+  assert.deepEqual(at, [2.5 * MIN])
+  s.stop()
+})
+
+test('ms of a result is stored and emitted in check.result', async () => {
+  const { c, s, db, events } = setup(() => 0)
+  s.set([node('a')], [{ id: 'c', every: '5m', run: () => ({ status: 'ok', ms: 42 }) }, { id: 'd', every: '5m', run: () => ({ status: 'ok' }) }])
+  await c.advance(1)
+  assert.deepEqual(events.filter((e) => e.type === 'check.result').map((e) => e.data.ms), [42, undefined])
+  assert.deepEqual(db.snapshots().map((x) => [x.check_id, x.ms]), [['c', 42], ['d', null]])
   s.stop()
 })
