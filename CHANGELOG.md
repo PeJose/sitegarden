@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-11-25
+
+### Added
+- The server serves the built web app next to the API (`SITEGARDEN_WEB`), with long-lived caching for hashed assets, and `GET /api/health`.
+- Auth (`auth: { enabled, mode, users }`): `tailscale` mode trusts the `Tailscale-User-Login` header from `tailscale serve` with an allowlist; `password` mode has a login page, scrypt hashes (`pnpm sg hash-password`), 30-day sessions stored hashed in SQLite and a login rate limit. Both accept `Authorization: Bearer` with `SITEGARDEN_API_TOKEN`; `sg` sends `SITEGARDEN_TOKEN`.
+- `Dockerfile` and `docker-compose.yml` with a Tailscale sidecar; the map is reachable over HTTPS on the tailnet only.
+- Playwright e2e tests (`pnpm e2e`) and e2e and Docker build jobs in PR CI.
+
+### Changed
+- The server listens on `HOST` (default `127.0.0.1`) and refuses a non-loopback address with auth off or in tailscale mode, unless `SITEGARDEN_INSECURE=1`.
+- `auth.enabled: true` is accepted now that auth exists.
+
+### Fixed
+- A node without a `mock:` block (any real node) crashed its details popover.
+
 ## [0.8.0] - 2026-11-25
 
 ### Added

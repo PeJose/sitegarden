@@ -129,13 +129,41 @@ Plugins never see a value. A plugin makes requests only through `ctx.http(url, i
 | `SITEGARDEN_CONFIG` | `sitegarden.yaml` | config file |
 | `SITEGARDEN_DATA` | `.data` | rendered artifacts and releases |
 | `PORT` | `8787` | API port |
+| `HOST` | `127.0.0.1` | listen address |
+| `SITEGARDEN_INSECURE` | unset | `1` allows a non-loopback `HOST` with auth off or in tailscale mode |
+| `SITEGARDEN_WEB` | `dist` | built web app the server serves |
 | `SITEGARDEN_DEMO` | unset | `1` loads the `mock` plugin (demo statuses and flows) |
 | `SG_RENDER_WORKERS` | CPU cores − 2 | parallel render workers |
+
+## Run it on a server
+
+One `docker compose up`: the app and a Tailscale sidecar. Nothing is published on the host; the map is reachable at `https://sitegarden.<your-tailnet>.ts.net` from your tailnet devices only (`tailscale serve` with a MagicDNS certificate, `deploy/serve.json`).
+
+```sh
+export TS_AUTHKEY=tskey-auth-...   # a Tailscale auth key
+docker compose up -d --build
+```
+
+Turn auth on in `sitegarden.yaml` (it is on even inside the VPN):
+
+```yaml
+auth:
+  enabled: true
+  mode: tailscale                  # trust the Tailscale-User-Login header from tailscale serve
+  users: [owner@example.com]       # tailnet logins allowed in
+```
+
+- `mode: tailscale` (default): a request without the header gets 401, a login not in `users` gets 403. The header is only trustworthy on loopback behind `tailscale serve`, so the server refuses to start in this mode on another address.
+- `mode: password`: a login page, a 30-day session cookie (HttpOnly, Secure, SameSite=Strict) and 5 tries per 15 minutes. Make the hash with `pnpm sg hash-password` and pass it as the secret `SITEGARDEN_PASSWORD_HASH` (or `SITEGARDEN_PASSWORD_HASH_FILE`). Setting it in tailscale mode also gives tagged devices, which have no Tailscale login, a way in.
+- API token, both modes: requests with `Authorization: Bearer <token>` matching the secret `SITEGARDEN_API_TOKEN` are let in. The CLI sends `SITEGARDEN_TOKEN`, so `SITEGARDEN_TOKEN=... pnpm sg apply --server https://sitegarden.<tailnet>.ts.net` works against a locked server.
+
+The server listens on `HOST` (default `127.0.0.1`) and refuses a non-loopback address while auth is off, unless `SITEGARDEN_INSECURE=1`. `GET /api/health` is open, for health checks.
 
 ## Development
 
 ```sh
 pnpm test       # unit tests
+pnpm e2e        # Playwright end-to-end tests against the production build (pnpm build first)
 pnpm lint       # oxlint
 pnpm build      # type-check and production build
 pnpm sg schema  # regenerate schema.json after adding a plugin

@@ -58,7 +58,7 @@ Every `/hooks/*` request is verified before anything else happens (see §4).
 | Mode | How | When |
 |---|---|---|
 | `tailscale` (default) | Trust `Tailscale-User-Login` from `tailscale serve`; allowlist of logins. Serve strips incoming copies of the header, and the app listens on localhost only, so it can't be forged | Inside a Tailscale tailnet |
-| `password` | Argon2id hash, session cookie (HttpOnly, Secure, SameSite=Strict), optional TOTP or passkey | No VPN, tagged devices, or as a second factor |
+| `password` | scrypt hash (built into Node, so no native dependency in the image; OWASP-listed next to Argon2id), session cookie (HttpOnly, Secure, SameSite=Strict), 5 failed logins per 15 minutes per client, optional TOTP or passkey later | No VPN, tagged devices, or as a second factor |
 | `oidc` (later) | Pocket ID, Authelia, Authentik | Already running an IdP |
 
 - **Fail closed.** If `Tailscale-User-Login` is missing, return 401. Serve does **not** set it for traffic from **tagged devices** or via **Funnel**. So a tagged laptop or a script on a tagged node needs the password mode or an API token.

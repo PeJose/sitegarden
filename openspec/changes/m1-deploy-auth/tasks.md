@@ -22,4 +22,4 @@
 
 ## 5. Close-out
 
-- [ ] 5.1 README (Docker, auth, tokens), `docs/security-model.md` (scrypt), `docs/plan.md` (item 5 done), CHANGELOG 0.9.0, `package.json` 0.9.0. Verify: `pnpm test`, `pnpm build`, lint no errors, version check.
+- [x] 5.1 README (Docker, auth, tokens), `docs/security-model.md` (scrypt), `docs/plan.md` (item 5 done), CHANGELOG 0.9.0, `package.json` 0.9.0. Verify: `pnpm test`, `pnpm build`, lint no errors, version check.
