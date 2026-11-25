@@ -17,8 +17,8 @@
 
 ## 4. E2E and CI
 
-- [ ] 4.1 Playwright suite and fixtures (D7). Verify: `pnpm e2e` passes locally, headless.
-- [ ] 4.2 PR CI `e2e` and `docker` jobs (D7). Verify: workflow file valid (`actionlint` if available); jobs pass on the PR.
+- [x] 4.1 Playwright suite and fixtures (D7). Verify: `pnpm e2e` passes locally, headless.
+- [x] 4.2 PR CI `e2e` and `docker` jobs (D7). Verify: workflow file valid (`actionlint` if available); jobs pass on the PR.
 
 ## 5. Close-out
 
