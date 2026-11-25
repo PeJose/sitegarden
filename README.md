@@ -156,6 +156,7 @@ auth:
 - `mode: tailscale` (default): a request without the header gets 401, a login not in `users` gets 403. The header is only trustworthy on loopback behind `tailscale serve`, so the server refuses to start in this mode on another address.
 - `mode: password`: a login page, a 30-day session cookie (HttpOnly, Secure, SameSite=Strict) and 5 tries per 15 minutes. Make the hash with `pnpm sg hash-password` and pass it as the secret `SITEGARDEN_PASSWORD_HASH` (or `SITEGARDEN_PASSWORD_HASH_FILE`). Setting it in tailscale mode also gives tagged devices, which have no Tailscale login, a way in.
 - API token, both modes: requests with `Authorization: Bearer <token>` matching the secret `SITEGARDEN_API_TOKEN` are let in. The CLI sends `SITEGARDEN_TOKEN`, so `SITEGARDEN_TOKEN=... pnpm sg apply --server https://sitegarden.<tailnet>.ts.net` works against a locked server.
+- Generated API tokens: Settings (hero menu, or `/settings`) has an "API tokens" section. Name a token, copy it once (only its SHA-256 is stored), revoke it in one click. It works like `SITEGARDEN_API_TOKEN` for API calls but cannot create or revoke tokens; the env token stays as the bootstrap and recovery token.
 
 The server listens on `HOST` (default `127.0.0.1`) and refuses a non-loopback address while auth is off, unless `SITEGARDEN_INSECURE=1`. `GET /api/health` is open, for health checks.
 

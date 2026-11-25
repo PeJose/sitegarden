@@ -153,16 +153,17 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
 .funswitch button { padding: 0 14px; font: 500 11.5px Outfit, sans-serif; background: transparent; border: none; border-radius: 7px; cursor: pointer; color: var(--muted); }
 .funswitch button[aria-pressed='true'] { background: var(--btn-bg); color: var(--btn-fg); }
 
-.debug { position: absolute; z-index: 5; left: 28px; bottom: 20px; font: 9px 'JetBrains Mono', monospace; letter-spacing: .08em; }
-.debug .tab, .debug .menu button { padding: 4px 9px; background: var(--card-strip); border: 1px solid var(--round-line); border-radius: 999px; cursor: pointer; color: var(--muted); font: inherit; }
-.debug .tab { opacity: .6; } .debug .tab:hover, .debug .tab[aria-expanded='true'] { opacity: 1; }
-.debug .menu { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; max-width: 300px; }
-.debug .menu button:hover { color: var(--ink); }
 
 .sheet { position: absolute; z-index: 7; left: 480px; top: 96px; width: min(600px, calc(100% - 580px)); max-height: calc(100% - 200px); overflow: auto; padding: 22px 24px 24px; background: var(--card-pop); border-radius: 12px; box-shadow: 0 1px 2px var(--shadow-1), 0 16px 40px var(--shadow-pop); }
 .sheet h2 { margin: 4px 0 8px; font: 400 28px/1.15 Fraunces, serif; }
 .sheet .x { position: absolute; right: 12px; top: 10px; width: 36px; height: 36px; font-size: 21px; background: none; border: none; cursor: pointer; color: var(--muted); }
 .sheet .group { margin-top: 18px; } .sheet .group .mono-label { padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.sheet.wide { position: fixed; z-index: 20; inset: 0; width: auto; max-height: none; border-radius: 0; padding: 0; background: var(--solid); }
+.sheet.wide .inner { position: relative; max-width: 760px; margin: 0 auto; padding: 56px 24px 64px; } .sheet.wide .x { right: 12px; top: 12px; position: fixed; }
+.kv { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; margin: 12px 0 0; font-size: 13px; } .kv dt { color: var(--muted); } .kv dd { margin: 0; }
+.tokform, .tools { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; } .tokform input { flex: 1 1 200px; min-height: 40px; padding: 0 12px; font: inherit; font-size: 13px; color: inherit; background: transparent; border: 1px solid var(--round-line); border-radius: 8px; }
+.once { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 8px 0 12px; padding: 12px; background: var(--card-strip); border-radius: 8px; } .once code { flex: 1 1 100%; font: 11.5px 'JetBrains Mono', monospace; word-break: break-all; user-select: all; }
+.irow .link { padding: 6px 4px; background: none; border: none; cursor: pointer; font: inherit; font-size: 11.5px; color: var(--link-hover); text-decoration: underline; }
 .irow { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0; background: none; border: none; border-bottom: 1px solid var(--hair); text-align: left; cursor: pointer; text-decoration: none; font-size: 13px; }
 .irow:hover b { color: var(--link-hover); }
 .irow b { font-weight: 500; } .irow .muted { font-size: 11.5px; color: var(--muted); } .irow .grow { flex: 1; } .irow .mono { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
@@ -178,8 +179,7 @@ html.tab-hidden *, html.tab-hidden *::before, html.tab-hidden *::after { animati
   .hero-handle { display: none; }
   .toast { transform: translateX(-50%); bottom: 88px; }
   .controls { right: 12px; bottom: 90px; }
-  .debug { left: 12px; bottom: 90px; }
-  .pop { position: fixed; left: 0; right: 0; top: auto; bottom: 0; transform: none; width: auto; border-radius: 12px 12px 0 0; z-index: 9; }
+    .pop { position: fixed; left: 0; right: 0; top: auto; bottom: 0; transform: none; width: auto; border-radius: 12px 12px 0 0; z-index: 9; }
   .pop.below { transform: none; }
   .pop-arrow { display: none; }
   .sheet { position: fixed; left: 12px; right: 12px; top: 60px; width: auto; max-height: calc(100vh - 120px); }

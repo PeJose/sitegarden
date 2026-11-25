@@ -13,7 +13,7 @@ import { CommandBar } from './ui/CommandBar'
 import { Controls } from './ui/Controls'
 import { Popover } from './ui/Popover'
 import { extConfig, registry } from './ext/registry'
-import { Debug } from './ui/Debug'
+import { Settings } from './settings/Settings'
 import { Boring } from './Boring'
 
 const params = new URLSearchParams(location.search) // ?select=copperleaf-site&still=1 are for screenshots
@@ -31,6 +31,7 @@ export default function App() {
 function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof usePrefs> & { world: WorldData }) {
   const [selected, setSelected] = useState<string | null>(world.estates.some((e) => params.get('select') && e.pins[params.get('select')!]) ? params.get('select') : null)
   const [panel, setPanel] = useState<string | null>(params.get('panel') && `tab:essentials:${params.get('panel')}`) // a tab id
+  const [settings, setSettings] = useState(() => location.pathname === '/settings') // /settings is a page over the map, which stays mounted
   const [toast, setToast] = useState('')
   const [size, setSize] = useState<{ w: number; h: number } | null>(null) // measured, so the first frame matches the design exactly
   const box = useRef<HTMLDivElement>(null)
@@ -58,15 +59,24 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
   }, [])
 
   useEffect(() => {
+    const onPop = () => setSettings(location.pathname === '/settings')
+    addEventListener('popstate', onPop)
+    return () => removeEventListener('popstate', onPop)
+  }, [])
+  const openSettings = () => { history.pushState(null, '', '/settings'); setSettings(true) }
+  const closeSettings = useCallback(() => { history.pushState(null, '', '/' + location.search); setSettings(false) }, [])
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === '[' && !e.metaKey && !e.ctrlKey && !e.altKey && !(e.target instanceof HTMLElement && e.target.closest('input,textarea,[contenteditable]'))) return innerWidth >= 760 ? toggleRef.current() : undefined
       if (e.key !== 'Escape') return
+      if (location.pathname === '/settings') return closeSettings()
       if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur()
       setPanel((p) => { if (!p) setSelected(null); return null })
     }
     addEventListener('keydown', onKey)
     return () => removeEventListener('keydown', onKey)
-  }, [])
+  }, [closeSettings])
 
   const pickFromPanel = (id: string) => {
     setPanel(null)
@@ -78,7 +88,7 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
   return (
     <div className={`app${collapsed ? ' collapsed' : ''}`} ref={app} style={{ '--inset': `${heroInset(size?.w ?? 1440, collapsed)}px` } as CSSProperties}>
       <HeroSmear scheme={scheme} seed={world.seed} appRef={app} />
-      <Hero onPanel={setPanel} say={say} collapsed={collapsed} onToggle={toggle} />
+      <Hero onPanel={setPanel} onSettings={openSettings} say={say} collapsed={collapsed} onToggle={toggle} />
       <div className="mapbox" ref={box}>
         {size && <MapView world={world} scheme={scheme} size={size} collapsed={collapsed} onSelect={(id) => { setSelected(id); setPanel(null) }} />}
         <StatusStrip onPick={pickFromPanel} />
@@ -87,8 +97,8 @@ function Fun({ scheme, style, toggleScheme, setStyle, world }: ReturnType<typeof
         {toast && <div className="toast" role="status">{toast}</div>}
         <CommandBar say={say} />
         <Controls scheme={scheme} style={style} toggleScheme={toggleScheme} setStyle={setStyle}  />
-        <Debug />
       </div>
+      {settings && <Settings onClose={closeSettings} />}
     </div>
   )
 }

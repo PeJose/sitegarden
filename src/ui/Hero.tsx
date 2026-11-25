@@ -32,7 +32,7 @@ function HeroTab({ onToggle }: { onToggle: () => void }) {
   )
 }
 
-export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (tabId: string) => void; say: (m: string) => void; collapsed: boolean; onToggle: () => void }) {
+export function Hero({ onPanel, onSettings, say, collapsed, onToggle }: { onPanel: (tabId: string) => void; onSettings: () => void; say: (m: string) => void; collapsed: boolean; onToggle: () => void }) {
   const st = useEngine((s) => s)
   const now = useNow(15000)
   const sum = summarize(st, now)
@@ -83,6 +83,7 @@ export function Hero({ onPanel, say, collapsed, onToggle }: { onPanel: (tabId: s
         ))}
         <div className="more">
           {registry.resolve('sidepanel', 'tabs', extConfig.extensions).map((t) => <button key={t.id} onClick={() => onPanel(t.id)}>{t.title ?? t.id} →</button>)}
+          <button onClick={onSettings}>Settings →</button>
         </div>
       </nav>
     </section>

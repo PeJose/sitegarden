@@ -171,3 +171,21 @@ test('tailscale mode has no login page until a password hash is set', async () =
   reset({ enabled: true, mode: 'tailscale', users: ['owner@example.com'] })
   assert.deepEqual([(await get('/login')).status, (await login(PW)).status], [404, 404])
 })
+
+test('a generated token authenticates by hash until revoked, is not the api user, and last_used moves at most once a minute', async () => {
+  reset({ enabled: true, mode: 'password', users: [] }, true)
+  const value = 'sg_generated-value', id = db.addToken('ci', sha(value), now), bearer = { Authorization: `Bearer ${value}` }
+  assert.equal(await user(await get('/api/x', bearer)), 'token:ci')
+  assert.equal(db.tokens()[0].last_used, now)
+  const first = now
+  now += 30_000
+  await get('/api/x', bearer)
+  assert.equal(db.tokens()[0].last_used, first) // under a minute: not written again
+  now += 31_000
+  await get('/api/x', bearer)
+  assert.equal(db.tokens()[0].last_used, now)
+  assert.equal((await get('/api/x', { Authorization: `Bearer ${sha(value)}` })).status, 401) // the stored hash is not a credential
+  assert.equal((await get('/api/x', { Authorization: 'Bearer sg_other' })).status, 401)
+  db.removeToken(id)
+  assert.equal((await get('/api/x', bearer)).status, 401)
+})

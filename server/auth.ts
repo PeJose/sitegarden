@@ -62,7 +62,14 @@ export function createAuth({ db, secrets, cfg, now = Date.now, addr = (c) => { t
   // A user name, a ready response (wrong token, unknown tailnet login), or null for nobody.
   function who(c: Context, a: Graph['auth']): string | Response | null {
     const h = c.req.header('authorization')
-    if (h && /^bearer(\s|$)/i.test(h)) { const want = secrets.value('SITEGARDEN_API_TOKEN'); return want && same(h.slice(6).trim(), want) ? 'api' : c.json({ error: 'unauthorized' }, 401) } // no fallthrough to other methods
+    if (h && /^bearer(\s|$)/i.test(h)) { // no fallthrough to other methods
+      const given = h.slice(6).trim(), want = secrets.value('SITEGARDEN_API_TOKEN')
+      if (want && same(given, want)) return 'api'
+      const t = db.tokenByHash(sha(given).digest('hex')) // a generated token: found by its hash only
+      if (!t) return c.json({ error: 'unauthorized' }, 401)
+      if (t.last_used === null || now() - t.last_used > 60_000) db.touchToken(t.id, now())
+      return `token:${t.name}`
+    }
     const login = c.req.header('tailscale-user-login')
     if (a.mode === 'tailscale' && login !== undefined) return a.users.some((u) => u.toLowerCase() === login.toLowerCase()) ? login : c.json({ error: 'forbidden' }, 403)
     return session(c)
