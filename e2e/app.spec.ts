@@ -51,3 +51,19 @@ test('Settings opens from the hero menu with the version and plugins, Esc return
   await expect(s).toHaveCount(0)
   await expect(page).toHaveURL(/\/$/)
 })
+
+test('zooming back out keeps the sharper tiles that are already loaded', async ({ page }) => {
+  test.setTimeout(150_000)
+  await page.goto('/')
+  const tiles = page.locator('img.tile:not(.preview)')
+  const top = () => tiles.evaluateAll((is) => Math.max(0, ...is.filter((i) => (i as HTMLImageElement).complete).map((i) => Number((i as HTMLElement).style.zIndex))))
+  await expect(tiles.first()).toBeVisible()
+  await page.mouse.move(900, 400) // right of the hero panel
+  const wheel = async (dy: number, n: number) => { for (let i = 0; i < n; i++) { await page.mouse.wheel(0, dy); await page.waitForTimeout(40) } }
+  await wheel(300, 8) // all the way out
+  await wheel(-300, 10) // all the way in: the sharpest level settles and loads
+  await expect.poll(top, { timeout: 100_000 }).toBe(3) // the level-3 tiles render in the background first time
+  await wheel(300, 10)
+  await page.waitForTimeout(600) // the level has settled at the lowest by now
+  expect(await top()).toBe(3)
+})
