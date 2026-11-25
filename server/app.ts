@@ -40,7 +40,8 @@ app.get('/api/settings', (c) => {
 })
 
 // Generated API tokens: the value leaves the server once, in the POST response; only its SHA-256 is stored. A generated token cannot manage tokens.
-const manage = async (c: Context, next: Next) => !authConfig().enabled || (c.get('user') && !String(c.get('user')).startsWith('token:')) ? next() : c.json({ error: 'tokens are managed by a signed-in user' }, 403)
+const who = (c: Context) => (c.get('user') as string | undefined) ?? 'anyone (auth off)'
+const manage = async (c: Context, next: Next) => !authConfig().enabled || (c.get('user') && !who(c).startsWith('token:')) ? next() : c.json({ error: 'tokens are managed by a signed-in user' }, 403)
 app.use('/api/tokens*', manage)
 app.get('/api/tokens', (c) => c.json(db.tokens(), 200, { 'Cache-Control': 'no-store' }))
 app.post('/api/tokens', async (c) => {
@@ -48,13 +49,13 @@ app.post('/api/tokens', async (c) => {
   if (!name || name.length > 64) return c.json({ error: 'name must be 1-64 characters' }, 400)
   const token = `sg_${randomBytes(32).toString('base64url')}`
   const id = db.addToken(name, createHash('sha256').update(token).digest('hex'), Date.now())
-  log.info(`[auth] token ${JSON.stringify(name)} created by ${c.get('user') ?? 'anyone (auth off)'}`)
+  log.info(`[auth] token ${JSON.stringify(name)} created by ${who(c)}`)
   return c.json({ id, name, token }, 201, { 'Cache-Control': 'no-store' })
 })
 app.delete('/api/tokens/:id', (c) => {
   const id = Number(c.req.param('id')), t = db.tokens().find((x) => x.id === id)
   if (!t || !db.removeToken(id)) return c.json({ error: 'no such token' }, 404)
-  log.info(`[auth] token ${JSON.stringify(t.name)} revoked by ${c.get('user') ?? 'anyone (auth off)'}`)
+  log.info(`[auth] token ${JSON.stringify(t.name)} revoked by ${who(c)}`)
   return c.body(null, 204)
 })
 

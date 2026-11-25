@@ -334,8 +334,8 @@ test('with auth on: a generated token works on the API but gets 403 on token rou
 test('the token value and the env token never reach the log', async () => {
   const lines: string[] = [], info = console.log
   console.log = (...a: unknown[]) => void lines.push(a.join(' '))
-  let t: { token: string; id: number }
-  try { t = await (await post('/api/tokens', { name: 'quiet' })).json() as typeof t!; await app.request(`/api/tokens/${t.id}`, { method: 'DELETE' }) } finally { console.log = info }
+  let t = { token: '', id: 0 }
+  try { t = await (await post('/api/tokens', { name: 'quiet' })).json() as typeof t; await app.request(`/api/tokens/${t.id}`, { method: 'DELETE' }) } finally { console.log = info }
   assert.ok(lines.some((l) => l.includes('token "quiet" created')))
-  assert.ok(lines.every((l) => !l.includes(t!.token) && !l.includes('api-tok-123456')))
+  assert.ok(lines.every((l) => !l.includes(t.token) && !l.includes('api-tok-123456')))
 })
