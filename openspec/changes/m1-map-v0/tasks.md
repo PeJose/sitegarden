@@ -8,9 +8,9 @@
 
 ## 2. Client
 
-- [ ] 2.1 `src/live/store.ts` replaces the fake engine for statuses (D3), SSE listeners in `src/world.ts`, callers moved. Verify: store tests (load, `node.status`, `check.result`, old ids ignored, unknown node, history cap); `pnpm build`.
-- [ ] 2.2 Refresh wired to `POST /api/refresh` with toasts (D4). Verify: test with a stubbed `fetch` for node and global refresh and the `queued === 0` messages.
-- [ ] 2.3 Demo flows in `src/live/demo.ts`, `working` overlay, deploy buttons, Debug menu (D5). Verify: store test for the overlay (working during a flow, server status after); `?still=1` screenshot diff with `pnpm perf --baseline` within thresholds.
+- [x] 2.1 `src/live/store.ts` replaces the fake engine for statuses (D3), SSE listeners in `src/world.ts`, callers moved. Verify: store tests (load, `node.status`, `check.result`, old ids ignored, unknown node, history cap); `pnpm build`.
+- [x] 2.2 Refresh wired to `POST /api/refresh` with toasts (D4). Verify: test with a stubbed `fetch` for node and global refresh and the `queued === 0` messages.
+- [x] 2.3 Demo flows in `src/live/demo.ts`, `working` overlay, deploy buttons, Debug menu (D5). Verify: store test for the overlay (working during a flow, server status after); `?still=1` screenshot diff with `pnpm perf --baseline` within thresholds.
 
 ## 3. Close-out
 
