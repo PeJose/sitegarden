@@ -28,6 +28,9 @@ export function ensure(src: string): Promise<void> | undefined {
   return entry.p
 }
 
+// Called with each bitmap just before it is closed (the GL backend deletes its texture).
+export const evicted = new Set<(b: ImageBitmap) => void>()
+
 export const beginFrame = () => { frame++ }
 // The decoded bitmap, marked as drawn in this frame.
 export function touch(src: string): ImageBitmap | undefined {
@@ -39,5 +42,5 @@ export const has = (src: string) => !!cache.get(src)?.bmp
 export const cached = () => cache.size
 export function trim(budget = BUDGET) {
   const done = [...cache].filter(([, e]) => e.bmp).map(([key, e]) => ({ key, px: e.px, used: e.used }))
-  for (const k of overBudget(done, budget, frame)) { cache.get(k)!.bmp!.close(); cache.delete(k) }
+  for (const k of overBudget(done, budget, frame)) { const b = cache.get(k)!.bmp!; evicted.forEach((f) => f(b)); b.close(); cache.delete(k) }
 }

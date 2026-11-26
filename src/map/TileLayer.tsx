@@ -6,7 +6,7 @@ import { ensure, has } from '../engine/bitmaps'
 import { createEngine, type Engine } from '../engine/engine'
 import { tileLayer } from '../engine/tiles'
 import { needs, nameAt as tileName, srcOf, wantOf } from './tiles'
-import { viewport } from './viewport'
+import { frames } from './viewport'
 
 // Where the canvas goes: WorldLayer's host under the scaled world layer (the canvas is not scaled by CSS, it draws the viewport itself).
 export const TilesHost = createContext<HTMLElement | null>(null)
@@ -15,6 +15,7 @@ export const TilesHost = createContext<HTMLElement | null>(null)
 export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: Scheme; view: TileView }) {
   const host = useContext(TilesHost)
   const [cv, setCv] = useState<HTMLCanvasElement | null>(null)
+  const [soft, setSoft] = useState(false) // a WebGL context that never came back: a fresh canvas drawn with 2D
   const eng = useRef<{ engine: Engine; layer: ReturnType<typeof tileLayer> }>()
   const reported = useRef(false)
   const { tiles } = world
@@ -29,11 +30,11 @@ export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: S
 
   useEffect(() => {
     if (!cv) return
-    const engine = createEngine(cv, viewport), layer = tileLayer()
+    const engine = createEngine(cv, frames, { gl: !soft, onLost: () => setSoft(true) }), layer = tileLayer()
     engine.addLayer(layer)
     eng.current = { engine, layer }
     return () => { engine.destroy(); eng.current = undefined }
-  }, [cv])
+  }, [cv, soft])
   useEffect(() => { eng.current?.layer.set({ world, scheme, level }); eng.current?.engine.invalidate() }, [cv, world, scheme, level])
 
   // decode what the view draws from; each arrival redraws, and the first wave being drawn is the "tiles visible" mark
@@ -68,5 +69,5 @@ export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: S
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheme, world, level])
 
-  return host ? createPortal(<canvas ref={setCv} className="tiles" aria-hidden="true" />, host) : null
+  return host ? createPortal(<canvas key={String(soft)} ref={setCv} className="tiles" aria-hidden="true" />, host) : null
 }
