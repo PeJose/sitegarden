@@ -29,3 +29,17 @@ The repository SHALL ship a Dockerfile and a compose file that run the app insid
 #### Scenario: Forged Tailscale header
 - **WHEN** someone starts the server with `HOST=0.0.0.0` and `tailscale` auth
 - **THEN** it exits with an error, because anyone on that network could send `Tailscale-User-Login`
+
+### Requirement: Published images
+Every release SHALL publish a multi-arch image to GitHub Container Registry tagged with the version and `latest`.
+
+#### Scenario: New release
+- **WHEN** a version bump merges to main
+- **THEN** `ghcr.io/pejose/sitegarden:<version>` exists for amd64 and arm64
+
+### Requirement: Deploy command
+`sg deploy` SHALL update a server over SSH with the image built in CI (default), on the owner's machine, or on the server, and SHALL report the running version or fail with the server's recent logs.
+
+#### Scenario: Small server
+- **WHEN** the owner runs `sg deploy --host "root@box -p 2222"`
+- **THEN** the server pulls the published image, restarts the app and prints its version without compiling anything
