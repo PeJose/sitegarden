@@ -35,6 +35,7 @@ export function deployPlan(o: DeployOpts): { local: string[][]; remote: string[]
     remote.push('git fetch --tags', `git checkout ${q(ref ?? `v${o.pkgVersion}`)}`)
     if (!o.version && o.branch) remote.push('git merge --ff-only @{u}')
     remote.push('nice -n 10 docker compose up -d --build sitegarden')
+    remote.push('docker builder prune -f --keep-storage 1gb') // builds leave cache behind that image prune never touches; capped so a small disk never fills
   }
   remote.push('docker image prune -f', HEALTH)
   return { local, remote: [remote.join('\n')] }
