@@ -54,22 +54,27 @@ test('Settings opens from the hero menu with the version and plugins, Esc return
   await expect(page).toHaveURL(/\/$/)
 })
 
-const centre = `(() => { const c = document.querySelector('canvas.tiles'); const d = c.getContext('2d').getImageData(c.width >> 1, c.height >> 1, 1, 1).data; return d[3] })()` // alpha: paper, preview and tiles are opaque
+// The engine pushes the centre pixel's alpha into window.__sgAlpha after every draw (paper, preview and tiles are opaque); a WebGL canvas cannot be read between frames.
 
-test('the tile canvas draws tiles, and zooming in and out never leaves the pane blank', async ({ page }) => {
+test('the tile canvas draws tiles, and zooming in and out never leaves the pane blank, with the DOM layers in the canvas\'s view every frame', async ({ page }) => {
   test.setTimeout(150_000)
   await page.goto('/')
   await expect(page.locator('canvas.tiles')).toBeVisible()
   await expect.poll(() => page.evaluate(() => window.__sgTiles?.drawn ?? 0), { timeout: 60_000 }).toBeGreaterThan(0)
-  expect(await page.evaluate(centre)).toBe(255)
-  await page.evaluate(`window.__alpha = []; (function f() { window.__alpha.push(${centre}); requestAnimationFrame(f) })()`)
+  await page.evaluate(`window.__sgAlpha = []; window.__bad = []; (function f() {
+    const t = window.__sgTiles, w = document.querySelector('.world').style.transform, p = document.querySelector('.pane .viewport').style.transform
+    const n = (s) => s.match(/-?[\\d.]+(e-?\\d+)?/g).map(Number), want = [t.view.x, t.view.y, t.view.zoom] // the style rounds to 6 digits
+    if (![w, p].every((s) => n(s).every((v, i) => Math.abs(v - want[i]) < 1e-2))) window.__bad.push([w, p, want])
+    requestAnimationFrame(f)
+  })()`)
   await page.mouse.move(900, 400) // right of the hero panel
   const wheel = async (dy: number, n: number) => { for (let i = 0; i < n; i++) { await page.mouse.wheel(0, dy); await page.waitForTimeout(40) } }
   await wheel(-300, 8) // in
   await page.waitForTimeout(500)
   await wheel(300, 12) // all the way out
   await page.waitForTimeout(300)
-  const alpha = await page.evaluate(() => (window as unknown as { __alpha: number[] }).__alpha)
+  const { alpha, bad } = await page.evaluate(() => { const w = window as unknown as { __sgAlpha: number[]; __bad: unknown[] }; return { alpha: w.__sgAlpha, bad: w.__bad } })
   expect(alpha.length).toBeGreaterThan(20)
   expect(alpha.filter((a) => a !== 255)).toEqual([])
+  expect(bad).toEqual([])
 })
