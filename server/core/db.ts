@@ -37,7 +37,7 @@ export function openDb(file: string, now = Date.now) {
       PRAGMA user_version=3`)
   }
   if ((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version < 4) {
-    // Rows older than the live window, kept for the M7 replay; M7 compacts them (dedupe, downsample).
+    // Rows older than the live window, kept for the M8 replay; M8 compacts them (dedupe, downsample).
     db.exec(`
       CREATE TABLE IF NOT EXISTS archive_events(id INTEGER PRIMARY KEY, at INTEGER NOT NULL, type TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS archive_history(node TEXT NOT NULL, check_id TEXT NOT NULL, status TEXT NOT NULL, at INTEGER NOT NULL, detail TEXT, ms INTEGER);

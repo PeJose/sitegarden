@@ -86,7 +86,7 @@ Speed work, measured first (profile which filter dominates):
 2. Terrain/estate layer split, so a change re-renders only its layer's tiles.
 3. Use every CPU core (a worker pool), visible tiles first.
 4. Watercolour filters rendered at reduced resolution and upscaled (soft by nature), and the first wave limited to the tiles on screen (done 2026-11-20: cold first view 2.6 s, full apply 67 s).
-5. Later: draw the watercolour with a GPU shader, see milestone M8 below. That is the "faster language" step that matters; a Rust or Go rewrite of the same filters would not change much, and resvg (Rust) currently crashes on the design's `feDisplacementMap`.
+5. Later: draw the watercolour with a GPU shader, see milestone M9 below. That is the "faster language" step that matters; a Rust or Go rewrite of the same filters would not change much, and resvg (Rust) currently crashes on the design's `feDisplacementMap`.
 
 ### Plugins in one paragraph
 
@@ -178,29 +178,42 @@ Budget: about **8–10 hobby days a month** (two evenings a week plus a weekend 
 | # | Name | Month | You get |
 |---|---|---|---|
 | M1 | Seed | Dec 2026 | A working map of your 2 projects behind Tailscale, with links and HTTP checks |
-| M2 | Roots and lanterns | Jan 2027 | GitHub status and deploy button; lanterns travel the paths |
-| M3 | Watercolour | Feb 2027 | The garden look: paper, painted plots, buildings, night |
-| M4 | Weather station | Mar 2027 | Expiries, heartbeats, richer checks, alerts on your phone |
-| M5 | Visitors | Apr 2027 | Instant webhooks, Sanity webhook inspector, logs, Lighthouse |
-| M6 | Toolshed | May 2027 | Plugin gallery, scaffolder, hot reload, CLI, MCP server |
-| M7 | Seasons | Jun 2027 | Time scrubber, growing garden, seasons, postcards |
-| M8 | Glasshouse | Jul 2027 | GPU-rendered watercolour (in the browser), instant re-renders, live seasons and weather |
+| M2 | Pocket | Jan 2027 | The map on your phone: smooth zoom, phone layouts, installable PWA, push notifications |
+| M3 | Roots and lanterns | Feb 2027 | GitHub status and deploy button; lanterns travel the paths |
+| M4 | Watercolour | Mar 2027 | The garden look: paper, painted plots, buildings, night |
+| M5 | Weather station | Apr 2027 | Expiries, heartbeats, richer checks, alerts on your phone |
+| M6 | Visitors | May 2027 | Instant webhooks, Sanity webhook inspector, logs, Lighthouse |
+| M7 | Toolshed | Jun 2027 | Plugin gallery, scaffolder, hot reload, CLI, MCP server |
+| M8 | Seasons | Jul 2027 | Time scrubber, growing garden, seasons, postcards |
+| M9 | Glasshouse | Aug 2027 | GPU-rendered watercolour (in the browser), instant re-renders, live seasons and weather |
 
 ### M1 — Seed (~14 days)
 
 1. Core: graph model, YAML loader + schema merge, plugin host (tiers A/B), extension tree, store, scheduler, SSE (4 d)
 2. Secrets broker with `_FILE`, SSRF guard (1 d)
 3. `essentials`: node types, `repo:` / `sanity:` shorthands, HTTP + keyword checks (1.5 d)
-4. Map v0 (plain theme), side panel, Inventory + Links lists, Refresh (2 d). Done in 0.8.0: `/api/status` + SSE drive the map, Refresh runs server checks, a server-side `mock` plugin replaces the client's fake engine (demo flows stay client-side until M2)
+4. Map v0 (plain theme), side panel, Inventory + Links lists, Refresh (2 d). Done in 0.8.0: `/api/status` + SSE drive the map, Refresh runs server checks, a server-side `mock` plugin replaces the client's fake engine (demo flows stay client-side until M3)
 5. Dockerfile, compose with Tailscale sidecar, `tailscale` + `password` auth, README; first Playwright e2e suite that pins the stable flows (map loads, live statuses, refresh, login) and runs in PR CI (2.5 d) Done in 0.9.0: the server serves the built app, `tailscale` and `password` auth plus an API token for the CLI, Dockerfile and compose with the Tailscale sidecar, 5 Playwright e2e tests and a Docker build in PR CI
 6. One web plugin end to end, built at build time against the host's Preact, to prove the SDK before it freezes (0.5 d) Done in 0.10.0: `essentials` ships a Checks tab as a web plugin (Vite plugin generates the imports from the config, `/api/config` gates them at runtime), web SDK 1.0.0 and plugin API v1 frozen in `docs/plugins.md`
 7. Client performance pass, before more UI lands (1.5 d). Observed 2026-11-20: the browser's GPU process sits at ~300% while the POC map is open, even when idle and fully loaded, and pan/zoom animations feel slow. Profile first (Chrome Performance + Layers panels, dev vs production build), then fix what the data shows. Suspects (React Flow, since replaced by the own viewport and Preact, was the first): re-rendering every pin/chip/label per frame, `backdrop-filter` blur on panels over a moving map, many rough.js SVG pins, CSS opacity transitions, idle animations (deploy path, red wash) that never stop. Target: near-zero GPU when idle, 60 fps pan on a mid phone
 8. pre4, smaller and faster client: our own viewport instead of React Flow (0.6.0) and Preact instead of React (0.7.0). Main chunk 181 KB to 40 KB gzip, pan and zoom unchanged (budgets in `perf/results.md`)
-9. Settings page at `/settings`, after item 6 (1.5 d). Kept plain and simple: it exists to make the app debuggable and to give later work a home. **About:** app, plugin API and renderer versions, config revision with time and source, demo mode. **Plugins:** id, version, loaded or "failed to load" (the reason stays in the server log). **Dev tools:** the debug menu's buttons (deploy now, webhook now, plant / remove estate), which leave the map. **API tokens:** generate a named token (shown once, with a copy button), stored hashed in SQLite with created and last-used times, revoke in one click; the env `SITEGARDEN_API_TOKEN` stays as the bootstrap and recovery token. Opened from the hero menu. Better design, display prefs, enable / disable and settings forms come in later milestones (M6). Done in 0.11.0: `/settings` with About, Plugins, API tokens (generated, hashed, revocable; the env token stays the bootstrap) and Dev tools; the `mock +` tab left the map
+9. Settings page at `/settings`, after item 6 (1.5 d). Kept plain and simple: it exists to make the app debuggable and to give later work a home. **About:** app, plugin API and renderer versions, config revision with time and source, demo mode. **Plugins:** id, version, loaded or "failed to load" (the reason stays in the server log). **Dev tools:** the debug menu's buttons (deploy now, webhook now, plant / remove estate), which leave the map. **API tokens:** generate a named token (shown once, with a copy button), stored hashed in SQLite with created and last-used times, revoke in one click; the env `SITEGARDEN_API_TOKEN` stays as the bootstrap and recovery token. Opened from the hero menu. Better design, display prefs, enable / disable and settings forms come in later milestones (M7). Done in 0.11.0: `/settings` with About, Plugins, API tokens (generated, hashed, revocable; the env token stays the bootstrap) and Dev tools; the `mock +` tab left the map
 
 Order for the rest of M1: 4 → 5 → 6 → 9.
 
-### M2 — Roots and lanterns (~9 days)
+### M2 — Pocket: mobile (~11.5 days, asked 2026-11-26)
+
+Why: the first real-phone test (Android Chrome over Tailscale, 2026-11-25) showed the map flashing and lagging; the canvas engine (0.11.2) and WebGL with one frame owner (0.11.3) fixed it: on the phone on 2026-11-26 pan is smooth with no tile jumps, only zoom still stutters. The phone experience itself was never designed. Comes right after M1 because the phone is where the map gets opened most. Headless emulation never reproduced the phone bugs, so this milestone tests on a real device.
+
+1. Phone designs in the design artifact: map, node details as a bottom sheet, lists, settings, status strip (2 d)
+2. Mobile layout and touch pass: hero vs map stacking, bottom sheet, 44 px touch targets, double-tap and two-finger gestures, safe areas, landscape (2 d)
+3. PWA: web manifest, PNG and maskable icons (192/512, apple-touch-icon), install to home screen, offline last map through the existing service worker (1 d)
+4. Web Push: VAPID keys as secrets, push subscriptions per device in SQLite, a `push` notifier for down and recovered from the check results, per-device toggle in settings (M5 adds expiry reminders and rules on top); iOS needs the installed PWA (16.4+) (2.5 d). Cheap on the server: one small outbound HTTPS request per notification to the browser's push service, no open connections, so a 1 GB / 1 CPU box is plenty
+5. Real-device test lane: an `adb` + Chrome DevTools Protocol script for an Android phone (pan, pinch, zoom-out; frame p95, frames with blank tiles, renders per gesture) with budgets, run before every map change is called done (1.5 d)
+6. Zoom stutter: pinch and button zoom still drop frames on the phone (0.11.3, OnePlus 10T); pan is fine. First candidate is the `gesture-zero-work` OpenSpec change (labels baked into the tiles, no Preact render during a gesture), measured with the item 5 lane (1.5 d)
+7. Phone perf budget for the engine and live layer, tuned on the device (1 d)
+
+### M3 — Roots and lanterns (~9 days)
 
 1. GitHub source: CI status, runs, commits, open PRs (1.5 d)
 2. Deploy (`workflow_dispatch`, tracked run id), re-run, cancel (1.5 d)
@@ -208,7 +221,7 @@ Order for the rest of M1: 4 → 5 → 6 → 9.
 4. Edge health, heartbeat breathing, focus mode, ⌘K palette, keyboard nav (2 d)
 5. Deploys + Activity lists, audit log, read-only mode, self-monitoring (1.5 d)
 
-### M3 — Watercolour (~10 days)
+### M4 — Watercolour (~10 days)
 
 1. World canvas synced to the viewport; tile bake worker + IndexedDB cache (2 d)
 2. Procedural paper and specks; Hobbs-style plot watercolour; rough.js hedges (3 d)
@@ -216,14 +229,14 @@ Order for the rest of M1: 4 → 5 → 6 → 9.
 4. Night theme, day/night by clock, lit windows, red bloom (2 d)
 5. Garden and plain as two theme plugins; reduced-motion and calm mode (0.5 d)
 
-### M4 — Weather station (~10 days)
+### M5 — Weather station (~10 days)
 
 1. SSL, domain (RDAP) and token expiry; Expiries list (2.5 d)
 2. Heartbeat check; Gatus-style conditions; TCP, DNS, FTPS login; flap damping (4 d)
 3. Health + Incidents lists; maintenance pause (1.5 d)
 4. Notifiers (ntfy, Telegram, Discord, email), rules, expiry reminders (2 d)
 
-### M5 — Visitors (~9 days)
+### M6 — Visitors (~9 days)
 
 1. Hooks ingress recipe (Funnel on 8443 or Caddy) (1 d)
 2. GitHub webhooks: instant flows, delivery log, redeliver (2.5 d)
@@ -231,21 +244,21 @@ Order for the rest of M1: 4 → 5 → 6 → 9.
 4. Workflow log viewer (1.5 d)
 5. Lighthouse / PageSpeed history per site (2 d)
 
-### M6 — Toolshed (~11 days)
+### M7 — Toolshed (~11 days)
 
 1. Plugin gallery with permissions and enable / disable (2 d)
 2. `create-sitegarden-plugin` scaffolder + `sitegarden dev` hot reload (3 d)
 3. Extension inspector + layer toggles; settings forms from schema (4 d)
 4. CLI and MCP server (2 d, overlapping: the MCP server wraps the same API)
 
-### M7 — Seasons (~11 days)
+### M8 — Seasons (~11 days)
 
 1. Time scrubber replay (4 d). Reads the live tables for the last 30 days and `archive_events` / `archive_history` before that (the daily pruner moves rows there since 0.8.0). Includes compacting the archive: keep only status changes plus a downsampled sample of the rest (e.g. 1 of every 5 ok results), and hourly summaries for long ranges
 2. Garden grows with uptime streaks (3 d)
 3. Seasons from the calendar (2 d)
 4. Weekly postcard PNG (2 d)
 
-### M8 — Glasshouse: GPU rendering (~9 days, decided 2026-11-20)
+### M9 — Glasshouse: GPU rendering (~9 days, decided 2026-11-20)
 
 Why: on the CPU, the design's watercolour filters (`aq`, `aqS`, `aqT`, `wash`, all `feDisplacementMap`-based) cost ~5.5 s per 512-unit tile (58 ms without filters). Baking hides that for revisits, but every config change pays it, and live effects (seasons, weather, growth) are impossible.
 
@@ -278,18 +291,7 @@ Why: on the CPU, the design's watercolour filters (`aq`, `aqS`, `aqT`, `wash`, a
 
 A GPU VPS is not worth it for this: small always-on GPU servers cost around €200/month (Hetzner L4 at about €0.44/h, per third-party listings), versus a few € for a CPU VPS, and the client GPU is free.
 
-### M9 — Pocket: mobile (~10 days, asked 2026-11-26)
-
-Why: the first real-phone test (Android Chrome over Tailscale, 2026-11-25) showed the map flashing and lagging; the canvas engine (0.11.2+) fixes the display, but the phone experience was never designed. Headless emulation never reproduced the phone bugs, so this milestone tests on a real device.
-
-1. Phone designs in the design artifact: map, node details as a bottom sheet, lists, settings, status strip (2 d)
-2. Mobile layout and touch pass: hero vs map stacking, bottom sheet, 44 px touch targets, double-tap and two-finger gestures, safe areas, landscape (2 d)
-3. PWA: web manifest, PNG and maskable icons (192/512, apple-touch-icon), install to home screen, offline last map through the existing service worker (1 d)
-4. Web Push: VAPID keys as secrets, push subscriptions per device in SQLite, a `push` notifier on top of the M4 rules (down, recovered, expiry), per-device toggle in settings; iOS needs the installed PWA (16.4+) (2.5 d). Cheap on the server: one small outbound HTTPS request per notification to the browser's push service, no open connections, so a 1 GB / 1 CPU box is plenty
-5. Real-device test lane: an `adb` + Chrome DevTools Protocol script for an Android phone (pan, pinch, zoom-out; frame p95, frames with blank tiles, renders per gesture) with budgets, run before every map change is called done (1.5 d)
-6. Phone perf budget for the engine and live layer, tuned on the device (1 d)
-
-### After M7
+### After M8
 
 Pick from the `later` items in [features.md](features.md): external status sources (Gatus / Kuma), importers queue, theme and building-pack editors, automations, weather, villagers, public status page, GitHub App, and more.
 
@@ -315,8 +317,8 @@ Pick from the `later` items in [features.md](features.md): external status sourc
 
 | Fact | Needed in |
 |---|---|
-| `GitHub-Authentication-Token-Expiration` header on fine-grained PATs (one `curl -i`) | M4 |
-| Whether a Sanity Viewer token can list webhooks | M5 |
+| `GitHub-Authentication-Token-Expiration` header on fine-grained PATs (one `curl -i`) | M5 |
+| Whether a Sanity Viewer token can list webhooks | M6 |
 | Sanity Manage deep-link paths (`/manage/project/<id>/...`) | M1 |
 | undici `connect.lookup` option for the SSRF guard | M1 |
 | Headscale release with Serve HTTPS (if using Headscale) | M1 |

@@ -93,7 +93,7 @@ The map, popover, status strip, Inventory and Links show the server's statuses: 
 
 ### Mock plugin and demo mode
 
-`plugins/mock` provides a `mock` check type that makes up statuses and response times from a node's `mock:` block (`initialStatus` for the first run, `baseMs` for the timing), with the occasional slow or broken site that recovers by itself. The sample config lists it and gives each mocked node `checks: [{ type: mock, every: 15s }]`. While it is loaded, the map also plays demo deploy and webhook flows; without it, deploy buttons are disabled until the GitHub plugin (M2). `SITEGARDEN_DEMO=1` loads it even when the config does not list it.
+`plugins/mock` provides a `mock` check type that makes up statuses and response times from a node's `mock:` block (`initialStatus` for the first run, `baseMs` for the timing), with the occasional slow or broken site that recovers by itself. The sample config lists it and gives each mocked node `checks: [{ type: mock, every: 15s }]`. While it is loaded, the map also plays demo deploy and webhook flows; without it, deploy buttons are disabled until the GitHub plugin (M3). `SITEGARDEN_DEMO=1` loads it even when the config does not list it.
 
 ### Secrets
 
@@ -180,6 +180,7 @@ Releases: every PR bumps the version in `package.json` and adds a matching entry
 | Milestone | Scope |
 |---|---|
 | Seed | core, plugin host, HTTP checks, Docker + Tailscale, auth |
+| Pocket | phone: smooth zoom, phone layouts, PWA, push notifications |
 | Roots and lanterns | GitHub status and deploy button, animated flows |
 | Weather station | expiries, heartbeats, alerts |
 | Visitors | webhooks, logs, Lighthouse history |

@@ -10,6 +10,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Mobile map: the tile canvas now uses WebGL2 (each tile is uploaded once as a mipmapped texture, a frame is one draw call per tile) instead of 2D `drawImage` scaling; on a 4x throttled phone profile a 1 s pan costs about 250 ms of main thread instead of about 4500 ms, a pinch about 270 ms instead of about 6000 ms. The 2D canvas stays as the fallback when WebGL2 is unavailable or a lost context does not come back.
 - The canvas is redrawn in the same task as a resize, so it is never painted blank.
 
+### Changed
+- Roadmap: the mobile milestone Pocket moves up to M2, right after Seed (the later milestones shift by one); it now also covers the remaining zoom stutter on phones.
+
 ## [0.11.2] - 2026-11-26
 
 ### Fixed

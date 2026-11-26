@@ -2,7 +2,7 @@ import { edges } from '../mock/data'
 import { live, still } from './store'
 
 // The design's flows (deploys, webhooks, the copperleaf opening scene) for the sample map; statuses stay the server's, a deploy only overlays `working`.
-export const NO_DEPLOY = 'Deploys arrive with the GitHub plugin (M2)'
+export const NO_DEPLOY = 'Deploys arrive with the GitHub plugin (M3)'
 const rnd = (a: number, b: number) => a + Math.random() * (b - a)
 const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)]
 const deployEdges = () => edges.filter((e) => e.type === 'deploy')
