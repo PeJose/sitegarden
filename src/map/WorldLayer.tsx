@@ -10,8 +10,9 @@ import { extConfig, registry } from '../ext/registry'
 import { flight } from './tiles'
 import { useSteppedZoom, viewport } from './viewport'
 import { Lantern, March, Wash } from './Fx'
+import { TilesHost } from './TileLayer'
 
-// The baked world (server tiles) sits under the pins and follows the viewport transform. On top of it,
+// The baked world (server tiles, drawn into a canvas by the engine) sits under the pins and follows the viewport transform. On top of it,
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
 // The transform is written straight to the DOM from the viewport store; React only re-renders when the tile level or the visible tile range changes.
 export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
@@ -40,13 +41,14 @@ export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { wo
     const off = viewport.subscribe(apply)
     return () => { clearTimeout(timer); off(); flight.onEnd.delete(land) }
   }, [T, size])
-  const tex = world.textures?.[scheme]?.[view.level]
+  const [host, setHost] = useState<HTMLDivElement | null>(null)
   return (
     <>
+    <div className="tilehost" ref={setHost} />
     <div className="world" ref={el}>
-      {/* paper under everything, in world units (repeats every 1024): the pan only moves the layer, nothing repaints. The texture is a tile's own base, so it continues seamlessly under the tiles */}
-      <div className="paper" style={{ backgroundImage: `url(/a/${tex})` }} />
-      {registry.resolve('map', 'layers', extConfig.extensions).map((l) => <Fragment key={l.id}>{l.render({ world, scheme, view })}</Fragment>)}
+      <TilesHost.Provider value={host}>
+        {registry.resolve('map', 'layers', extConfig.extensions).map((l) => <Fragment key={l.id}>{l.render({ world, scheme, view })}</Fragment>)}
+      </TilesHost.Provider>
     </div>
     </>
   )

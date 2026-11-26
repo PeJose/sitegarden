@@ -1,19 +1,21 @@
-import { useEffect, useRef } from 'react'
-import type { JSX } from 'preact'
+import { createContext, createPortal, useContext, useEffect, useRef, useState } from 'react'
 import type { Scheme } from '../prefs'
 import type { TileView } from '../lib/view'
 import type { WorldData } from '../world'
-import { evict, nameAt as tileName, srcOf, wantOf, type Tile } from './tiles'
+import { ensure, has } from '../engine/bitmaps'
+import { createEngine, type Engine } from '../engine/engine'
+import { tileLayer } from '../engine/tiles'
+import { needs, nameAt as tileName, srcOf, wantOf } from './tiles'
+import { viewport } from './viewport'
 
-const keyOf = (t: Tile) => `${t.z}/${t.x}/${t.y}/${t.src}` // identical paper tiles share one file, so the file name alone is not a position
-// shortcut: 96 tiles (~20 MB decoded on a phone) incl. sharper leftovers, no memory-based budget; revisit if low-end phones reload the page
-const KEEP = 96 // decoded tiles kept mounted after they scroll out of view or the level drops
+// Where the canvas goes: WorldLayer's host under the scaled world layer (the canvas is not scaled by CSS, it draws the viewport itself).
+export const TilesHost = createContext<HTMLElement | null>(null)
 
-// Server-rendered map tiles under the React Flow viewport: only visible tiles are requested, recent ones stay mounted (LRU),
-// and level 1 always sits under the sharper level so zooming never shows a hole while it loads.
+// Thin wrapper: the canvas engine draws the tiles (src/engine); this mounts it, feeds it world, theme and level, and tells the server what is missing.
 export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: Scheme; view: TileView }) {
-  const lru = useRef(new Map<string, Tile>())
-  const loaded = useRef(new Set<string>())
+  const host = useContext(TilesHost)
+  const [cv, setCv] = useState<HTMLCanvasElement | null>(null)
+  const eng = useRef<{ engine: Engine; layer: ReturnType<typeof tileLayer> }>()
   const reported = useRef(false)
   const { tiles } = world
   const T = tiles.size
@@ -22,22 +24,26 @@ export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: S
 
   const m = T / 2, [rx0, ry0, rx1, ry1] = view.rect
   const { want, missing } = wantOf(world, scheme, view)
-  for (const t of want) { lru.current.delete(keyOf(t)); lru.current.set(keyOf(t), t) }
-  const wanted = new Set(want.map(keyOf))
-  evict(lru.current, wanted, view, KEEP)
-  // drop tiles of another theme, or that a newer release replaced (the file name is the content hash)
-  const mounted = [...lru.current.values()].filter((t) => t.src === (nameAt(scheme, t.z, t.x, t.y) ? srcOf(nameAt(scheme, t.z, t.x, t.y)!) : '')).sort((a, b) => (keyOf(a) < keyOf(b) ? -1 : 1)) // stable DOM order (z-index stacks): LRU order reshuffled and re-inserted dozens of <img> on every level change
-
   const firstWave = useRef<string[] | null>(null)
-  firstWave.current ??= want.filter((t) => t.z === 1 && t.x * T < rx1 - m && (t.x + 1) * T > rx0 + m && t.y * T < ry1 - m && (t.y + 1) * T > ry0 + m).map(keyOf)
-  const onLoad = (k: string) => (e: JSX.TargetedEvent<HTMLImageElement>) => {
-    e.currentTarget.style.opacity = '1'
-    loaded.current.add(k)
-    if (!reported.current && firstWave.current!.every((s) => loaded.current.has(s))) {
-      reported.current = true
-      performance.mark('tiles-visible')
-    }
-  }
+  firstWave.current ??= want.filter((t) => t.z === 1 && t.x * T < rx1 - m && (t.x + 1) * T > rx0 + m && t.y * T < ry1 - m && (t.y + 1) * T > ry0 + m).map((t) => t.src)
+
+  useEffect(() => {
+    if (!cv) return
+    const engine = createEngine(cv, viewport), layer = tileLayer()
+    engine.addLayer(layer)
+    eng.current = { engine, layer }
+    return () => { engine.destroy(); eng.current = undefined }
+  }, [cv])
+  useEffect(() => { eng.current?.layer.set({ world, scheme, level }); eng.current?.engine.invalidate() }, [cv, world, scheme, level])
+
+  // decode what the view draws from; each arrival redraws, and the first wave being drawn is the "tiles visible" mark
+  const need = needs(world, scheme, view), needKey = need.join(';')
+  useEffect(() => {
+    const wave = () => { if (!reported.current && firstWave.current!.every(has)) { reported.current = true; performance.mark('tiles-visible') } }
+    for (const src of need) ensure(src)?.then(() => { eng.current?.engine.invalidate(); wave() })
+    wave()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needKey, cv])
 
   // tell the server which tiles we are waiting for: they jump its queue, and the release event brings them
   const missKey = missing.join(';')
@@ -54,20 +60,13 @@ export function TileLayer({ world, scheme, view }: { world: WorldData; scheme: S
     const id = setTimeout(() => {
       for (const t of want.filter((t) => t.z === level)) {
         const n = nameAt(other, t.z, t.x, t.y)
-        if (n) new Image().src = srcOf(n)
+        if (n) ensure(srcOf(n))
       }
+      if (world.previews[other]) ensure(srcOf(world.previews[other]!))
     }, 1500)
     return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheme, world, level])
 
-  const prev = world.previews[scheme]
-  return (
-    <>
-      {prev && <img className="tile preview" decoding="async" src={`/a/${prev}`} onLoad={(e) => { e.currentTarget.style.opacity = '1' }} style={{ left: tiles.x0 * T, top: tiles.y0 * T, width: tiles.cols * T, height: tiles.rows * T, zIndex: -1 }} alt="" draggable={false} />}
-      {mounted.map((t) => (
-        <img key={keyOf(t)} className="tile" decoding="async" src={t.src} onLoad={onLoad(keyOf(t))} style={{ left: t.x * T, top: t.y * T, width: T, height: T, zIndex: t.z }} alt="" draggable={false} />
-      ))}
-    </>
-  )
+  return host ? createPortal(<canvas ref={setCv} className="tiles" aria-hidden="true" />, host) : null
 }
