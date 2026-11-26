@@ -141,8 +141,22 @@ One `docker compose up`: the app and a Tailscale sidecar. Nothing is published o
 
 ```sh
 export TS_AUTHKEY=tskey-auth-...   # a Tailscale auth key
-docker compose up -d --build
+docker compose up -d               # pulls the published image; --build builds it here instead
 ```
+
+### Updating
+
+Every release publishes a multi-arch image (`ghcr.io/pejose/sitegarden:<version>` and `:latest`). `pnpm sg deploy` updates the server over SSH and prints the running version, or the last 30 log lines (exit 5) when the app does not come up. You choose where the image is built:
+
+```sh
+pnpm sg deploy --host "root@box.example -p 2222"                  # ci (default): the server pulls CI's image, nothing compiles there
+pnpm sg deploy --build local --host "root@box.example -p 2222"    # built on this machine for the server's CPU, streamed over SSH
+pnpm sg deploy --build server --host "root@box.example -p 2222"   # built on the server (git fetch + compose --build)
+```
+
+`--host` can be `SITEGARDEN_DEPLOY_HOST`; `--dir` (default `/opt/sitegarden`) is the checkout on the server; `--version` picks a release (default: `latest` for `ci`, this checkout's version otherwise; `server` checks out the tag `v<version>`, or this checkout's branch without `--version`); `--dry-run` prints exactly what would run. `server` is the slow one: on a small box the build can starve SSH and the map for minutes (it runs at `nice -n 10`).
+
+The `ci` mode needs the image to be pullable: once, make the package public (GitHub profile, Packages, sitegarden, Package settings, Change visibility), or run `docker login ghcr.io` on the server with a token that can read packages.
 
 Turn auth on in `sitegarden.yaml` (it is on even inside the VPN):
 

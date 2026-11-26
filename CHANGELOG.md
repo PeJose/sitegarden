@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.12.0] - 2026-11-26
+
+### Added
+- Every release publishes a multi-arch (amd64, arm64) image to `ghcr.io/pejose/sitegarden` (`<version>` and `latest`); `docker-compose.yml` names it, so `docker compose pull` needs no build.
+- `sg deploy`: updates a server over SSH with the image built in CI (default), on your machine (`--build local`) or on the server (`--build server`), then waits for `/api/health` and prints the running version. `--dry-run` prints the commands.
+
 ## [0.11.3] - 2026-11-26
 
 ### Fixed
