@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.11.3] - 2026-11-26
+
+### Fixed
+- Mobile map: pins, chips, labels and the live layer no longer drift from the map while panning or zooming: one frame owner (`src/engine/frame.ts`) applies the viewport, so the canvas draws and the DOM layers move with the same view in the same frame (before, the DOM moved at once and the canvas a frame later).
+- Mobile map: the tile canvas now uses WebGL2 (each tile is uploaded once as a mipmapped texture, a frame is one draw call per tile) instead of 2D `drawImage` scaling; on a 4x throttled phone profile a 1 s pan costs about 250 ms of main thread instead of about 4500 ms, a pinch about 270 ms instead of about 6000 ms. The 2D canvas stays as the fallback when WebGL2 is unavailable or a lost context does not come back.
+- The canvas is redrawn in the same task as a resize, so it is never painted blank.
+
 ## [0.11.2] - 2026-11-26
 
 ### Fixed
