@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.11.2] - 2026-11-26
+
+### Fixed
+- Mobile map: tiles, the whole-map preview and the paper texture are now drawn into one canvas (new `src/engine`, a small 2D map engine) from bitmaps decoded once and kept within a 32 Mpx budget, instead of an `<img>` per tile in one CSS-scaled layer that Android Chrome re-rasterized (flashing) on every pinch and pan. A cell never falls back to a blurrier tile while a sharper one is decoded; labels, pins, chips and the live layer are unchanged. Tiles now appear without a fade.
+
 ## [0.11.1] - 2026-11-25
 
 ### Fixed

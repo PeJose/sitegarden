@@ -25,12 +25,16 @@ Artifacts are files in `.data/a/` named by the hash of their exact inputs (SVG, 
 
 Zoom levels are 0.125 / 0.5 / 1 / 2 px per world unit (level 0 only feeds the preview). Files not referenced by the current release are deleted after a complete apply. The browser loads `/api/release` (tiny), the preview, then visible tiles; `/a/*` is `immutable`, and `public/sw.js` (production only) keeps it all for offline revisits.
 
-Client tile levels: the level follows the zoom only after it has rested for 200 ms (while zooming, the mounted tiles are scaled by CSS and the paper texture stays), `levelFor` counts screen density up to 2, and tiles already loaded at a sharper level stay mounted above the current one (up to 96 tiles, off-screen ones evicted first), so zooming out never blurs what is decoded. The paper texture is a child of the world layer (world units, repeats every 1024), so panning only moves a composited layer; tiles keep a stable DOM order.
+Client tile levels: the level follows the zoom only after it has rested for 200 ms (while zooming, the decoded tiles are drawn scaled and the paper stays), `levelFor` counts screen density up to 2, and a cell is drawn from the sharpest decoded tile up to one level above the settled one, so zooming out never blurs what is decoded. Tiles are fetched and decoded once into `ImageBitmap`s (`src/engine/bitmaps.ts`, 32 Mpx budget, least recently drawn evicted first, never one drawn in the last frame); level 1 is always fetched under the sharper level. Per frame the canvas gets the paper texture (a pattern repeating every 1024 world units, only where a cell has no tile yet), the preview, then one tile per visible cell at whole backing pixels (no seams). `.world` keeps only the live layer and labels above the canvas.
+
+## Map engine
+
+`src/engine` is plain TS (no Preact): `bitmaps.ts` (decoded-bitmap cache), `engine.ts` (`createEngine(canvas, viewport)` returns `{ addLayer, removeLayer, invalidate, destroy }`; one rAF per `invalidate()`, nothing runs while idle), `tiles.ts` (the tile layer). Each frame builds a `Frame { x, y, zoom, dpr, w, h, rect, now }`, sets the world transform once and calls `layer.draw(ctx, frame)` for layers sorted by `order`; a layer is `{ id, order, draw, animating? }` and any `animating()` keeps the frames coming. `TileLayer.tsx` only mounts the canvas, feeds the layer world, theme and level, and reports missing tiles. Why canvas: an `<img>` per tile inside one CSS-scaled `will-change` layer made Android Chrome re-rasterize the huge layer on every scale change (flashing on small GPU budgets); a canvas redraws from already decoded bitmaps. `window.__sgTiles` (`drawn`, `cached`, `lastDrawMs`) is read by e2e only.
 
 ## Code
 
 - `src/gen`: seeded isomorphic generator (`world`, `estate`, `hood`) and the SVG layer functions in `render.ts`.
 - `server/`: `plan.ts` (hash everything), `apply.ts` (render, flatten, publish), `store.ts` (data dir, releases, GC), `config.ts` (YAML), `index.ts` (Hono, watcher, SSE), `sg.ts` (CLI).
-- `src/map`: `viewport.ts` is the own pan/zoom store (wheel, drag, pinch, animated flights) and the pin layer's transform; server tiles follow it. Chips and path labels fade out by on-screen size (see `MapView`).
+- `src/map`: `viewport.ts` is the own pan/zoom store (wheel, drag, pinch, animated flights) and the pin layer's transform; the tile canvas follows it. `src/engine`: the canvas map engine. Chips and path labels fade out by on-screen size (see `MapView`).
 - `src/mock`: data and the fake live engine. `src/Boring.tsx`: Boring.dc.html.
 - URL helpers: `?theme=night`, `?style=boring`, `?select=copperleaf-site`, `?panel=inventory|links`, `?still=1` (freeze the mock scene).
