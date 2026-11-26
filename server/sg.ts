@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
+import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import readline from 'node:readline/promises'
 import { Writable } from 'node:stream'
 
-// pnpm sg plan | apply | pull | schema | hash-password [--server URL] [--yes] [--no-wait] [--local-render] [--force]
+// pnpm sg plan | apply | pull | schema | hash-password | deploy [--server URL] [--yes] [--no-wait] [--local-render] [--force]
 // plan/apply/pull talk to a server (SITEGARDEN_SERVER, default http://localhost:8787); the server's latest revision is the state.
 const args = process.argv.slice(2), cmd = args[0], flag = (n: string) => args.includes(`--${n}`)
 const CONFIG_FILE = path.resolve(process.env.SITEGARDEN_CONFIG ?? path.join(import.meta.dirname, '../sitegarden.yaml'))
@@ -135,7 +136,29 @@ if (cmd === 'plan') {
   const file = path.join(path.dirname(CONFIG_FILE), 'schema.json')
   fs.writeFileSync(file, `${JSON.stringify(await schemaJson(), null, 2)}\n`)
   console.log(`wrote ${file}`)
+} else if (cmd === 'deploy') { // update a server over ssh: sg deploy [--build ci|local|server] --host "root@box -p 22" [--dir D] [--version V] [--arch A] [--dry-run]
+  const { deployPlan, sshArgv } = await import('./deploy')
+  type Build = import('./deploy').Build
+  const opt = (n: string) => { const i = args.indexOf(`--${n}`); return i >= 0 ? args[i + 1] : undefined }
+  const build = (opt('build') ?? 'ci') as Build, host = opt('host') ?? process.env.SITEGARDEN_DEPLOY_HOST, dry = flag('dry-run')
+  if (build !== 'ci' && build !== 'local' && build !== 'server') die(2, '--build must be ci, local or server')
+  if (!host) die(2, 'deploy needs --host "user@box [ssh options]" (or SITEGARDEN_DEPLOY_HOST)')
+  const ssh = ['ssh', ...sshArgv(host!)], line = (a: string[]) => a.map((w) => /^[\w@%+=:,./<>-]+$/.test(w) ? w : `'${w.replace(/'/g, `'\\''`)}'`).join(' ')
+  const git = (...a: string[]) => spawnSync('git', a, { cwd: path.join(import.meta.dirname, '..'), encoding: 'utf8' }).stdout.trim()
+  let arch = opt('arch')
+  if (build === 'local' && !arch) {
+    if (dry) console.log(`# host arch: ${line([...ssh, 'uname', '-m'])}`)
+    else { const r = spawnSync(ssh[0], [...ssh.slice(1), 'uname', '-m'], { encoding: 'utf8' }); if (r.status !== 0) die(1, 'cannot read the host architecture over ssh'); arch = r.stdout }
+  }
+  let plan
+  try {
+    plan = deployPlan({ build, host: host!, dir: opt('dir') ?? '/opt/sitegarden', version: opt('version'), arch, branch: git('rev-parse', '--abbrev-ref', 'HEAD').replace(/^HEAD$/, '') || undefined,
+      pkgVersion: JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../package.json'), 'utf8')).version })
+  } catch (e) { die(2, (e as Error).message) }
+  const steps = [...plan!.local, ...plan!.remote.map((s) => [...ssh, s])]
+  if (dry) for (const s of steps) console.log(line(s))
+  else for (const s of steps) { const r = spawnSync(s[0], s.slice(1), { stdio: 'inherit' }); if (r.status !== 0) process.exit(r.status ?? 1) } // the host script exits 5 when the app never came up
 } else {
-  die(2, 'usage: pnpm sg plan | apply | pull | schema | hash-password [--server URL] [--yes] [--no-wait] [--local-render] [--force]')
+  die(2, 'usage: pnpm sg plan | apply | pull | schema | hash-password | deploy [--server URL] [--yes] [--no-wait] [--local-render] [--force]')
 }
 process.exit(0)
