@@ -8,13 +8,13 @@ import type { WorldData } from '../world'
 import { levelFor, viewOf, type TileView } from '../lib/view'
 import { extConfig, registry } from '../ext/registry'
 import { flight } from './tiles'
-import { useSteppedZoom, viewport } from './viewport'
+import { frames, useSteppedZoom, viewport } from './viewport'
 import { Lantern, March, Wash } from './Fx'
 import { TilesHost } from './TileLayer'
 
 // The baked world (server tiles, drawn into a canvas by the engine) sits under the pins and follows the viewport transform. On top of it,
 // everything that depends on live status is drawn from the World JSON: red wash, lit windows, fires, flows, labels.
-// The transform is written straight to the DOM from the viewport store; React only re-renders when the tile level or the visible tile range changes.
+// The transform is written straight to the DOM in the frame owner's frame (src/engine/frame.ts), the same one the canvas draws in; React only re-renders when the tile level or the visible tile range changes.
 export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { world: WorldData; scheme: Scheme; size: { w: number; h: number } }) {
   const el = useRef<HTMLDivElement>(null)
   const T = world.tiles.size
@@ -23,22 +23,22 @@ export const WorldLayer = memo(function WorldLayer({ world, scheme, size }: { wo
   useLayoutEffect(() => {
     let key = '', last = viewport.get().zoom, timer = 0
     const dpr = window.devicePixelRatio
-    const apply = ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
-      el.current!.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`
+    const track = ({ x, y, zoom }: { x: number; y: number; zoom: number }) => {
       if (zoom !== last) { // zooming: keep the level (CSS scales the mounted tiles), change it once the zoom has rested for 200 ms
         last = zoom
         lvl.current = Math.min(lvl.current, levelFor(zoom, dpr)) // zooming out drops the level at once (fewer, lighter tiles; the sharper ones stay mounted), only going up waits
         clearTimeout(timer)
-        timer = window.setTimeout(() => { lvl.current = levelFor(zoom, dpr); apply(viewport.get()) }, 200)
+        timer = window.setTimeout(() => { lvl.current = levelFor(zoom, dpr); track(viewport.get()) }, 200)
       }
       const v = viewOf({ x, y, zoom }, T, size, dpr, lvl.current)
       const kk = `${v.level}/${v.c0}/${v.c1}/${v.r0}/${v.r1}`
       if (kk !== key && !flight.active) { key = kk; setView(v) } // mid-flight the mounted tiles stay as they are; landing calls apply again
     }
+    const apply = (v: { x: number; y: number; zoom: number }) => { el.current!.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.zoom})`; track(v) } // in the engine's frame, with the canvas
     apply(viewport.get())
-    const land = () => { lvl.current = levelFor(viewport.get().zoom, dpr); apply(viewport.get()) } // landing: the preloaded destination level at once
+    const land = () => { lvl.current = levelFor(viewport.get().zoom, dpr); track(viewport.get()) } // landing: the preloaded destination level at once
     flight.onEnd.add(land)
-    const off = viewport.subscribe(apply)
+    const off = frames.onFrame(apply)
     return () => { clearTimeout(timer); off(); flight.onEnd.delete(land) }
   }, [T, size])
   const [host, setHost] = useState<HTMLDivElement | null>(null)

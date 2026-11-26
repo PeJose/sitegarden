@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { clampViewport, type Viewport } from '../lib/view'
+import { createFrames } from '../engine/frame'
 
 // The map's own pan and zoom. Same feel as the d3-zoom React Flow used: wheel step, pinch, drag anchors, the van Wijk flight and cubic ease of setViewport.
 type Pt = [number, number]
@@ -76,7 +77,9 @@ export function flight(a: Viewport, b: Viewport, w: number, h: number): (t: numb
 export const cubicInOut = (t: number) => ((t *= 2) <= 1 ? t * t * t : (t -= 2) * t * t + 2) / 2
 
 interface Env { raf: (f: () => void) => number; caf: (id: number) => void; now: () => number }
-const browser: Env = { raf: (f) => requestAnimationFrame(f), caf: (id) => cancelAnimationFrame(id), now: () => performance.now() }
+// The frame owner: input and flights are applied at the top of its frame, then the canvas and the DOM layers apply the result (see engine/frame.ts).
+export const frames = createFrames(() => viewport.get())
+const browser: Env = { raf: (f) => frames.raf(f), caf: (id) => frames.caf(id), now: () => performance.now() }
 
 // The viewport everyone reads: `set` is immediate, `request` is applied once per frame (input events coalesce), `animateTo` moves it over time.
 export function createViewport(init: Viewport, env: Env = browser) {
@@ -114,6 +117,7 @@ export function createViewport(init: Viewport, env: Env = browser) {
 }
 
 export const viewport = createViewport({ x: 0, y: 0, zoom: 1 })
+viewport.subscribe(frames.request)
 export const useViewport = <T,>(pick: (v: Viewport) => T): T => useSyncExternalStore(viewport.subscribe, () => pick(viewport.get()))
 
 // Mouse, touch and pen on the pane: drag, pinch, wheel. `pin` is the data-pin id under the first press (pins are DOM children of the pane).

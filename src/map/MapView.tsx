@@ -5,7 +5,7 @@ import type { WorldData } from '../world'
 import { WorldLayer } from './WorldLayer'
 import { endFlight, preloadTiles, startFlight } from './tiles'
 import { PinNode } from './PinNode'
-import { bindPane, place, toWorld, useSteppedZoom, viewport, type Limits } from './viewport'
+import { bindPane, frames, place, toWorld, useSteppedZoom, viewport, type Limits } from './viewport'
 
 // Centre a world point in the part of the map the hero does not cover.
 const mapSize = { w: 1440, h: 900, collapsed: false } // kept current by MapView
@@ -56,7 +56,7 @@ export function MapView({ world, scheme, size, collapsed, onSelect }: { world: W
   useLayoutEffect(() => {
     const apply = (v: { x: number; y: number; zoom: number }) => { vp.current!.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.zoom})` }
     apply(viewport.get())
-    const off = viewport.subscribe(apply)
+    const off = frames.onFrame(apply) // the canvas draws in the same frame
     const unbind = bindPane(pane.current!, viewport, limits, { start: () => { moved.current = true; endFlight() }, end: endFlight, click: (pin) => select.current(pin) }) // the user took over mid-flight: show tiles for where it is now
     return () => { off(); unbind() }
   }, [])
