@@ -6,16 +6,20 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.tag.outputs.version }} # set only when this run created the release
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Tag and release a new version
+        id: tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -23,3 +27,29 @@ jobs:
           if gh release view "$v" >/dev/null 2>&1; then echo "$v already released"; exit 0; fi
           node .github/scripts/release-notes.mjs "${v#v}" > "$RUNNER_TEMP/notes.md"
           gh release create "$v" --target "$GITHUB_SHA" --title "$v" --notes-file "$RUNNER_TEMP/notes.md"
+          echo "version=${v#v}" >> "$GITHUB_OUTPUT"
+  image:
+    needs: release
+    if: needs.release.outputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/pejose/sitegarden:${{ needs.release.outputs.version }}
+            ghcr.io/pejose/sitegarden:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

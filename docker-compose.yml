@@ -1,4 +1,4 @@
-# docker compose up --build, with TS_AUTHKEY set in the environment. Nothing is published on the host: the app is reachable over the tailnet only.
+# docker compose pull && up -d (the published image; up --build builds from source), with TS_AUTHKEY set in the environment. Nothing is published on the host: the app is reachable over the tailnet only.
 services:
   tailscale:
     image: tailscale/tailscale:stable
@@ -14,6 +14,7 @@ services:
       - ./deploy:/config:ro
     restart: unless-stopped
   sitegarden:
+    image: ghcr.io/pejose/sitegarden:${SITEGARDEN_VERSION:-latest}
     build: .
     network_mode: service:tailscale
     depends_on: [tailscale]
