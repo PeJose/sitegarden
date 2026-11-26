@@ -278,6 +278,17 @@ Why: on the CPU, the design's watercolour filters (`aq`, `aqS`, `aqT`, `wash`, a
 
 A GPU VPS is not worth it for this: small always-on GPU servers cost around €200/month (Hetzner L4 at about €0.44/h, per third-party listings), versus a few € for a CPU VPS, and the client GPU is free.
 
+### M9 — Pocket: mobile (~10 days, asked 2026-11-26)
+
+Why: the first real-phone test (Android Chrome over Tailscale, 2026-11-25) showed the map flashing and lagging; the canvas engine (0.11.2+) fixes the display, but the phone experience was never designed. Headless emulation never reproduced the phone bugs, so this milestone tests on a real device.
+
+1. Phone designs in the design artifact: map, node details as a bottom sheet, lists, settings, status strip (2 d)
+2. Mobile layout and touch pass: hero vs map stacking, bottom sheet, 44 px touch targets, double-tap and two-finger gestures, safe areas, landscape (2 d)
+3. PWA: web manifest, PNG and maskable icons (192/512, apple-touch-icon), install to home screen, offline last map through the existing service worker (1 d)
+4. Web Push: VAPID keys as secrets, push subscriptions per device in SQLite, a `push` notifier on top of the M4 rules (down, recovered, expiry), per-device toggle in settings; iOS needs the installed PWA (16.4+) (2.5 d). Cheap on the server: one small outbound HTTPS request per notification to the browser's push service, no open connections, so a 1 GB / 1 CPU box is plenty
+5. Real-device test lane: an `adb` + Chrome DevTools Protocol script for an Android phone (pan, pinch, zoom-out; frame p95, frames with blank tiles, renders per gesture) with budgets, run before every map change is called done (1.5 d)
+6. Phone perf budget for the engine and live layer, tuned on the device (1 d)
+
 ### After M7
 
 Pick from the `later` items in [features.md](features.md): external status sources (Gatus / Kuma), importers queue, theme and building-pack editors, automations, weather, villagers, public status page, GitHub App, and more.

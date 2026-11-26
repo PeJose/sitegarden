@@ -8,6 +8,7 @@ Estimates come from the research agents and are rough. Sources for ideas are in 
 
 | Feature | What | Days | When | Inspired by |
 |---|---|---|---|---|
+| Mobile design and PWA | Phone layouts, bottom sheet, touch gestures, install to home screen, real-device test lane | 6.5 | M9 | |
 | Map v0 | Nodes and edges from YAML, plain theme, pan/zoom, fit-to-project | 1 | M1 | |
 | Side panel | Links, notes/runbook, status, copy buttons; tabs from plugins | 1 | M1 | |
 | Seeded layout | Plots placed on a spiral, stable positions, drag saves a position | 2.5 | M3 | visual.md |
@@ -106,6 +107,7 @@ All actions: confirm, audit log, disabled in read-only mode.
 | Notifiers | ntfy, Telegram, Discord, email, generic webhook | 2 | M4 | Gatus |
 | Rules | Per node or group, quiet hours, reminder if still down, resolved message | 1 | M4 | |
 | Expiry reminders | 30 / 14 / 3 days before a cert, domain or token expires | 0.5 | M4 | |
+| Web Push | Phone notifications from the installed PWA (VAPID, per-device subscriptions), as a notifier | 2.5 | M9 | |
 | Weekly digest | "All green for 6 days, 3 deploys" | 1.5 | later | |
 | Automations | YAML rules: "when X goes down, do Y" (notify, re-run, pause) | 3 | later | |
 
